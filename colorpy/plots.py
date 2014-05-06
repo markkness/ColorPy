@@ -49,7 +49,7 @@ spectrum_plot (
     filename,
     xlabel = 'Wavelength ($nm$)',
     ylabel = 'Intensity ($W/m^2$)') -
-    
+
     Plot for a single spectrum -
     In a two part graph, plot:
     top: color of the spectrum, as a large patch.
@@ -75,7 +75,7 @@ color_vs_param_plot (
     plotfunc = pylab.plot,
     xlabel   = 'param',
     ylabel   = 'RGB Color') -
-    
+
     Plot for a color that varies with a parameter -
     In a two part figure, draw:
     top: color as it varies with parameter (x axis)
@@ -166,7 +166,7 @@ def rgb_patch_plot (
     patch_gap = 0.05,
     num_across = 6):
     '''Draw a set of color patches, specified as linear rgb colors.'''
-    
+
     def draw_patch (x0, y0, color, name, patch_gap):
         '''Draw a patch of color.'''
         # patch relative vertices
@@ -235,7 +235,7 @@ def spectrum_subplot (spectrum):
     # scale to make brightest rgb value = 1.0
     rgb_max = numpy.max (rgb_colors)
     scaling = 1.0 / rgb_max
-    rgb_colors *= scaling        
+    rgb_colors *= scaling
     # draw color patches (thin vertical lines matching the spectrum curve) in color
     for i in xrange (0, num_wl-1):    # skipping the last one here to stay in range
         x0 = spectrum [i][0]
@@ -368,7 +368,7 @@ def visible_spectrum_plot ():
     # scale to make brightest rgb value = 1.0
     rgb_max = numpy.max (rgb_colors)
     scaling = 1.0 / rgb_max
-    rgb_colors *= scaling        
+    rgb_colors *= scaling
     # plot colors and rgb values vs wavelength
     color_vs_param_plot (
         spectrum [:,0],
@@ -485,14 +485,14 @@ def shark_fin_plot ():
         color_string = colormodels.irgb_string_from_rgb (
             colormodels.rgb_from_xyz (xyz_list [i]))
         pylab.fill (poly_x, poly_y, color_string, edgecolor=color_string)
-        
+
     # fill in the monitor gamut with true colors
     def get_brightest_irgb_string (xyz):
         '''Convert the xyz color to rgb, scale to maximum displayable brightness, and convert to a string.'''
         rgb = colormodels.brightest_rgb_from_xyz (xyz)
         color_string = colormodels.irgb_string_from_rgb (rgb)
-        return color_string        
-    
+        return color_string
+
     def fill_gamut_slice (v0, v1, v2):
         '''Fill in a slice of the monitor gamut with the correct colors.'''
         #num_s, num_t = 10, 10
@@ -522,7 +522,7 @@ def shark_fin_plot ():
     fill_gamut_slice (white, blue,  green)
     fill_gamut_slice (white, green, red)
     fill_gamut_slice (white, red,   blue)
-    
+
     # draw the curve of the xy values of the spectral lines and purples
     pylab.plot (xy_list [:,0], xy_list [:,1], color='#808080', linewidth=3.0)
     # draw monitor gamut and white point
@@ -553,6 +553,7 @@ def figures ():
     visible_spectrum_plot()
     cie_matching_functions_plot()
     shark_fin_plot()
+    scattered_visual_brightness()
 
 #
 # HTML
@@ -579,7 +580,7 @@ def visible_spectrum_table (filename='visible_spectrum.html'):
     # scale 1 to make brightest rgb value = 1.0
     rgb_max = numpy.max (rgb_colors_1)
     scaling = 1.0 / rgb_max
-    rgb_colors_1 *= scaling        
+    rgb_colors_1 *= scaling
     # write HTML file
 
     def write_link (f, url, text):
@@ -598,7 +599,7 @@ def visible_spectrum_table (filename='visible_spectrum.html'):
     f.write ('<p>%s</p>\n' % 'White added to undisplayable pure colors to fit into rgb space.')
     f.write ('<hr/>\n')
     # table header
-    f.write ('<table border cellpadding="5">\n')    
+    f.write ('<table border cellpadding="5">\n')
     f.write ('<tr>\n')
     f.write ('<th>Wavelength</th>\n')
     f.write ('<th>R</th>\n')
@@ -632,7 +633,7 @@ def visible_spectrum_table (filename='visible_spectrum.html'):
         f.write ('<td bgcolor="%s">%s</td>\n' % (hexstr_2, swatch))
         f.write ('<td bgcolor="%s">%s</td>\n' % (hexstr_1, swatch))
         f.write ('</tr>\n')
-    
+
     f.write ('</table>\n')
     # references
     f.write ('<hr/>\n')
@@ -663,4 +664,8 @@ def visible_spectrum_table (filename='visible_spectrum.html'):
 
 def vst ():
     visible_spectrum_table ()
-    
+
+
+if __name__ == '__main__':
+    figures()
+
