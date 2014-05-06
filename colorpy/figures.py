@@ -82,4 +82,8 @@ def figures_white_A ():
     colormodels.init()
     colormodels.init_Luv_Lab_white_point (colormodels.WhiteA)
     figures()
+
     
+if __name__ == '__main__':
+    figures()
+
