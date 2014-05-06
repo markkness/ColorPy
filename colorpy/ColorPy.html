@@ -352,9 +352,8 @@ represent the chromaticities of the monitor primaries, and the point labeled
 White represents the white point with all primaries at full strength.&nbsp; 
 (This plot assumes the standard sRGB primaries and white point.)&nbsp; The 
 points inside the inner triangle are the only colors that the display can render 
-accurately.&nbsp; (The figure would be clearer if the colors inside the triangle 
-were shown, as these are the truly displayable colors.&nbsp; So this figure 
-could use a little work.&nbsp; It would also be nice to label the outer boundary 
+accurately.&nbsp; (This figure 
+could use a little work.&nbsp; It would be nice to label the outer boundary 
 of the fin with the corresponding wavelength.)&nbsp; The points outside the 
 inner triangle are colors that must be approximated.&nbsp; (Points outside the 
 outer 'fin' do not correspond to any color at all.)</p>
@@ -1019,6 +1018,9 @@ Conversion functions:<br>
 <br>
 <tt>xyz_from_rgb (rgb)</tt> -<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Convert an rgb color to xyz.<br>
+<br>
+<tt>brightest_rgb_from_xyz (xyz, max_component=1.0)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert an xyz color to rgb, and scale to the maximum displayable brightness, so one of the components will be 1.0 (or max_component).<br>
 <br>
 <tt>irgb_string_from_irgb (irgb)</tt> -<br>
 &nbsp;&nbsp;&nbsp;&nbsp;Convert a displayable irgb color (0-255) into a hex string.<br>

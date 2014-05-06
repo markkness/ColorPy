@@ -260,11 +260,16 @@ def spectral_colors_plus_purples_patch_plot ():
 
 # An attempt to get a perceptually equally spaced (almost) subset of the pure spectral colors
 
-def perceptually_uniform_spectral_colors ():
+def perceptually_uniform_spectral_colors (
+    brightness = 1.0,
+    plot_name  = 'PerceptuallyEqualColors',
+    plot_title = 'Perceptually (almost) Equally Spaced Pure Colors',
+    table_name = 'percep_equal_names.txt'):
     '''Patch plot of (nearly) perceptually equally spaced colors, covering the pure spectral lines plus purples.'''
     # TODO - This may or may not be quite right...
     # get pure colors
-    xyzs = ciexyz.get_normalized_spectral_line_colors (brightness=1.0, num_purples=200, dwl_angstroms=1)
+#    xyzs = ciexyz.get_normalized_spectral_line_colors (brightness=1.0, num_purples=200, dwl_angstroms=1)
+    (xyzs, names) = ciexyz.get_normalized_spectral_line_colors_annotated (brightness=brightness, num_purples=200, dwl_angstroms=1)
     (num_colors, num_columns) = xyzs.shape
     
     # pick these two functions for either Luv or Lab
@@ -293,7 +298,7 @@ def perceptually_uniform_spectral_colors ():
     # pick out subsamples as evenly spaced as possible
     num_samples = 160
     ds_avg = sum_ds / float (num_samples - 1)
-    E_list = []
+    E_indices = []
     index = 0
     count = 0
     need = 0.0
@@ -301,18 +306,36 @@ def perceptually_uniform_spectral_colors ():
         while need > 1.0e-10:
             need -= dss [index]
             index += 1
-        E_list.append (uniforms [index])
+        E_indices.append (index)
         need += ds_avg
         count += 1
         if count >= num_samples:
             break
-    # patch plot
+    # patch plot and save names
     xyz_list = []
-    for uniform in E_list:
-        xyz = xyz_from_uniform (uniform)
-        xyz_list.append (xyz)
+    fil = open (table_name, 'wt')
+    fil.write ('%s\n' % plot_title)
+    fil.write ('Name iRGB\n')
+    fil.write ('\n')
+    for index in E_indices:
+        uniform_color = uniforms [index]
+        uniform_xyz   = xyz_from_uniform (uniform_color)
+        uniform_irgb  = colormodels.irgb_from_xyz (uniform_xyz)
+        uniform_name  = names [index]
+        xyz_list.append (uniform_xyz)
+        fil.write ('%s %s\n' % (uniform_name, str (uniform_irgb)))
+    fil.close ()
     plots.xyz_patch_plot (
-        xyz_list, None, 'Perceptually (almost) Equally Spaced Pure Colors', 'PerceptuallyEqualColors', num_across=20)
+        xyz_list, None, plot_title, plot_name, num_across=20)
+
+def perceptually_uniform_spectral_color_plots ():
+    brightness_list = [1.0, 0.9, 0.8, 0.75, 0.6, 0.5, 0.4, 0.3, 0.25]
+    for brightness in brightness_list:
+        ibright = math.floor (100.0 * brightness + 0.5)
+        plot_name  = 'PerceptuallyEqualColors_%d' % ibright
+        plot_title = 'Perceptually (almost) Equally Spaced Pure Colors %d%%' % ibright
+        table_name = 'percep_equal_names_%d.txt' % ibright
+        perceptually_uniform_spectral_colors (brightness, plot_name, plot_title, table_name)
 
 # A sample spectrum that doesn't have equally spaced wavelengths
 
@@ -344,11 +367,12 @@ def figures ():
     colorstring_patch_plot (jet_colors, None, 'Jet Colormap', 'jet')
     colorstring_patch_plot (primary_colors, primary_names, 'Primary Colors', 'primary', num_across=4)
     # patch charts of xyz color tables
-    MacBeth_ColorChecker_patch_plot()
-    chemical_solutions_patch_plot()
-    universe_patch_plot()
+    MacBeth_ColorChecker_patch_plot ()
+    chemical_solutions_patch_plot ()
+    universe_patch_plot ()
     # pure colors
-    spectral_colors_patch_plot()
-    spectral_colors_plus_purples_patch_plot()
-    perceptually_uniform_spectral_colors()
-    spectral_line_555nm_plot()
+    spectral_colors_patch_plot ()
+    spectral_colors_plus_purples_patch_plot ()
+    perceptually_uniform_spectral_color_plots ()
+    spectral_line_555nm_plot ()
+    
