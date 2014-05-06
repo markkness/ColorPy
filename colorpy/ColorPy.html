@@ -1,0 +1,1868 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>ColorPy</title>
+<style type="text/css">
+  <!--
+    /* center headings */  
+    h1, h2, h3, h4 {
+        text-align: center; 
+    }
+  -->
+</style>
+</head>
+
+<body>
+<p>
+<h3>ColorPy - A Python package for handling physical descriptions of color and light spectra.</h3>
+</p>
+
+<p>
+<h4>Introduction and Motivation</h4>
+</p>
+<p>
+ColorPy is a Python package that can convert physical descriptions of light - 
+spectra of light intensity vs. wavelength - into RGB colors that can be drawn on 
+a computer screen.&nbsp; It provides a nice set of attractive plots that you can 
+make of such spectra, and some other color related functions as well.&nbsp; All 
+of the plots in this documentation were created with ColorPy.</p>
+<p>
+ColorPy is free software.&nbsp; ('Free' as in speech <i>and</i> beer.)&nbsp; It is 
+released under the GNU Lesser GPL license.&nbsp; You are free to use ColorPy 
+for any application that you like, including commercial applications.&nbsp; If 
+you modify ColorPy, you should release the source code for your modifications.&nbsp; 
+You have no obligation to release any source for your products that just <i>use</i>
+ColorPy, however. </p>
+<p>
+Several years ago, I developed some C++ code to do these kinds of physical color 
+calculations.&nbsp; Recently, I decided to port the code to Python, and publish 
+the library as open source under the GNU LGPL license.&nbsp; I decided to make 
+use of (and assume the existence of) NumPy and MatPlotLib for this.&nbsp; These 
+libraries make it easy to make some nice, attractive, and informative, plots of 
+spectra.&nbsp; Besides, Python is just more fun than C++.</p>
+<p>
+So what can ColorPy do?&nbsp; The short answer, is to scan this document, and 
+examine the various plots of spectra and their colors.&nbsp; You can use ColorPy 
+to make the same kinds of plots, for whatever spectra you have and are 
+interested in.&nbsp; ColorPy also provides conversions between several important 
+three-dimensional 'color spaces', specifically RGB, XYZ, Luv, and Lab.&nbsp; 
+(There can be many different RGB spaces, depending on the particular display 
+used to view the results.&nbsp; By default, ColorPy uses the sRGB space, but you 
+can configure it to use other RGB spaces if you like.)</p>
+
+<p align="center">
+<a href="#download">Download ColorPy</a>
+</p>
+
+<p>
+<h4>License</h4>
+</p>
+<p align="center">
+Copyright (C) 2008 Mark Kness<br>
+Author - Mark Kness - <a href="mailto:mkness@alumni.utexas.net">mkness@alumni.utexas.net</a>
+</p>
+
+<p>
+ColorPy is free software: you can redistribute it and/or modify
+it under the terms of the GNU Lesser General Public License as
+published by the Free Software Foundation, either version 3 of
+the License, or (at your option) any later version.
+ColorPy is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU Lesser General Public License for more details.
+You should have received a copy of the GNU Lesser General Public License
+along with ColorPy. If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.
+</p>
+
+<h4>Prerequisites</h4>
+</p>
+<p>
+To use ColorPy, you must have installed the following:&nbsp; 
+<a href="http://www.python.org/">Python</a>, 
+<a href="http://www.scipy.org/NumPy">NumPy</a>, and 
+<a href="http://matplotlib.sourceforge.net/">MatPlotLib</a>.
+&nbsp; Typically, <a href="http://www.scipy.org/">SciPy</a>
+is installed along with NumPy and MatPlotLib.&nbsp; 
+ColorPy doesn't use SciPy explicitly, although MatPlotLib may require SciPy.&nbsp; 
+(I am not sure.)&nbsp; ColorPy is a 'pure' Python distribution, so you do not 
+need any extra software to build it.&nbsp; I have tested ColorPy both on Windows 
+XP and Ubuntu Linux, and it should run on any system where you can install the 
+prerequisites.&nbsp; If, for some reason, you can only install NumPy but not 
+MatPlotLib, you should still be able to do many of the calculations, but will 
+not be able to make any of the nice plots.</p>
+<p>
+<h4>Types and Units</h4>
+</p>
+<p>
+ColorPy generally uses wavelengths measured in nanometers (nm), 10<sup>-9</sup> m.&nbsp; 
+Otherwise, typical metric units are used.&nbsp; For descriptions of spectra, 
+ColorPy uses two-dimensional NumPy arrays, with two columns and an arbitrary 
+number of rows.&nbsp; Each row of these arrays represents the light intensity 
+for one wavelength, with the value in the first column being the wavelength in 
+nm, and the value in the second column being the light intensity at that 
+wavelength.&nbsp; ColorPy can provide a blank spectrum array, via 
+<tt>colorpy.ciexyx.empty_spectrum()</tt>, which will have rows for each wavelength from 360 nm to 
+830 nm, at 1 nm increments.&nbsp; (Wavelengths outside this range are generally 
+ignored, as the eye cannot see them.)&nbsp; However, you can create your own spectrum 
+arrays with any set of wavelengths you like.</p>
+<p>
+Color values are represented as three-component NumPy vectors.&nbsp; 
+(One-dimensional arrays).&nbsp; Typically, these are vectors of floats, with the 
+exception of displayable irgb colors, which are arrays of integers (in the range 
+0 - 255).</p>
+<p>
+<h4>Fundamentals - Mapping spectra to three-dimensional color values</h4>
+</p>
+<p>
+We are interested in working with physical descriptions of light spectra, that 
+is, functions of intensity vs. wavelength.&nbsp; However, color is perceived as 
+a three-dimensional quantity, as there are three sets of color receptors in the 
+eye, which respond approximately to red, green and blue light.&nbsp; So how do 
+we reduce a function of intensity vs. wavelength to a three-dimensional value?</p>
+<p>
+This fundamental step is done by integrating the intensity function with a set 
+of three matching functions.&nbsp; The standard matching functions were defined 
+by the <i>Commission Internationale de l'Eclairage 
+(CIE)</i>, based on experiments with viewers matching the color of single wavelength 
+lights.&nbsp; The matching functions generally used in computer graphics are 
+those developed in 1931, which used a 2 degree field of view.&nbsp; (There is 
+also a set of matching functions developed in 1964, covering a field of view of 
+10 degrees, but the larger field of view does not correspond to typical 
+conditions in viewing computer graphics.)&nbsp; So the mapping is done as 
+follows:</p>
+<p align="center">
+<tt>
+X = &#8747; I (&#955;) * CIE-X (&#955;) * d&#955;<br/>
+Y = &#8747; I (&#955;) * CIE-Y (&#955;) * d&#955;<br/>
+Z = &#8747; I (&#955;) * CIE-Z (&#955;) * d&#955;</tt></p>
+<p>
+where I (&#955;) is the spectrum of light intensity vs. wavelength, and CIE-X (&#955;), 
+CIE-Y (&#955;) and CIE-Z (&#955;) are the matching functions.&nbsp; The CIE matching 
+functions are defined over the interval of 360 nm to 830 nm, and are zero for 
+all wavelengths outside this interval, so these are the bounds for the 
+integrals.</p>
+<p>
+So what do these matching functions look like?&nbsp; Let's take a look at a plot 
+(made with ColorPy, of course.)</p>
+<p align="center">
+<img border="0" src="CIEXYZ_Matching.png"><br>
+Figure 1 - The 1931 CIE XYZ matching functions.
+</p>
+<p>
+This plot shows the three matching functions vs. wavelength.&nbsp; The colors 
+underneath the curve, at each wavelength, are the (approximate) colors that the 
+human eye will perceive for a pure spectral line at that wavelength, of constant 
+intensity.&nbsp; The apparent brightness of the color at each wavelength 
+indicates how strongly the eye perceives that wavelength - the intensity for 
+each wavelength is the same.&nbsp; (The next section will explain how we get the 
+RGB values for the colors.)</p>
+<p>
+Each of the three plots was generated via <tt>colorpy.plots.spectrum_subplot (spectrum)</tt>, 
+where <tt>spectrum</tt> is the value of the matching function vs. wavelength.</p>
+<p>
+All three of the matching functions are zero or positive everywhere.&nbsp; Since 
+the light intensity at any wavelength is never negative, this means that the 
+resulting XYZ color values are never negative.&nbsp; Also, the Y matching 
+function corresponds exactly to the luminous efficiency of the eye - the eye's 
+response to light of constant luminance.&nbsp; (These facts are some of the 
+reasons that make this particular set of matching functions so useful.)</p>
+<p>
+So now we can map a spectrum of intensity vs. wavelength into a 
+three-dimensional value.&nbsp; Before we consider how to convert this into an 
+RGB color value that we can draw, we will first discuss some typical scaling 
+operations on XYZ colors.</p>
+<p>
+Often, it is useful to consider the 'chromaticity' of a color, that is, the hue 
+and saturation, independent of the intensity.&nbsp; This is typically done by 
+scaling the XYZ values so that their sum is 1.0.&nbsp; The resulting scaled 
+values are conventionally written as lower case letters x,y,z.&nbsp; With this 
+scaling, x+y+z = 1.0.&nbsp; The chromaticity can be 
+specified by the resulting x and y values, and the z component can be reconstructed as z = 1.0 - x - y.&nbsp; 
+It is also common to specify colors with their chromaticity (x and y), as well 
+as the total brightness (Y).&nbsp; Occasionally, one also wants to scale an XYZ 
+color so that the resulting Y value is 1.0.</p>
+<p>
+ColorPy represents XYZ colors (and other types of colors) as three-component 
+vectors.&nbsp; There are some 'constructor' like functions to create such 
+arrays, and perform these kinds of scaling:</p>
+<p>
+<tt>
+colorpy.colormodels.xyz_color (x, y, z = None)<br>
+colorpy.colormodels.xyz_normalize (xyz)<br>
+colorpy.colormodels.xyz_color_from_xyY (x, y, Y)<br>
+colorpy.colormodels.xyz_normalize_Y1 (xyz)
+</tt></p>
+<p>
+Notice that color types are generally specified in ColorPy with lower case 
+letters, as this is more readable.&nbsp; (I.e., <tt>xyz_color</tt> instead of <tt>XYZ_color</tt>.)&nbsp; 
+The user must keep track of the particular normalization that applies in each 
+situation.</p>
+<p>
+<h4>Fundamentals - Converting XYZ colors to RGB colors</h4>
+</p>
+<p>
+So how do we convert one of these XYZ colors to an RGB color that I can draw on 
+my computer?</p>
+<p>
+The short answer, is to call <tt>colorpy.colormodels.irgb_from_xyz (xyz)</tt>, where <tt>xyz</tt> is the 
+XYZ color vector.&nbsp; This will return a three element integer vector, with 
+each component in the range 0 - 255.&nbsp; There is also a function 
+<tt>colorpy.colormodels.irgb_string_from_xyz (xyz)</tt> that will return a hex string, such as 
+'#FF0000' for red.</p>
+<p>
+There are several subtleties and approximations in the behavior of these 
+functions, which are important to understand what is happening.</p>
+<p>
+The first step in the conversion, is to convert the XYZ color to a 'linear' RGB 
+color.&nbsp; By 'linear', we mean that the light intensity is proportional to 
+the numerical color values.&nbsp; ColorPy represents such linear RGB values as 
+floats, with the nominal range of 0.0 - 1.0 covering the range of intensity that the 
+monitor display can produce.&nbsp; (This implies an assumption as to the 
+physical brightness of the display.)&nbsp; The conversion from XYZ to linear RGB 
+is done by multiplication by a 3x3 element array.&nbsp; So, which array to use?&nbsp; 
+The specific values of the array depend on the physical display in question, 
+specifically the chromaticities of the monitor phosphors.&nbsp; Not all displays 
+have the exact same red, green and blue monitor primaries, and so any conversion 
+matrix cannot apply to all displays.&nbsp; This can be a considerable 
+complication, but fortunately, there is a specification of monitor 
+chromaticities that we can assume, part of the sRGB standard, and are likely to 
+be a close match to most actual displays.&nbsp; ColorPy uses this assumption by 
+default, although you can change the assumed monitor chromaticities to nearly 
+anything you like.</p>
+<p>
+So for now, let's assume the standard sRGB chromaticities, which gives us the 
+correct 3x3 matrix, and so we can convert our XYZ colors to linear RGB colors.</p>
+<p>
+We then come to the next obstacle...&nbsp; The RGB values that we get from this 
+process are often out of range - meaning that they are either greater than 1.0, 
+or even that they are negative!&nbsp; The first case is fairly straightforward, 
+it means that the color is too bright for the display.&nbsp; The second case 
+means that the color is too saturated and vivid for the display.&nbsp; The 
+display must compose all colors from some combination of positive amounts of the 
+colors of its red, green and blue phosphors.&nbsp; The colors of these phosphors 
+are not perfectly saturated, they are washed out, mixed with white, to some 
+extent.&nbsp; So not all colors can be displayed accurately.&nbsp; As an 
+example, the colors of pure spectral lines, all have some negative component.&nbsp; 
+Something must be done to put these values into the 0.0 - 1.0 range that can 
+actually be displayed, known as color clipping.</p>
+<p>
+In the first case, values larger than 1.0, ColorPy scales the color so that the 
+maximum component is 1.0.&nbsp; This reduces the brightness without changing the 
+chromaticity.&nbsp; The second case requires some change in chromaticity.&nbsp; 
+By default, ColorPy will add white to the color, just enough to make all of the 
+components non-negative.&nbsp; (You can also have ColorPy clamp the negative 
+values to zero.&nbsp; My personal, qualitative, assessment is that adding white 
+produces somewhat better results.&nbsp; There is also the potential to develop a 
+better clipping function.)</p>
+<p>
+So now we have linear RGB values in the range 0.0 - 1.0.&nbsp; The next subtlety 
+in the conversion process, is that the intensity of colors on the display is not 
+simply proportional to the color values given to the hardware.&nbsp; This 
+situation is known as 'gamma correction', and is particularly significant for 
+CRT displays.&nbsp; The voltage on the electron gun in the CRT display is 
+proportional to the RGB values given to the hardware to display, but the 
+intensity of the resulting light is *not* proportional to this voltage, in fact 
+the relationship is a power law.&nbsp; The particular correction for this 
+depends on the physical display in question.&nbsp; LCD displays add another 
+complication, as it is not clear (at least to me) what the correct conversion is 
+in this case.&nbsp; Again, we rely on the sRGB standard to decide what to do.&nbsp; 
+That standard assumes a physical 'gamma' exponent of about 2.2, and ColorPy 
+applies this correction by default.&nbsp; You can change this to a different 
+exponent if you like.</p>
+<p>
+The final step after gamma correction, is to convert the RGB components from the 
+range 0.0 - 1.0 to 0 - 255, which is the typical range needed to pass to the 
+hardware.&nbsp; This is done with simple scaling and rounding.&nbsp; The final 
+result of all of these conversions, RGB color values in the range 0 - 255, is 
+referred to as an <tt>irgb_color</tt>.&nbsp; This is the color type that can be passed to 
+drawing functions.</p>
+<p>
+Summarizing of these conversions, with the functions that ColorPy uses 
+internally:</p>
+<p>
+<tt>colorpy.colormodels.rgb_from_xyz (xyz)</tt> - Converts an XYZ color to a linear RGB color, 
+with components in the nominal range 0.0 - 1.0, but possibly out of range 
+(greater than 1.0, or negative).&nbsp; The resulting linear RGB color cannot be 
+directly passed to drawing functions.</p>
+<p>
+<tt>colorpy.colormodels.irgb_from_rgb (rgb)</tt> - Converts a linear RGB color in the nominal 
+range 0.0 - 1.0 to a displayable irgb color, definitely in the range 0 - 255.&nbsp; 
+Color clipping may be applied (intensity as well as chromaticity), and gamma 
+correction is accounted for.&nbsp; This result can be passed to drawing 
+functions.</p>
+
+<hr>
+
+<p>
+With all of this, let's plot some real colors.&nbsp; First, consider the pure 
+spectral lines - that is, spectra that are all black (zero 
+intensity), except at a single wavelength.&nbsp; We consider all the wavelengths 
+from 360 nm to 830 nm, which covers the range of human vision (and the range of 
+the CIE XYZ matching functions.)</p>
+<p>
+The two-part plot below shows the result.&nbsp; The top section, shows the best 
+colors that ColorPy can draw for each wavelength.&nbsp; The amount of light 
+intensity for each wavelength is the same.&nbsp; But since the human eye has 
+different sensitivity to different wavelengths, the apparent brightness looks different 
+for different colors.&nbsp; For example, the color for 750 nm is quite dark, 
+while the color for 550 nm is quite bright.&nbsp; They represent lines with the 
+same physical luminance, however.&nbsp; The bottom section shows the 
+linear RGB values corresponding to each wavelength.&nbsp; You can see that there 
+are negative RGB values on this plot.&nbsp; In fact, there is a negative 
+component at every wavelength - none of the pure spectral lines can be displayed 
+with full saturation.&nbsp; (The overall intensity scale is arbitrary, and has 
+been chosen so that the largest RGB component for any wavelength is 1.0.)</p>
+<p align="center">
+<img border="0" src="VisibleSpectrum.png"><br>
+Figure 2 - RGB values for the pure spectral lines.</p>
+<p>
+This specific plot was made with <tt>colorpy.plots.visible_spectrum_plot ()</tt>, and the real 
+work was done with <tt>colorpy.plots.color_vs_param_plot (param_list, rgb_colors, title, 
+filename, tight=False, plotfunc=pylab.plot, xlabel='param', ylabel='RGB Color')</tt>.&nbsp; 
+This function accepts two lists, one of an arbitrary parameter (wavelength in 
+this case), and one of linear RGB colors.&nbsp; (The two lists must be of the 
+same size.)&nbsp; You also must supply a title and filename for the plot.&nbsp; 
+Optional arguments include a request that the x-axis be 'tightened' to only 
+include the range of the parameters, a different plotting function from the 
+default, and different labels for the axes.&nbsp; This is a very handy function, 
+useful for many other plots besides this one.</p>
+<p>
+You can see that there are negative RGB values for these colors, and those 
+actually drawn have been clipped to something displayable.</p>
+
+<p>
+Another way to understand the limited color gamut (range of displayable colors) of physical displays, is to consider 
+the 'shark fin' CIE chromaticity diagram.&nbsp; On this plot, we draw the chromaticities of the pure 
+spectral lines.&nbsp; These trace out a fin shaped region.&nbsp; The low 
+wavelength colors start at the lower left corner of the fin, and as the 
+wavelength increases, moves up on the plot towards green, and then down and 
+to the right towards yellow and red.&nbsp; The longest wavelength corresponds to 
+the red corner at the far right.&nbsp; The straight line connecting the long 
+wavelength red to the short wavelength blue is not composed of pure spectral 
+lines, rather these 'purples' are a linear combination of the extreme red and 
+blue colors.&nbsp; The outer boundary of this diagram represents the spectrally 
+pure colors.&nbsp; Just inside this boundary, we draw the best color match for 
+each wavelength.</p>
+<p>
+The triangle inside the fin represents the range (gamut) of colors that the 
+physical display can show.&nbsp; The vertices labeled Red, Green and Blue 
+represent the chromaticities of the monitor primaries, and the point labeled 
+White represents the white point with all primaries at full strength.&nbsp; 
+(This plot assumes the standard sRGB primaries and white point.)&nbsp; The 
+points inside the inner triangle are the only colors that the display can render 
+accurately.&nbsp; (The figure would be clearer if the colors inside the triangle 
+were shown, as these are the truly displayable colors.&nbsp; So this figure 
+could use a little work.&nbsp; It would also be nice to label the outer boundary 
+of the fin with the corresponding wavelength.)&nbsp; The points outside the 
+inner triangle are colors that must be approximated.&nbsp; (Points outside the 
+outer 'fin' do not correspond to any color at all.)</p>
+<p>
+You can see that the standard monitor is much more limited in displaying greens 
+than blues and reds.&nbsp; If someone is able to invent a much purer green 
+colored phosphor, with low persistence so it is suitable for animations and 
+hence real displays, then the world of computer graphics will get significantly 
+more richly colored!&nbsp; Also notice that there is no possible set of of three 
+monitor phosphor chromaticities that can cover the entire visible gamut.&nbsp; 
+For any three points inside the 'fin', the enclosed triangle must necessarily 
+exclude some of the pure spectral colors, even if the monitor phosphors were 
+perfectly spectrally pure.</p>
+<p align="center">
+<img border="0" src="ChromaticityDiagram.png">
+<br>
+Figure 3 - CIE chromaticity diagram of the visible gamut.<br>
+Colors inside 
+the inner triangle can be accurately drawn on the display, points outside (but 
+inside the fin) must be approximated.</p>
+<p>
+This figure is drawn with <tt>colorpy.plots.shark_fin_plot()</tt>.&nbsp; This is kind of a 
+specialized figure, probably not that useful for other things.&nbsp;
+Now, let's consider some more examples.</p>
+
+<hr>
+
+<p>
+<h4>MacBeth ColorChecker Chart</h4>
+</p>
+<p align="center">
+<img border="0" src="MacBeth.png"><br>
+Figure 4 - MacBeth ColorChecker Chart.</p>
+<p>
+The simplest way that ColorPy can be used to display colors, is to display a set 
+of known XYZ (or RGB) colors.&nbsp; As an example, we use the MacBeth ColorChecker Chart.&nbsp; 
+This is a set of standard reference colors that is used in photography and 
+video.&nbsp; (You can buy the physical chart from photographic suppliers.&nbsp; 
+It is not particularly cheap.)&nbsp; It is used to verify that colors are being 
+reproduced accurately on film.&nbsp; [Hall, p. 119] provides a set of xy colors for 
+the patches on this chart (which must assume some particular lighting 
+environment), and ColorPy can convert these into displayable colors.&nbsp; This 
+serves as a test that the xyz to rgb conversions are operating correctly, which 
+is analogous to the sort of thing the real chart is used for.</p>
+<p>
+This 'patch' plot is made with <tt>colorpy.plots.xyz_patch_plot (xyz_colors, color_names, 
+title, filename, patch_gap=0.05, num_across=6)</tt>, where <tt>xyz_colors</tt> and <tt>color_names</tt>
+are two lists, the first with the XYZ color values to draw, and the second with 
+names to draw on the plot.&nbsp; The two lists must be of the same size, but you 
+can pass <tt>None</tt> for the second list to skip the labels.&nbsp; You also must supply 
+a title and filename, and there are optional arguments to fine-tune the size and 
+arrangement of the patches.&nbsp; There is also a similar function 
+<tt>colorpy.plots.rgb_patch_plot()</tt> when you have known RGB values that you want to draw.
+</p>
+
+<hr>
+
+<p>
+<h4>Blackbody Radiation</h4>
+</p>
+<p>
+For a more interesting example, one that involves physical light spectra, consider the colors of thermal 
+blackbodies.&nbsp; A 'blackbody' is an object that is in thermal equilibrium 
+with its environment, at some temperature T.&nbsp; Such an object will radiate 
+light energy, with a particular spectrum of intensity vs. wavelength.&nbsp; This 
+spectrum depends only on the temperature of the blackbody, and is completely 
+independent of the composition of the blackbody.&nbsp; The theory of blackbodies 
+was important in the development of quantum mechanics, the first application of 
+quantum mechanics was by Max Planck in deriving the blackbody spectrum.&nbsp; Many real light 
+sources are approximately blackbodies.</p>
+<p>
+Blackbody theory shows that the 'monochromatic specific intensity' 
+B<sub>&#955;</sub>(T), the power at wavelength &#955; radiated per unit wavelength 
+per unit solid angle, is [Shu p. 78]:</p>
+<p align="center">
+B<sub>&#955;</sub>(T) = (2hc<sup>2</sup>)/(&#955;<sup>5</sup>) * (1 / (exp(hc/&#955;kT) - 1))</p>
+<p>
+where h = Planck's constant, c = speed of light, k 
+= Boltzman's constant, &#955; = wavelength, and T = temperature.
+</p>
+<p>
+Using this relation, we can construct a spectrum in ColorPy, and then determine 
+the rgb color of the blackbody radiator.&nbsp; The module <tt>blackbody</tt> provides the 
+appropriate functions.&nbsp; First, the function <tt>blackbody.blackbody_specific_intensity (wl_nm, T_K)</tt>
+calculates the B<sub>&#955;</sub>(T) above, for any wavelength and temperature.&nbsp; This is 
+then converted into a spectrum of intensity vs. wavelength.&nbsp; The function 
+<tt>ciexyz.empty_spectrum()</tt> is called to get a NumPy array to hold the 
+spectrum.&nbsp; This array has one row for each wavelength to be used,  
+from 360 to 830 nm, with an increment of 1 nm.&nbsp; The first column is already 
+filled in with the wavelength (in nm), the second column is to be filled with 
+the intensity, and is initially zero.&nbsp; Since B<sub>&#955;</sub>(T) represents the power per unit wavelength, this 
+must be multiplied by the width of the interval, which is 1 nm.&nbsp; This 
+resulting spectrum is then converted into an xyz color with 
+<tt>ciexyz.xyz_from_spectrum()</tt>.&nbsp; This can then be converted to a 
+displayable irgb color and 
+drawn.&nbsp; The whole process is performed by <tt>colorpy.blackbody.blackbody_spectrum()</tt>, 
+which is listed below.</p>
+<p>
+<tt>def blackbody_spectrum (T_K):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;'''Get the spectrum of a blackbody, as a numpy array.'''<br>
+&nbsp;&nbsp;&nbsp;&nbsp;spectrum = ciexyz.empty_spectrum()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(num_rows, num_cols) = spectrum.shape<br>
+&nbsp;&nbsp;&nbsp;&nbsp;for i in xrange (0, num_rows):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;specific_intensity = blackbody_specific_intensity (spectrum [i][0], T_K)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# scale by size of wavelength interval<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;spectrum [i][1] = specific_intensity * ciexyz.delta_wl_nm * 1.0e-9<br>
+&nbsp;&nbsp;&nbsp;&nbsp;return spectrum</tt><br>
+</p>
+<p>
+So let's look at some results of these calculations, which also introduce a new 
+type of ColorPy plot, the spectrum plot.&nbsp; First, consider a 
+blackbody with a temperature of 5778 K.&nbsp; This is the surface temperature of 
+the Sun [<a href="http://en.wikipedia.org/wiki/Sun">Wikipedia</a>], and this spectrum approximates that of the sun.&nbsp; Figure 5 below 
+shows both the overall color of the resulting spectrum, with a graph of the 
+spectrum itself below the color patch.&nbsp; The overall color is nearly white.&nbsp; 
+The spectrum shows that the peak intensity is in the green region, around 500 nm 
+or so, but with significant contributions from both lower and higher 
+wavelengths.&nbsp; The colors in the spectrum plot are indicate the extent to 
+which the eye is sensitive to the particular wavelength.&nbsp; Each color band 
+has the same amount of luminance, so the apparent brightness of the color indicates the 
+extent to which the eye is sensitive to that wavelength.&nbsp; The eye has a 
+very low sensitivity to wavelengths below 400 nm or so, and to wavelengths above 
+700 nm or so.&nbsp; Thus, the resulting color in the spectrum plot is nearly 
+black.&nbsp; With a wavelength of 550 nm, on the other hand, the eye is quite 
+sensitive to this wavelength, and the resulting color is therefore bright 
+(green).&nbsp; This way of drawing the spectrum is intended to help show the 
+contributions of each wavelength in the spectrum to the overall color.&nbsp; For 
+example, in this case, there is a considerable amount of power at wavelengths 
+from 700 nm to 830 nm.&nbsp; However, the eye has a low sensitivity to these, 
+and so these wavelengths do not contribute much to the overall color.</p>
+<p>
+These kinds of plots are made with <tt>colorpy.plots.spectrum_plot (spectrum, title, 
+filename, xlabel, ylabel)</tt>, where <tt>spectrum</tt> is the numpy array with the spectrum 
+data, and the other parameters are the title, filename, and axis labels.</p>
+<p align="center">
+<img border="0" src="BlackbodySpectrum-5778K.png"><br>
+Figure 5 - Color of a 5778 K blackbody.&nbsp; This approximates the spectrum of 
+the Sun.</p>
+<p>
+Since the temperature is just a parameter to the function calls, we can do the 
+same thing for any other temperature that we like.&nbsp; The nearby star Proxima 
+Centauri is much cooler than the sun, it has a surface temperature of about 3000 
+K. 
+[<a href="http://en.wikipedia.org/wiki/Proxima_Centauri">Wikipedia</a>].&nbsp; The spectrum of a 3000 K blackbody is shown below, 
+with the same kind of plot.&nbsp; 
+The overall color in this case is orange, and the spectrum is concentrated at 
+longer wavelengths.</p>
+<p align="center">
+<img border="0" src="BlackbodySpectrum-3000K.png"><br>
+Figure 6 - Spectrum of 3000 K blackbody.&nbsp; This approximates the spectrum of Proxima Centauri.
+</p>
+<p>
+We can also evaluate this at higher temperatures.&nbsp; The star Rigel, in the 
+constellation Orion, has a 
+surface temperature of 11000 K [<a href="http://en.wikipedia.org/wiki/Rigel">Wikipedia</a>], and the resulting blackbody spectrum is shown 
+below.&nbsp; The overall color is now blue-white, and the intensity is 
+concentrated at low wavelengths.</p>
+<p align="center">
+<img border="0" src="BlackbodySpectrum-11000K.png"><br>
+Figure 7 - Spectrum of 11000 K blackbody.&nbsp; This approximates the spectrum 
+of the star Rigel.</p>
+<p>
+But why limit ourselves to just a handful of temperatures?&nbsp; We can 
+calculate the blackbody spectrum for very many temperatures, and ColorPy allows 
+us to plot the resulting color vs. temperature, while also showing a plot of the 
+rgb color values.&nbsp; In the figure below, we have calculated the blackbody 
+color for temperatures ranging from 1200 K to 16000 K.&nbsp; The top subplot 
+shows the resulting color, as a function of temperature, while the lower plot 
+shows the linear RGB values.&nbsp;
+For low temperatures, the blackbody is red to orange, and as the temperature 
+increases, the color becomes white, and then blue.</p>
+<p>
+This style plot was generated with <tt>colorpy.plots.color_vs_param_plot (param_list, 
+rgb_colors, title, filename, tight, plotfunc, xlabel, ylabel)</tt>.&nbsp; The 
+arguments <tt>tight</tt>, <tt>plotfunc</tt>, <tt>xlabel</tt> and <tt>ylabel</tt> are optional, in this case we set 
+<tt>tight=True</tt> and <tt>plotfunc=pylab.semilogy</tt> to obtain the semilog plot, which is 
+needed for the very large range of color values covered.<br>
+</p>
+
+<p align="center">
+<img border="0" src="Blackbody-Colors.png"><br>
+Figure 8 - Color of blackbody vs. temperature.</p>
+<p>
+Let's also consider similar plots over different temperature ranges.&nbsp; 
+First, consider the range 950 K to 1200 K, shown below.&nbsp; The colors are all 
+nearly red, and are brighter for higher temperatures.</p>
+<p>
+This provides another example to discuss the color intensity scaling that ColorPy 
+uses.&nbsp; ColorPy attempts to calculate a color value that, when displayed on a 
+computer monitor, will match the physical brightness of the spectrum.&nbsp;
+In this plot, the red value reaches 1.0 at about 1150 K.&nbsp; This means 
+(approximately) that an 1150 K blackbody is as bright as the monitor at full 
+intensity.&nbsp; Similarly, a 950 K blackbody is about 1.5% as bright as the 
+monitor.&nbsp; This, by the way, suggests an experimental test of whether the 
+display brightness assumed by ColorPy is correct - a 1150 K blackbody is 
+predicted to be as bright as the display monitor at full red.</p>
+<p>
+Also notice that there is no blue line on this plot.&nbsp; For temperatures as 
+low as 1200 K (and all lower), the correct blue value is negative.&nbsp; (This 
+means that the monitor is not capable of displaying the color at full saturation 
+- it is necessarily washed out.)&nbsp; Since negative values cannot be plotted 
+on a log axis, there is no blue on this plot.&nbsp; The green value also becomes 
+negative near the left edge of the plot.</p>
+
+<p align="center">
+<img border="0" src="Blackbody-CoolColors.png"><br>
+Figure 9 - Colors of relatively cool blackbodies.</p>
+<p>
+Now consider a high temperature range, 10000 K to 40000 K, shown in the plot 
+below.&nbsp; In this situation, the colors are far in excess of that 
+displayable on the monitor.&nbsp; A 40000 K blackbody is far far brighter than 
+any computer monitor!&nbsp; In fact, the intensity is on the order of 10<sup>9</sup> times 
+that of what the monitor can display.&nbsp; When displaying very bright colors 
+such as this, ColorPy will scale them to the brightest color, of the same hue 
+and saturation, that can be displayed.&nbsp; In this case, where all the colors 
+are scaled like this, the resulting RGB values all have similar brightness.&nbsp; 
+So, all the colors on this chart are of similar brightness.&nbsp; However, there 
+is actually a large range in physical brightness - a 40000 K blackbody is much 
+brighter than a 10000 K blackbody.&nbsp; Note how this contrasts with the 
+situation on the cool blackbody plot, where the intensity of the displayed 
+colors varied with temperature.&nbsp; There is a physical variation in intensity 
+in both cases, but ColorPy can only show this when the colors are in the range 
+displayable by the monitor.</p>
+
+<p align="center">
+<img border="0" src="Blackbody-HotColors.png"><br>
+Figure 10 - Colors of relatively hot blackbodies.
+</p>
+
+<hr>
+
+<p>
+<h4>Example 2 - Rayleigh Scattering</h4>
+</p>
+<p>
+For a second example, consider Rayleigh scattering.&nbsp; This concerns the 
+scattering of light by small particles (much smaller than the wavelength of the 
+light.)&nbsp; In this situation, the amount of scattering is inversely 
+proportional to the fourth power of the wavelength.&nbsp; To compute the 
+spectrum resulting from Rayleigh scattering, we need a description of the 
+original light source, the 'Illuminant', as the power emitted as a function of 
+wavelength.&nbsp; Then, the spectrum resulting from Rayleigh scattering is [van de Hulst, 
+p. 65]:</p>
+<p align="center">
+Scattered Intensity (&#955;) = Illuminant (&#955;) * a * (1 / &#955;<sup>4</sup>)
+</p>
+<p>
+where a is a proportionality constant.&nbsp; (In the plots below, we have 
+arbitrarily taken the constant a so that the value of the Rayleigh scattering 
+term at 550 nm is 1.0.)</p>
+<p>
+Often, the intensity of the illuminant is arbitrary.&nbsp; The illuminants 
+provided by ColorPy are scaled so that they have Y = 1.0, which means that they 
+are about as bright as the monitor at full white.&nbsp; One obvious choice for 
+an illuminant is a blackbody.&nbsp; ColorPy will provide an illuminant for a 
+blackbody of any temperature you like, with <tt>colorpy.illuminants.get_blackbody_illuminant (T_K)</tt>.&nbsp; 
+(Remember that these illuminants are scaled to have a Y = 1.0, rather than the 
+(typically) much larger brightness of a true blackbody.)</p>
+<p>
+A familiar illuminant is the one for a 5778 K blackbody, which approximates the 
+illumination of the Sun.&nbsp; The plot below shows the effect of Rayleigh 
+scattering of this illuminant.&nbsp; The overall color is sky blue, with the 
+spectrum concentrated at low wavelengths.&nbsp; This result is as expected, as 
+Rayleigh scattering is the basic physical 
+reason that the sky is blue.
+</p>
+<p align="center">
+<img border="0" src="Rayleigh-Spectrum-5778K.png"><br>
+Figure 11 - Rayleigh scattering of a 5778 K blackbody.&nbsp; Why the sky is blue.</p>
+<p>
+But why limit ourselves to the color of our Sun?&nbsp; With ColorPy, we can do 
+the same calculations for a blackbody of any temperature we like.&nbsp; So we 
+repeat the process, first for a temperature of 3000 K (Proxima Centauri), and 
+then for a temperature of 11000 K (Rigel).&nbsp; The plots below show the 
+results.&nbsp; If we lived on a planet around Proxima Centauri, the sky would be 
+nearly white.&nbsp; On the other hand, if we lived on a planet near Rigel, the 
+sky would also be blue, but a deeper shade of blue than we have on Earth.</p>
+<p align="center">
+<img border="0" src="Rayleigh-Spectrum-3000K.png"><br>
+Figure 12 - Rayleigh scattering of a 3000 K blackbody.&nbsp; The color of the sky 
+from near Proxima Centauri.</p>
+<p align="center">
+<img border="0" src="Rayleigh-Spectrum-11000K.png"><br>
+Figure 13 - Rayleigh scattering of a 11000 K blackbody.&nbsp; The color of the 
+sky from near Rigel.</p>
+<p>
+We can also make a plot for many temperatures, and get a plot of the color of 
+the sky vs. blackbody illuminant temperature, similar to the plot we made of the 
+color of the blackbody itself vs. temperature.&nbsp; The range of sky colors is 
+about the same as the range of blackbody colors, but the sky colors are bluer 
+than the blackbody colors, for any given temperature.</p>
+<p align="center">
+<img border="0" src="Rayleigh-SkyColors.png"><br>
+Figure 14 - Color of the sky for various temperature blackbody illuminants.
+</p>
+
+<hr>
+
+<p>
+<h4>Illuminants</h4>
+</p>
+
+<p>ColorPy provides several different 'illuminant' functions that can be used as 
+light sources.&nbsp; In addition to the blackbody illuminants, ColorPy provides 
+the CIE standard Illuminant D65.&nbsp; Illuminant D65 is intended to provide a 
+good approximation for normal daylight.&nbsp; Illuminant D65 is recommended as 
+the general-purpose, default, illumination for daytime conditions (on Earth only 
+however!)</p>
+<p>Illuminant D65 is given by a table of intensity vs. wavelength, rather than 
+a mathematical formula.&nbsp; ColorPy provides this illuminant, normalized so 
+that Y = 1.0, as usual.&nbsp; The spectrum of D65 is shown below.&nbsp; Note 
+that the overall color is white.&nbsp; In fact, D65 is used as the white point 
+for determining the xyz to rgb conversion matrix, so D65 is in fact the very 
+definition of white!</p>
+<p align="center">
+<img border="0" src="Illuminant-D65.png"><br>
+Figure 15 - Spectrum of CIE Illuminant D65.</p>
+
+<hr>
+
+<p>
+<h4>Example 3 - Thin Film Interference</h4>
+</p>
+<p>
+In this example, we will calculate the colors produced by interference films, 
+such as a soap bubble, or an oil slick on water.&nbsp; This time, we will use 
+D65 as the illuminant.</p>
+<p>
+The physical situation can be described by illumination from above, passing 
+through a dielectric medium with some index of refraction n1.&nbsp; As the wave 
+propagates, it meets an interface where the index of refraction changes to a new 
+value n2.&nbsp; At the interface, part of the original wave is reflected, and 
+part continues into the new medium.&nbsp; The material n2 is considered to be in 
+a thin layer.&nbsp; After passing through this thin layer, the wave meets a 
+second interface, where the index of refraction changes from n2 to n3.&nbsp; 
+Again, part of the incident wave is reflected from the interface, and part 
+continues to propagate.</p>
+<p>
+We will assume that the regions where the index is n1 and n3 are infinite in 
+extent, while the region where the index is n2 is limited to a thin layer, with 
+thickness t.</p>
+<p>
+Some typical indices of refraction of real materials are:<br>
+n = 1.000 - Vacuum<br>
+n = 1.003 - Air<br>
+n = 1.33&nbsp;&nbsp; - Water<br>
+n = 1.44&nbsp;&nbsp; - Oil<br>
+n = 1.50&nbsp;&nbsp; - Glass</p>
+<p>
+The total reflected wave from the system is a combination of the wave reflected 
+from the first interface (n1 to n2), and the wave reflected from the second 
+interface (n2 to n3).</p>
+<p>
+There may be multiple reflections - e.g. the wave reflected from 
+the second interface will not fully pass through the (now reversed) interface 
+from n2 to n1, rather only part will pass, while some will reflect again and 
+head back to the interface from n2 to n3.&nbsp; The calculations in ColorPy 
+consider all numbers of multiple reflections, not just a single reflection.</p>
+<p>
+What makes the interesting colors, is that the two waves travel through a 
+different path length, and this results in them being out of phase.&nbsp; The 
+exact change in phase depends on both the wavelength of the light, the thickness 
+of the layer, and the index of refraction of the layer.&nbsp; Depending on the 
+specifics, the two waves may constructively interfere, resulting in a large 
+amplitude of the reflected wave, or the waves may destructively interfere, 
+resulting in a small (or zero) amplitude of the reflected wave, or something in 
+between.</p>
+<p>
+Whether the interference is constructive or destructive depends on the 
+wavelength, and for thin films, part of the spectrum will be reduced from 
+destructive interference, and part enhanced from constructive interference, 
+resulting in a significant color shift.</p>
+<p>
+First, consider a soap bubble.&nbsp; In this situation, material 1 is air, 
+material 2 is a solution of soap in water, while material 3 is air again.&nbsp; 
+(The inside of the bubble.)&nbsp; So, n1 = 1.003, n2 = 1.33, and n3 = 1.003.&nbsp; 
+Calculating the color of the total reflection, with an illuminant of D65, as a 
+function of the thickness of the layer, results in the plot below.&nbsp; Note 
+that the RGB components oscillate as the thickness is varied.&nbsp; </p>
+<p>
+The phase relationship between the red, green and blue components affects the 
+resulting color.</p>
+<p>
+For the most 
+part, these stay within the displayable range of 0.0 to 1.0, but there are a few 
+places where the red component becomes negative, in the most vivid green 
+regions.&nbsp; These vivid green colors cannot be properly displayed on the 
+monitor, the true color is more saturated than what is shown.&nbsp; Most of the 
+other colors can be displayed properly.</p>
+<p align="center">
+<img border="0" src="ThinFilm-SoapBubble.png"><br>
+Figure 16 - Color of reflections from a soap bubble.&nbsp; The illuminant is D65.</p>
+<p>
+For a particular thickness of the film, we can plot the reflectance spectrum.&nbsp; 
+The plots below show the spectrum for some of the particularly vivid colors, for 
+thicknesses (not wavelengths!) of 400 nm and 500 nm.&nbsp; For these plots, we 
+used an illuminant that is constant over wavelength, rather than D65.&nbsp; The 
+only reason is to avoid the jaggedness of the D65 curve from making the plot 
+more confusing.</p>
+<p align="center">
+<img border="0" src="ThinFilm-Spectrum-400nm.png"><br>
+Figure 17 - Spectrum of soap bubble reflection for a thickness of 400 nm.&nbsp; 
+The illuminant is constant over wavelength.</p>
+<p align="center">
+<img border="0" src="ThinFilm-Spectrum-500nm.png"><br>
+Figure 18 - Spectrum of soap bubble reflection for a thickness of 500 nm.&nbsp; 
+The illuminant is constant over wavelength.</p>
+<p>
+We can do the same thing for an oil slick floating on water.&nbsp; In this case, 
+medium 1 is air (n = 1.003), medium 2 is oil (n = 1.44), and medium 3 is water 
+(n = 1.33).&nbsp; The result is shown below.&nbsp; Note that the colors are not 
+as saturated and vivid as for the reflection from a soap bubble.&nbsp; Since 
+these colors are less saturated than the soap bubble reflections, all of them 
+are properly displayable on the computer.</p>
+
+<p align="center">
+<img border="0" src="ThinFilm-OilSlick.png"><br>
+Figure 19 - Color of reflections from an oil slick.&nbsp; The illuminant is D65.</p>
+
+<hr>
+
+<p>
+<h4>(Nearly) Perceptually Uniform Color Spaces - Luv and Lab</h4>
+</p>
+<p>
+ColorPy also provides some color manipulation functions, that are not directly 
+related to physical color calculations.&nbsp; The most important of these are 
+routines to convert colors into the nearly perceptually uniform color spaces Luv 
+and Lab.</p>
+<p>
+The common color spaces rgb and xyz are not very perceptually uniform.&nbsp; 
+This means that, if you calculate the distance between two colors 
+C<sub>1</sub> and C<sub>2</sub>, using the usual Euclidean metric, namely:</p>
+<p align="center">
+Distance = &#8730; ((Red<sub>2</sub> - Red<sub>1</sub>)<sup>2</sup> + 
+(Green<sub>2</sub> - Green<sub>1</sub>)<sup>2</sup> + 
+(Blue<sub>2</sub> - Blue<sub>1</sub>)<sup>2</sup>)
+</p>
+<p>
+the calculated distance values do not agree well with the psychological apparent 
+differences in the colors.&nbsp; I.e., the mind may see two colors as very 
+different, but where they have a small distance, or alternately the mind may see 
+two colors as similar, but where they have a large color distance.&nbsp; This 
+causes difficulties in calculating the 'closest color'.&nbsp; (Since xyz and rgb 
+values are linearly related, the same distance issues apply to both of those 
+spaces.)</p>
+<p>
+The color spaces Luv and Lab are designed to be a much more perceptually uniform 
+color space than rgb or xyz.&nbsp; If colors are transformed into Luv or Lab 
+space, then mathematical distance calculations, using the Euclidean metric, on 
+Luv and Lab values will provide a much better assessment of how different the 
+colors appear.</p>
+<p>
+These perceptually uniform color spaces are not perfect.&nbsp; (The fact 
+that there are two of them, is a clear sign that they are imperfect.)&nbsp; 
+However, they should do a substantially better job in measuring the apparent 
+differences in colors.</p>
+<p>
+ColorPy provides routines to transform color values from xyz into both Luv and 
+Lab, and also routines to convert back to xyz.&nbsp; Coupled with the 
+conversions between xyz and rgb, one can convert between any of the desired 
+color spaces.&nbsp; Most descriptions of the Luv and Lab models only provide the 
+transformation from xyz to Luv and Lab, but ColorPy also provides the inverses.&nbsp; 
+The conversion routines are:</p>
+<p>
+<tt>colorpy.colormodels.luv_from_xyz (xyz)</tt><br>
+<tt>colorpy.colormodels.xyz_from_luv (luv)</tt><br>
+<tt>colorpy.colormodels.lab_from_xyz (xyz)</tt><br>
+<tt>colorpy.colormodels.xyz_from_lab (Lab)</tt></p>
+<p>
+The Luv and Lab conversions depend on the definition of the white point.&nbsp; 
+By default, the white point used in specifying the rgb to xyz conversions is 
+used, this is CIE D65 by default.&nbsp; You can change this, by passing the 
+desired chromaticity of the white point, to:</p>
+<p>
+<tt>colorpy.colormodels.init_Luv_Lab_white_point (white_point)</tt></p>
+<p>
+One potential application of these spaces, would be an improvement in the 
+color clipping algorithm.&nbsp; When ColorPy needs to clip an undisplayable 
+color value (with rgb values either negative or greater than 1.0), the best 
+action would probably be to choose the displayable color that is perceptually 
+closest to the desired color.&nbsp; If this was done with these color spaces, 
+rather than the current clipping algorithm, a better selection of out-of-gamut 
+colors might result.</p>
+
+<hr>
+
+<p>
+<h4><a name="download">Download ColorPy</a></h4>
+</p>
+
+<p>
+<b>Binary distribution for Windows (32-bit):&nbsp;&nbsp;&nbsp;
+<a href="dist/colorpy-0.1.0.win32.exe">ColorPy-0.1.0.win32.exe</a></b></p>
+<p>
+<b>Source distribution for Windows:&nbsp;&nbsp;&nbsp;
+<a href="dist/colorpy-0.1.0.zip">ColorPy-0.1.0 zip</a></b></p>
+<p>
+<b>Source distribution for Linux:&nbsp;&nbsp;&nbsp;
+<a href="dist/colorpy-0.1.0.tar.gz">ColorPy-0.1.0 tarball</a></b></p>
+
+<p>
+Installation:</p>
+
+<p>
+If you are installing from the Windows binary distribution, all you need to do 
+is double-click the executable, and follow the installation prompts.&nbsp; 
+Otherwise, you must first unpack the distribution, and then install.</p>
+
+<p>
+Unpacking the source distributions:</p>
+
+<p>
+Windows -<br>
+Unzip the .zip distribution. Recent versions of Windows (XP or later), will 
+unpack the directory automatically, you can simply enter the directory in 
+Windows Explorer. You will probably need to copy the uncompressed files into 
+another directory.</p>
+
+<p>
+Linux -<br>
+The distribution is a compressed tar archive, uncompress it as follows:<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<tt>gunzip -c colorpy-0.1.0.tar.gz | tar xf -</tt><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<tt>cd colorpy-0.1.0</tt></p>
+
+<p>
+Installing from the source distribution:</p>
+<p>
+From the directory in which the files are unpacked, run:<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<tt>python setup.py install</tt></p>
+
+<p>
+It is possible that you may need to supply a path to the Python executable.&nbsp; 
+You will probably need administrator privileges to do this.&nbsp;
+This should complete the installation.</p>
+
+<p>
+After downloading and installing, I recommend that you run the test cases, and 
+then create the sample figures.&nbsp; These will provide a check that the module 
+is working correctly.</p>
+
+<p>
+<tt>import colorpy.test</tt><br>
+<tt>colorpy.test.test()</tt></p>
+<p>
+This will run all the test cases.</p>
+<p>
+<tt>import colorpy.figures</tt><br>
+<tt>colorpy.figures.figures()</tt></p>
+<p>
+This will generate the sample figures (typically .png files), including all 
+those in this documentation, as well as several others.</p>
+
+<hr>
+
+<p>
+<h4>Module Reference</h4>
+</p>
+
+<p>
+<tt>colorpy.colormodels.py</tt> - Conversions between color models<br>
+<br>
+Description:<br>
+<br>
+Defines several color models, and conversions between them.<br>
+<br>
+The models are:<br>
+<br>
+xyz - CIE XYZ color space, based on the 1931 matching functions for a 2 degree 
+field of view.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Spectra are converted to xyz color values by integrating with the matching 
+functions in ciexyz.py.<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;xyz colors are often handled as absolute values, conventionally written with 
+uppercase letters XYZ,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;or as scaled values (so that X+Y+Z = 1.0), conventionally written with lowercase 
+letters xyz.<br>
+<br>
+This is the fundamental color model around which all others are based.<br>
+<br>
+rgb - Colors expressed as red, green and blue values, in the nominal range 0.0 - 
+1.0.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;These are linear color values, meaning that doubling the number implies a 
+doubling of the light intensity.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;rgb color values may be out of range (greater than 1.0, or negative), and do not 
+account for gamma correction.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;They should not be drawn directly.<br>
+<br>
+irgb - Displayable color values expressed as red, green and blue values, in the 
+range 0 - 255.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;These have been adjusted for gamma correction, and have been clipped into the 
+displayable range 0 - 255.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;These color values can be drawn directly.<br>
+<br>
+Luv - A nearly perceptually uniform color space.<br>
+<br>
+Lab - Another nearly perceptually uniform color space.<br>
+<br>
+As far as I know, the Luv and Lab spaces are of similar quality.<br>
+Neither is perfect, so perhaps try each, and see what works best for your 
+application.<br>
+<br>
+The models store color values as 3-element NumPy vectors.<br>
+The values are stored as floats, except for irgb, which are stored as integers.<br>
+<br>
+Constants:<br>
+<br>
+<tt>SRGB_Red</tt><br>
+<tt>SRGB_Green</tt><br>
+<tt>SRGB_Blue</tt><br>
+<tt>SRGB_White</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Chromaticity values for sRGB standard display monitors.<br>
+<br>
+<tt>PhosphorRed</tt><br>
+<tt>PhosphorGreen</tt><br>
+<tt>PhosphorBlue</tt><br>
+<tt>PhosphorWhite</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Chromaticity values for display used in initialization.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;These are the sRGB values by default, but other values can be chosen.<br>
+<br>
+<tt>CLIP_CLAMP_TO_ZERO = 0</tt><br>
+<tt>CLIP_ADD_WHITE = 1</tt><br>
+&nbsp;&nbsp;&nbsp;&nbsp;Available color clipping methods. Add white is the default.<br>
+<br>
+Functions:<br>
+<br>
+'Constructor-like' functions:<br>
+<br>
+<tt>xyz_color (x, y, z = None)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Construct an xyz color. If z is omitted, set it so that x+y+z = 1.0.<br>
+<br>
+<tt>xyz_normalize (xyz)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Scale so that all values add to 1.0.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;This both modifies the passed argument and returns the normalized result.<br>
+<br>
+<tt>xyz_normalize_Y1 (xyz)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Scale so that the y component is 1.0.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;This both modifies the passed argument and returns the normalized result.<br>
+<br>
+<tt>xyz_color_from_xyY (x, y, Y)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Given the 'little' x,y chromaticity, and the intensity Y,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;construct an xyz color. See Foley/Van Dam p. 581, eq. 13.21.<br>
+<br>
+<tt>rgb_color (r, g, b)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Construct a linear rgb color from components.<br>
+<br>
+<tt>irgb_color (ir, ig, ib)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Construct a displayable integer irgb color from components.<br>
+<br>
+<tt>luv_color (L, u, v)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Construct a Luv color from components.<br>
+<br>
+<tt>lab_color (L, a, b)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Construct a Lab color from components.<br>
+<br>
+Conversion functions:<br>
+<br>
+<tt>rgb_from_xyz (xyz)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert an xyz color to rgb.<br>
+<br>
+<tt>xyz_from_rgb (rgb)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert an rgb color to xyz.<br>
+<br>
+<tt>irgb_string_from_irgb (irgb)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert a displayable irgb color (0-255) into a hex string.<br>
+<br>
+<tt>irgb_from_irgb_string (irgb_string)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert a color hex string (like '#AB13D2') into a displayable irgb color.<br>
+<br>
+<tt>irgb_from_rgb (rgb)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert a (linear) rgb value (range 0.0 - 1.0) into a 0-255 displayable integer 
+irgb value (range 0 - 255).<br>
+<br>
+<tt>rgb_from_irgb (irgb)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert a displayable (gamma corrected) irgb value (range 0 - 255) into a linear 
+rgb value (range 0.0 - 1.0).<br>
+<br>
+<tt>irgb_string_from_rgb (rgb)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Clip the rgb color, convert to a displayable color, and convert to a hex string.<br>
+<br>
+<tt>irgb_from_xyz (xyz)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert an xyz color directly into a displayable irgb color.<br>
+<br>
+<tt>irgb_string_from_xyz (xyz)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert an xyz color directly into a displayable irgb color hex string.<br>
+<br>
+<tt>luv_from_xyz (xyz)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert CIE XYZ to Luv.<br>
+<br>
+<tt>xyz_from_luv (luv)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert Luv to CIE XYZ. Inverse of luv_from_xyz().<br>
+<br>
+<tt>lab_from_xyz (xyz)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert color from CIE XYZ to Lab.<br>
+<br>
+<tt>xyz_from_lab (Lab)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert color from Lab to CIE XYZ. Inverse of lab_from_xyz().<br>
+<br>
+Gamma correction:<br>
+<br>
+<tt>simple_gamma_invert (x)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Simple power law for gamma inverse correction.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Not used by default.<br>
+<br>
+<tt>simple_gamma_correct (x)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Simple power law for gamma correction.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Not used by default.<br>
+<br>
+<tt>srgb_gamma_invert (x)</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;sRGB standard for gamma inverse correction.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;This is used by default.<br>
+<br>
+<tt>srgb_gamma_correct (x)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;sRGB standard for gamma correction.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;This is used by default.<br>
+<br>
+Color clipping:<br>
+<br>
+<tt>clip_rgb_color (rgb_color)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Convert a linear rgb color (nominal range 0.0 - 1.0), into a displayable<br>
+&nbsp;&nbsp;&nbsp;&nbsp;irgb color with values in the range (0 - 255), clipping as necessary.<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The return value is a tuple, the first element is the clipped irgb color,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;and the second element is a tuple indicating which (if any) clipping processes 
+were used.<br>
+<br>
+Initialization functions:<br>
+<br>
+<tt>init (<br>
+phosphor_red = SRGB_Red,<br>
+phosphor_green = SRGB_Green,<br>
+phosphor_blue = SRGB_Blue,<br>
+white_point = SRGB_White)</tt> -<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Setup the conversions between CIE XYZ and linear RGB spaces.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Also do other initializations (gamma, conversions with Luv and Lab spaces, 
+clipping model).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The default arguments correspond to the sRGB standard RGB space.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The conversion is defined by supplying the chromaticities of each of<br>
+&nbsp;&nbsp;&nbsp;&nbsp;the monitor phosphors, as well as the resulting white color when all<br>
+&nbsp;&nbsp;&nbsp;&nbsp;of the phosphors are at full strength.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;See [Foley/Van Dam, p.587, eqn 13.27, 13.29] and [Hall, p. 239].<br>
+<br>
+<tt>init_Luv_Lab_white_point (white_point)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Specify the white point to use for Luv/Lab conversions.<br>
+<br>
+<tt>init_gamma_correction (<br>
+display_from_linear_function = srgb_gamma_invert,<br>
+linear_from_display_function = srgb_gamma_correct,<br>
+gamma = STANDARD_GAMMA)</tt> -<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Setup gamma correction.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The functions used for gamma correction/inversion can be specified,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;as well as a gamma value.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The specified display_from_linear_function should convert a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;linear (rgb) component [proportional to light intensity] into<br>
+&nbsp;&nbsp;&nbsp;&nbsp;displayable component [proportional to palette values].<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The specified linear_from_display_function should convert a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;displayable (rgb) component [proportional to palette values]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;into a linear component [proportional to light intensity].<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The choices for the functions:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;display_from_linear_function -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;srgb_gamma_invert [default] - sRGB standard <br>
+&nbsp;&nbsp;&nbsp;&nbsp;simple_gamma_invert - simple power function, can specify gamma.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;linear_from_display_function -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;srgb_gamma_correct [default] - sRGB standard<br>
+&nbsp;&nbsp;&nbsp;&nbsp;simple_gamma_correct - simple power function, can specify gamma.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The gamma parameter is only used for the simple() functions,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;as sRGB implies an effective gamma of 2.2.<br>
+<br>
+<tt>init_clipping (clip_method = CLIP_ADD_WHITE)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Specify the color clipping method.<br>
+<br>
+References:<br>
+<br>
+Foley, van Dam, Feiner and Hughes. Computer Graphics: Principles and Practice, 
+2nd edition,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Addison Wesley Systems Programming Series, 1990. ISBN 0-201-12110-7.<br>
+<br>
+Roy Hall, Illumination and Color in Computer Generated Imagery. Monographs in 
+Visual Communication,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Springer-Verlag, New York, 1989. ISBN 0-387-96774-5.<br>
+<br>
+Wyszecki and Stiles, Color Science: Concepts and Methods, Quantitative Data and 
+Formulae, 2nd edition,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;John Wiley, 1982. Wiley Classics Library Edition 2000. ISBN 0-471-39918-3.<br>
+<br>
+Judd and Wyszecki, Color in Business, Science and Industry, 1975.<br>
+<br>
+Kasson and Plouffe, An Analysis of Selected Computer Interchange Color Spaces,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ACM Transactions on Graphics, Vol. 11, No. 4, October 1992.<br>
+<br>
+Charles Poynton - Frequently asked questions about Gamma and Color,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;posted to comp.graphics.algorithms, 25 Jan 1995.<br>
+<br>
+sRGB - <a href="http://www.color.org/sRGB.xalter">http://www.color.org/sRGB.xalter</a> - (accessed 15 Sep 2008)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;A Standard Default Color Space for the Internet: sRGB,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Michael Stokes (Hewlett-Packard), Matthew Anderson (Microsoft), Srinivasan 
+Chandrasekar (Microsoft),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Ricardo Motta (Hewlett-Packard), Version 1.10, November 5, 1996. <br>
+</p>
+
+<hr>
+
+<p>
+<tt>colorpy.ciexyz.py</tt> - Spectral response curves for 1931 CIE XYZ 2 degree field of view 
+matching functions.<br>
+<br>
+Description:<br>
+<br>
+This module provides the CIE standard XYZ color matching functions.<br>
+The 1931 tabulation, for a 2 degree field of view, is used in preference to the 
+10 degree 1964 set,<br>
+as is conventional in computer graphics.<br>
+<br>
+The matching functions are stored internally at 1 nm increments, and linear 
+interpolation is<br>
+used for any wavelength in between.<br>
+<br>
+ColorPy attempts to scale the matching functions so that:<br>
+A spectrum, constant with wavelength, over the range 360 nm to 830 nm, with a 
+total intensity<br>
+equal to the (assumed) physical intensity of the monitor, will sample with Y = 
+1.0.<br>
+<br>
+This scaling corresponds with that in colormodels.py, which assumes Y = 1.0 at 
+full white.<br>
+<br>
+NOTE - I suspect that the scaling is not quite correct. I think it is at least 
+close.<br>
+<br>
+Ideally, we would like the spectrum of the actual monitor display, at full 
+white, which is not<br>
+independent of wavelength, to sample to Y = 1.0.<br>
+<br>
+Constants and Functions:<br>
+</p>
+<p>
+<tt>start_wl_nm</tt>, <tt>end_wl_nm</tt> - Default starting and ending range of wavelengths, in 
+nm, as integers.<br>
+<tt>delta_wl_nm</tt> - Default wavelength spacing, in nm, as a float.<br>
+<br>
+<tt>DEFAULT_DISPLAY_INTENSITY</tt> - Default assumed intensity of monitor display, in 
+W/m^2<br>
+<br>
+<tt>init (monitor_intensity = DEFAULT_DISPLAY_INTENSITY)</tt><br>
+&nbsp;&nbsp;&nbsp;&nbsp;Initialization of color matching curves. Called at module startup with default 
+arguments.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;This can be called again to change the assumed display intensity.<br>
+<br>
+<tt>empty_spectrum ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get a black (no intensity) ColorPy spectrum.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;This is a 2D numpy array, with one row for each wavelength in the visible range,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;360 nm to 830 nm, with a spacing of delta_wl_nm (1.0 nm), and two columns.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The first column is filled with the wavelength [nm].<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The second column is filled with 0.0. It should later be filled with the 
+intensity.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The result can be passed to xyz_from_spectrum() to convert to an xyz color.<br>
+<br>
+<tt>xyz_from_wavelength (wl_nm)</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Given a wavelength (nm), return the corresponding xyz color, for unit intensity.<br>
+<br>
+<tt>xyz_from_spectrum (spectrum)</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Determine the xyz color of the spectrum.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The spectrum is assumed to be a 2D numpy array, with a row for each wavelength,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;and two columns. The first column should hold the wavelength (nm), and the<br>
+&nbsp;&nbsp;&nbsp;&nbsp;second should hold the light intensity. The set of wavelengths can be arbitrary,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;it does not have to be the set that empty_spectrum() returns.<br>
+<br>
+<tt>get_normalized_spectral_line_colors (<br>
+brightness = 1.0,<br>
+num_purples = 0,<br>
+dwl_angstroms = 10)</tt><br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get an array of xyz colors covering the visible spectrum.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Optionally add a number of 'purples', which are colors interpolated between the 
+color<br>
+&nbsp;&nbsp;&nbsp;&nbsp;of the lowest wavelength (violet) and the highest (red).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;brightness - Desired maximum rgb component of each color. Default 1.0. (Maxiumum 
+displayable brightness)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;num_purples - Number of colors to interpolate in the 'purple' range. Default 0. 
+(No purples)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;dwl_angstroms - Wavelength separation, in angstroms (0.1 nm). Default 10 A. (1 
+nm spacing)</p>
+<p>
+References:<br>
+<br>
+Wyszecki and Stiles, Color Science: Concepts and Methods, Quantitative Data and 
+Formulae,<br>
+2nd edition, John Wiley, 1982. Wiley Classics Library Edition 2000. ISBN 
+0-471-39918-3.<br>
+<br>
+CVRL Color and Vision Database - <a href="http://cvrl.ioo.ucl.ac.uk/index.htm">http://cvrl.ioo.ucl.ac.uk/index.htm</a> - (accessed 
+17 Sep 2008)<br>
+Color and Vision Research Laboratories.<br>
+Provides a set of data sets related to color vision.<br>
+ColorPy uses the tables from this site for the 1931 CIE XYZ matching functions,<br>
+and for Illuminant D65, both at 1 nm wavelength increments.<br>
+<br>
+CIE Standards - <a href="http://cvrl.ioo.ucl.ac.uk/cie.htm">http://cvrl.ioo.ucl.ac.uk/cie.htm</a> - (accessed 17 Sep 2008)<br>
+CIE standards as maintained by CVRL.<br>
+The 1931 CIE XYZ and D65 tables that ColorPy uses were obtained from the 
+following files, linked here:<br>
+<a href="http://cvrl.ioo.ucl.ac.uk/database/data/cmfs/ciexyz31_1.txt">http://cvrl.ioo.ucl.ac.uk/database/data/cmfs/ciexyz31_1.txt</a><br>
+<a href="http://cvrl.ioo.ucl.ac.uk/database/data/cie/Illuminantd65.txt">http://cvrl.ioo.ucl.ac.uk/database/data/cie/Illuminantd65.txt</a><br>
+<br>
+CIE International Commission on Illumination - <a href="http://www.cie.co.at/">http://www.cie.co.at/</a> - (accessed 
+17 Sep 2008)<br>
+Official website of the CIE.<br>
+There are tables of the standard functions (matching functions, illuminants) 
+here:<br>
+<a href="http://www.cie.co.at/main/freepubs.html">http://www.cie.co.at/main/freepubs.html</a><br>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/x2.txt">http://www.cie.co.at/publ/abst/datatables15_2004/x2.txt</a><br>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/y2.txt">http://www.cie.co.at/publ/abst/datatables15_2004/y2.txt</a><br>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/z2.txt">http://www.cie.co.at/publ/abst/datatables15_2004/z2.txt</a><br>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/sid65.txt">http://www.cie.co.at/publ/abst/datatables15_2004/sid65.txt</a><br>
+ColorPy does not use these specific files.<br>
+<br>
+Charles Poynton - Frequently asked questions about Gamma and Color,<br>
+posted to comp.graphics.algorithms, 25 Jan 1995.<br>
+<br>
+</p>
+
+<hr>
+
+<p>
+<tt>colorpy.illuminants.py</tt> - Definitions of some standard illuminants.<br>
+<br>
+Description:<br>
+<br>
+Illuminants are spectrums, normalized so that Y = 1.0.<br>
+<br>
+Spectrums are 2D numpy arrays, with one row for each wavelength,<br>
+with the first column holding the wavelength in nm, and the<br>
+second column the intensity.<br>
+<br>
+The spectrums have a wavelength increment of 1 nm.<br>
+<br>
+Functions:<br>
+<br>
+<tt>init ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Initialize CIE Illuminant D65. This runs on module startup.<br>
+<br>
+<tt>get_illuminant_D65 ()</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get CIE Illuminant D65, as a spectrum, normalized to Y = 1.0.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;CIE standard illuminant D65 represents a phase of natural daylight<br>
+&nbsp;&nbsp;&nbsp;&nbsp;with a correlated color temperature of approximately 6504 K. (Wyszecki, p. 144)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;In the interest of standardization the CIE recommends that D65 be used<br>
+&nbsp;&nbsp;&nbsp;&nbsp;whenever possible. Otherwise, D55 or D75 are recommended. (Wyszecki, p. 145)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(ColorPy does not currently provide D55 or D75, however.)<br>
+<br>
+<tt>get_illuminant_A ()</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get CIE Illuminant A, as a spectrum, normalized to Y = 1.0.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;This is actually a blackbody illuminant for T = 2856 K. (Wyszecki, p. 143)<br>
+<br>
+<tt>get_blackbody_illuminant (T_K)</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get the spectrum of a blackbody at the given temperature, normalized to Y = 1.0.<br>
+<br>
+<tt>get_constant_illuminant ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get an illuminant, with spectrum constant over wavelength, normalized to Y = 
+1.0.<br>
+<br>
+<tt>scale_illuminant (illuminant, scaling)</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Scale the illuminant intensity by the specfied factor.<br>
+<br>
+References:<br>
+<br>
+Wyszecki and Stiles, Color Science: Concepts and Methods, Quantitative Data and 
+Formulae,<br>
+2nd edition, John Wiley, 1982. Wiley Classics Library Edition 2000. ISBN 
+0-471-39918-3.<br>
+<br>
+CVRL Color and Vision Database - <a href="http://cvrl.ioo.ucl.ac.uk/index.htm">http://cvrl.ioo.ucl.ac.uk/index.htm</a> - (accessed 
+17 Sep 2008)<br>
+Color and Vision Research Laboratories.<br>
+Provides a set of data sets related to color vision.<br>
+ColorPy uses the tables from this site for the 1931 CIE XYZ matching functions,<br>
+and for Illuminant D65, both at 1 nm wavelength increments.<br>
+<br>
+CIE Standards - <a href="http://cvrl.ioo.ucl.ac.uk/cie.htm">http://cvrl.ioo.ucl.ac.uk/cie.htm</a> - (accessed 17 Sep 2008)<br>
+CIE standards as maintained by CVRL.<br>
+The 1931 CIE XYZ and D65 tables that ColorPy uses were obtained from the 
+following files, linked here:<br>
+<a href="http://cvrl.ioo.ucl.ac.uk/database/data/cmfs/ciexyz31_1.txt">http://cvrl.ioo.ucl.ac.uk/database/data/cmfs/ciexyz31_1.txt</a><br>
+<a href="http://cvrl.ioo.ucl.ac.uk/database/data/cie/Illuminantd65.txt">http://cvrl.ioo.ucl.ac.uk/database/data/cie/Illuminantd65.txt</a><br>
+<br>
+CIE International Commission on Illumination - <a href="http://www.cie.co.at/">http://www.cie.co.at/</a> - (accessed 
+17 Sep 2008)<br>
+Official website of the CIE.<br>
+There are tables of the standard functions (matching functions, illuminants) 
+here:<br>
+<a href="http://www.cie.co.at/main/freepubs.html">http://www.cie.co.at/main/freepubs.html</a><br>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/x2.txt">http://www.cie.co.at/publ/abst/datatables15_2004/x2.txt</a><br>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/y2.txt">http://www.cie.co.at/publ/abst/datatables15_2004/y2.txt</a><br>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/z2.txt">http://www.cie.co.at/publ/abst/datatables15_2004/z2.txt</a><br>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/sid65.txt">http://www.cie.co.at/publ/abst/datatables15_2004/sid65.txt</a><br>
+ColorPy does not use these specific files.<br>
+</p>
+
+<hr>
+
+<p>
+<tt>colorpy.plots.py</tt> - Various types of plots.<br>
+<br>
+Description:<br>
+<br>
+Functions to draw various types of plots for light spectra.<br>
+<br>
+Functions:<br>
+<br>
+<tt>log_interpolate (y0, y1, num_values)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Return a list of values, num_values in size, logarithmically interpolated<br>
+&nbsp;&nbsp;&nbsp;&nbsp;between y0 and y1. The first value will be y0, the last y1.<br>
+<br>
+<tt>tighten_x_axis (x_list)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Tighten the x axis (only) of the current plot to match the given range of x 
+values.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The y axis limits are not affected.<br>
+<br>
+General plots:<br>
+<br>
+<tt>rgb_patch_plot (<br>
+rgb_colors,<br>
+color_names,<br>
+title,<br>
+filename,<br>
+patch_gap = 0.05,<br>
+num_across = 6)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Draw a set of color patches, specified as linear rgb colors.<br>
+<br>
+<tt>xyz_patch_plot (<br>
+xyz_colors,<br>
+color_names,<br>
+title,<br>
+filename,<br>
+patch_gap = 0.05,<br>
+num_across = 6)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Draw a set of color patches specified as xyz colors.<br>
+<br>
+<tt>spectrum_subplot (spectrum)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Plot a spectrum, with x-axis the wavelength, and y-axis the intensity.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The curve is colored at that wavelength by the (approximate) color of a<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pure spectral color at that wavelength, with intensity constant over wavelength.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;(This means that dark looking colors here mean that wavelength is poorly viewed 
+by the eye.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;This is not a complete plotting function, e.g. no file is saved, etc.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;It is assumed that this function is being called by one that handles those 
+things.<br>
+<br>
+<tt>spectrum_plot (<br>
+spectrum,<br>
+title,<br>
+filename,<br>
+xlabel = 'Wavelength ($nm$)',<br>
+ylabel = 'Intensity ($W/m^2$)')</tt> -<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Plot for a single spectrum -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;In a two part graph, plot:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;top: color of the spectrum, as a large patch.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;low: graph of spectrum intensity vs wavelength (x axis).<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The graph is colored by the (approximated) color of each wavelength.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Each wavelength has equal physical intensity, so the variation in<br>
+&nbsp;&nbsp;&nbsp;&nbsp;apparent intensity (e.g. 400, 800 nm are very dark, 550 nm is bright),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;is due to perceptual factors in the eye. This helps show how much<br>
+&nbsp;&nbsp;&nbsp;&nbsp;each wavelength contributes to the percieved color.<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;spectrum - spectrum to plot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title - title for plot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;filename - filename to save plot to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;xlabel - label for x axis<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ylabel - label for y axis<br>
+<br>
+<tt>color_vs_param_plot (<br>
+param_list,<br>
+rgb_colors,<br>
+title,<br>
+filename,<br>
+tight = False,<br>
+plotfunc = pylab.plot,<br>
+xlabel = 'param',<br>
+ylabel = 'RGB Color')</tt> -<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Plot for a color that varies with a parameter -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;In a two part figure, draw:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;top: color as it varies with parameter (x axis)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;low: r,g,b values, as linear 0.0-1.0 values, of the attempted color.<br>
+<br>
+&nbsp;&nbsp;&nbsp;&nbsp;param_list - list of parameters (x axis)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;rgb_colors - numpy array, one row for each param in param_list<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title - title for plot<br>
+&nbsp;&nbsp;&nbsp;&nbsp;filename - filename to save plot to<br>
+&nbsp;&nbsp;&nbsp;&nbsp;plotfunc - optional plot function to use (default pylab.plot)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;xlabel - label for x axis<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ylabel - label for y axis (default 'RGB Color')<br>
+<br>
+Specialized plots:<br>
+<br>
+<tt>visible_spectrum_plot ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Plot the visible spectrum, as a plot vs wavelength.<br>
+<br>
+<tt>cie_matching_functions_plot ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Plot the CIE XYZ matching functions, as three spectral subplots.<br>
+<br>
+<tt>shark_fin_plot ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Draw the 'shark fin' CIE chromaticity diagram of the pure spectral lines (plus 
+purples) in xy space.<br>
+</p>
+
+<hr>
+
+<p>
+<tt>colorpy.blackbody.py</tt> - Color of thermal blackbodies.<br>
+<br>
+Description:<br>
+<br>
+Calculate the spectrum of a thermal blackbody at an arbitrary temperature.<br>
+<br>
+Constants:<br>
+<br>
+<tt>PLANCK_CONSTANT</tt> - Planck's constant, in J-sec<br>
+<tt>SPEED_OF_LIGHT</tt> - Speed of light, in m/sec<br>
+<tt>BOLTZMAN_CONSTANT</tt> - Boltzman's constant, in J/K<br>
+<tt>SUN_TEMPERATURE</tt> - Surface temperature of the Sun, in K</p>
+<p>
+Functions:<br>
+<br>
+<tt>blackbody_specific_intensity (wl_nm, T_K)</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get the monochromatic specific intensity for a blackbody -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;wl_nm = wavelength [nm]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;T_K = temperature [K]<br>
+&nbsp;&nbsp;&nbsp;&nbsp;This is the energy radiated per second per unit wavelength per unit solid angle.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Reference - Shu, eq. 4.6, p. 78.<br>
+<br>
+<tt>blackbody_spectrum (T_K)</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get the spectrum of a blackbody, as a numpy array.<br>
+<br>
+<tt>blackbody_color (T_K)</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Given a temperature (K), return the xyz color of a thermal blackbody.<br>
+<br>
+Plots:<br>
+<br>
+<tt>blackbody_patch_plot (T_list, title, filename)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Draw a patch plot of blackbody colors for the given temperature range.<br>
+<br>
+<tt>blackbody_color_vs_temperature_plot (T_list, title, filename)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Draw a color vs temperature plot for the given temperature range.<br>
+<br>
+<tt>blackbody_spectrum_plot (T_K)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Draw the spectrum of a blackbody at the given temperature.<br>
+<br>
+References:<br>
+<br>
+Frank H. Shu, The Physical Universe. An Introduction to Astronomy,<br>
+University Science Books, Mill Valley, California. 1982. ISBN 0-935702-05-9.<br>
+<br>
+Charles Kittel and Herbert Kroemer, Thermal Physics, 2nd edition,<br>
+W. H. Freeman, New York, 1980. ISBN 0-7167-1088-9.<br>
+</p>
+
+<hr>
+
+<p>
+<tt>colorpy.rayleigh.py</tt> - Rayleigh scattering<br>
+<br>
+Description:<br>
+<br>
+Calculation of the scattering by very small particles (compared to the 
+wavelength).<br>
+Also known as Rayleigh scattering.<br>
+The scattering intensity is proportional to 1/wavelength^4.<br>
+It is scaled so that the scattering factor for 555.0 nm is 1.0.<br>
+This is the basic physical reason that the sky is blue.<br>
+<br>
+Functions:<br>
+<br>
+<tt>rayleigh_scattering (wl_nm)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get the Rayleigh scattering factor for the wavelength.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Scattering is proportional to 1/wavelength^4.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The scattering is scaled so that the factor for wl_nm = 555.0 is 1.0.<br>
+<br>
+<tt>rayleigh_scattering_spectrum ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get the Rayleigh scattering spectrum (independent of illuminant), as a numpy 
+array.<br>
+<br>
+<tt>rayleigh_illuminated_spectrum (illuminant)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get the spectrum when illuminated by the specified illuminant.<br>
+<br>
+<tt>rayleigh_illuminated_color (illuminant)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get the xyz color when illuminated by the specified illuminant.<br>
+<br>
+Plots:<br>
+<br>
+<tt>rayleigh_patch_plot (named_illuminant_list, title, filename)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Make a patch plot of the Rayleigh scattering color for each illuminant.<br>
+<br>
+<tt>rayleigh_color_vs_illuminant_temperature_plot (T_list, title, filename)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Make a plot of the Rayleigh scattered color vs. temperature of blackbody 
+illuminant.<br>
+<br>
+<tt>rayleigh_spectrum_plot (illuminant, title, filename)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Plot the spectrum of Rayleigh scattering of the specified illuminant.<br>
+<br>
+References:<br>
+<br>
+H.C. van de Hulst, Light Scattering by Small Particles,<br>
+Dover Publications, New York, 1981. ISBN 0-486-64228-3.<br>
+</p>
+
+<hr>
+
+<p>
+<tt>colorpy.thinfilm.py</tt> - Thin film interference colors.<br>
+<br>
+Description:<br>
+<br>
+Reflection from a thin film, as a function of wavelength, thickness, and index 
+of refraction of materials.<br>
+<br>
+Note that film thicknesses are given in nm instead of m, as this is a more 
+convenient unit in this case.<br>
+<br>
+We consider incident light from a medium of index of refraction n1,<br>
+striking a thin film of index n2, with a third medium of index n3 behind the 
+film.<br>
+<br>
+The total reflection from the film, back towards the incident light, is 
+calculated.<br>
+<br>
+Some sample values of the index of refraction:<br>
+air : n = 1.003<br>
+water: n = 1.33<br>
+glass/plastic: n = 1.5<br>
+oil: n = 1.44 (matches Minnaert's color observations)<br>
+<br>
+Functions:<br>
+<br>
+<tt>class thin_film (n1, n2, n3, thickness_nm)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Represents a thin film, with the indices of refraction n1,n2,n3 representing:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n1 - index of refraction of infinite region the light comes from<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n2 - index of refraction of finite region of the film<br>
+&nbsp;&nbsp;&nbsp;&nbsp;n3 - index of refraction of infinite region beyond the film<br>
+&nbsp;&nbsp;&nbsp;&nbsp;and thickness_nm being the thickness of the film [nm].<br>
+<br>
+On these class objects, the following functions are available:<br>
+<br>
+<tt>get_interference_reflection_coefficient (wl_nm)</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get the reflection coefficient for the intensity for light<br>
+&nbsp;&nbsp;&nbsp;&nbsp;of the given wavelength impinging on the film.<br>
+<br>
+<tt>reflection_spectrum ()</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get the reflection spectrum (independent of illuminant) for the thin film.<br>
+<br>
+<tt>illuminated_spectrum (illuminant)</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get the spectrum when illuminated by the specified illuminant.<br>
+<br>
+<tt>illuminated_color (illuminant)</tt> - <br>
+&nbsp;&nbsp;&nbsp;&nbsp;Get the xyz color when illuminated by the specified illuminant.<br>
+<br>
+Plots:<br>
+<br>
+<tt>thinfilm_patch_plot (n1, n2, n3, thickness_nm_list, illuminant, title, filename)</tt> 
+-<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Make a patch plot of the color of the film for each thickness [nm].<br>
+<br>
+<tt>thinfilm_color_vs_thickness_plot (n1, n2, n3, thickness_nm_list, illuminant, 
+title, filename)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Plot the color of the thin film for the specfied thicknesses [nm].<br>
+<br>
+<tt>thinfilm_spectrum_plot (n1, n2, n3, thickness_nm, illuminant, title, filename)</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Plot the spectrum of the reflection from a thin film for the given thickness 
+[nm].<br>
+<br>
+References:<br>
+<br>
+Frank S. Crawford, Jr., Waves: Berkeley Physics Course - Volume 3,<br>
+McGraw-Hill Book Company, 1968. Library of Congress 64-66016.<br>
+<br>
+M. Minnaert, The nature of light and color in the open air,<br>
+translation H.M. Kremer-Priest, Dover Publications, New York, 1954. ISBN 
+486-20196-1. p. 208-209.<br>
+</p>
+
+<hr>
+
+<p>
+<tt>colorpy.misc.py</tt> - Miscellaneous color plots.<br>
+<br>
+Description:<br>
+<br>
+Some miscellaneous plots.<br>
+<br>
+<tt>colorstring_patch_plot (colorstrings, color_names, title, filename, num_across=6)</tt> 
+-<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Color patch plot for colors specified as hex strings.<br>
+<br>
+<tt>MacBeth_ColorChecker_patch_plot ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;MacBeth ColorChecker Chart.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The xyz values are from Hall p. 119. I do not know for what lighting conditions 
+this applies.<br>
+<br>
+<tt>chemical_solutions_patch_plot ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Colors of some chemical solutions.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Darren L. Williams et. al., 'Beyond lambda-max: Transforming Visible Spectra 
+into 24-bit Color Values'.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Journal of Chemical Education, Vol 84, No 11, Nov 2007, p1873-1877.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;A student laboratory experiment to measure the transmission spectra of some 
+common chemical solutions,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;and determine the rgb values.<br>
+<br>
+<tt>universe_patch_plot ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The average color of the universe.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Karl Glazebrook and Ivan Baldry<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<a href="http://www.pha.jhu.edu/~kgb/cosspec/">http://www.pha.jhu.edu/~kgb/cosspec/</a> (accessed 17 Sep 2008)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The color of the sum of all light in the universe.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;This originally caused some controversy when the (correct) xyz color was incorrectly 
+reported as light green.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;The authors also consider several other white points, here we just use the 
+default (normally D65).<br>
+<br>
+<tt>spectral_colors_patch_plot ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Colors of the pure spectral lines.<br>
+<br>
+<tt>spectral_colors_plus_purples_patch_plot ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Colors of the pure spectral lines plus purples.<br>
+<br>
+<tt>perceptually_uniform_spectral_colors ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Patch plot of (nearly) perceptually equally spaced colors, covering the pure 
+spectral lines plus purples.<br>
+<br>
+<tt>spectral_line_555nm_plot ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Plot a spectrum that has mostly only a line at 555 nm.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;It is widened a bit only so the plot looks nicer, otherwise the black curve 
+covers up the color.<br>
+</p>
+
+<hr>
+
+<p>
+<tt>colorpy.figures.py</tt> - Create all the ColorPy sample figures.<br>
+<br>
+Description:<br>
+<br>
+Creates the sample figures.<br>
+<br>
+This can also create the figures with some non-default initialization 
+conditions.<br>
+<br>
+Functions:<br>
+<br>
+<tt>figures()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Create all the sample figures.<br>
+<br>
+<tt>figures_clip_clamp_to_zero ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Adjust the color clipping method, and create the sample figures.<br>
+<br>
+<tt>figures_gamma_245 ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Adjust the gamma correction to a power law gamma = 2.45 and create samples.<br>
+<br>
+<tt>figures_white_A ()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Adjust the white point (for Luv/Lab) and create sample figures.<br>
+</p>
+
+<hr>
+
+<p>
+<tt>colorpy.test.py</tt> - Run all ColorPy test cases.<br>
+<br>
+Functions:<br>
+<br>
+<tt>test()</tt> -<br>
+&nbsp;&nbsp;&nbsp;&nbsp;Run all the test cases.<br>
+</p>
+
+<hr>
+
+<p>
+<h3>Issues</h3>
+</p>
+
+<p>
+ColorPy is certainly not perfect.&nbsp; Some of the problems it likely has, and 
+so possible avenues for future improvements, are as follows:</p>
+<p>
+I am not sure that the (assumed) physical luminance of the monitor display is 
+correct.&nbsp; I am pretty sure that it is close, but things are confusing 
+enough that this may not be quite right.&nbsp; In most cases, this should not 
+matter, as the intensities are typically scaled by an arbitrary factor.&nbsp; In 
+any case, attempting to scale to the physical display brightness might not be 
+the best course of action in many cases.&nbsp; For example, for a plot of very 
+bright colors (such as hot blackbodies), all the colors are clamped to the 
+maximum brightness, when there is a large range of luminance in the data.</p>
+<p>
+There are many places where the Python code is not well 'vectorized', that is, a 
+single Python call might be able to operate on an entire spectrum, for example, 
+but the current code requires a Python call for each wavelength.&nbsp; This will 
+certainly degrade performance, and ColorPy is definitely slower than the 
+original C++ code.&nbsp; Still, I think the performance is acceptable.</p>
+<p>
+The default gamma correction may not be ideal for LCD displays.&nbsp; As these 
+are getting more and more common, this is becoming the most important case, 
+rather than CRT displays.</p>
+<p>
+The color clipping method can probably be improved, it is likely that the Luv 
+and Lab color models could help with this.</p>
+<p>
+There are some standard illuminants (especially D55 and D75) that would be nice 
+to add.</p>
+<p>
+ColorPy does not have support for HSV (Hue-Saturation-Value) and HLS 
+(Hue-Lightness-Saturation) color models.&nbsp; These are not particularly 
+relevant for physically based color modeling, but they are reasonably common in 
+the computing world, and it would be nice to add this support for that reason.</p>
+<p>
+There are also surely bugs that I have not found, and also things that could be 
+more conveniently arranged for many uses.</p>
+
+
+<hr>
+
+<p>
+<h3>Literature References</h3>
+</p>
+
+<p>Shu - Frank H. Shu, <i>The Physical Universe. An Introduction to Astronomy</i>,
+University Science Books, Mill Valley, California. 1982. ISBN 0-935702-05-9.</p>
+
+<p>Foley - Foley, van Dam, Feiner and Hughes. <i>Computer Graphics: Principles and Practice</i>,
+2nd edition, Addison Wesley Systems Programming Series, 1990. ISBN 0-201-12110-7.</p>
+
+<p>Hall - Roy Hall, <i>Illumination and Color in Computer Generated Imagery.
+Monographs in Visual Communication</i>, Springer-Verlag, New York, 1989. ISBN 0-387-96774-5.</p>
+
+<p>Kittel - Charles Kittel and Herbert Kroemer, <i>Thermal Physics</i>, 2nd edition,
+W. H. Freeman, New York, 1980. ISBN 0-7167-1088-9.</p>
+
+<p>Wyszecki - Wyszecki and Stiles, <i>Color Science: Concepts and Methods, Quantitative Data and Formulae</i>,
+2nd edition, John Wiley, 1982. Wiley Classics Library Edition 2000. ISBN 0-471-39918-3.</p>
+
+<p>Judd - Judd and Wyszecki, <i>Color in Business, Science and 
+Industry</i>, 1975.</p>
+
+<p>Waves - Frank S. Crawford, Jr., <i>Waves: Berkeley Physics Course - Volume 3</i>,
+McGraw-Hill Book Company, 1968. Library of Congress 64-66016.</p>
+
+<p>van de Hulst - H.C. van de Hulst, <i>Light Scattering by Small Particles</i>,
+Dover Publications, New York, 1981. ISBN 0-486-64228-3.</p>
+
+<p>Minnaert - M. Minnaert, <i>The nature of light and color in the open air</i>,
+translation H.M. Kremer-Priest, Dover Publications, New York, 1954. ISBN 486-20196-1.</p>
+
+<p>Kasson - Kasson and Plouffe, An Analysis of Selected Computer Interchange Color 
+Spaces, ACM Transactions on Graphics, Vol. 11, No. 4, October 1992.</p>
+
+<p>Poynton - Frequently asked questions about Gamma and Color,
+posted to comp.graphics.algorithms, 25 Jan 1995.</p>
+
+<p>
+<a href="http://www.color.org/sRGB.xalter">sRGB</a> - http://www.color.org/sRGB.xalter - 
+(accessed 15 Sep 2008)<br/>
+<i>'A Standard Default Color Space for the Internet: sRGB'</i>.,
+Michael Stokes (Hewlett-Packard), Matthew Anderson (Microsoft),
+Srinivasan Chandrasekar (Microsoft), Ricardo Motta (Hewlett-Packard)
+Version 1.10, November 5, 1996.
+</p>
+
+<p>
+<a href="http://cvrl.ioo.ucl.ac.uk/index.htm">CVRL Color and Vision Database</a> - 
+http://cvrl.ioo.ucl.ac.uk/index.htm - (accessed 17 Sep 2008)<br/>
+Color and Vision Research Laboratories.
+Provides a set of data sets related to color vision.
+ColorPy uses the tables from this site for the 1931 CIE XYZ matching functions,
+and for Illuminant D65, both at 1 nm wavelength increments.
+</p>
+ 
+<p>
+<a href="http://cvrl.ioo.ucl.ac.uk/cie.htm">CIE Standards maintained by CVRL</a> - 
+http://cvrl.ioo.ucl.ac.uk/cie.htm - (accessed 17 Sep 2008)<br/>
+The 1931 CIE XYZ and D65 tables that ColorPy uses were obtained from the following files, linked here:<br/>
+<a href="http://cvrl.ioo.ucl.ac.uk/database/data/cmfs/ciexyz31_1.txt">http://cvrl.ioo.ucl.ac.uk/database/data/cmfs/ciexyz31_1.txt</a><br/>
+<a href="http://cvrl.ioo.ucl.ac.uk/database/data/cie/Illuminantd65.txt">http://cvrl.ioo.ucl.ac.uk/database/data/cie/Illuminantd65.txt</a>
+</p>
+
+<p>
+<a href="http://www.cie.co.at/">CIE International Commission on Illumination</a> - 
+http://www.cie.co.at/ - (accessed 17 Sep 2008)<br/>
+Official website of the CIE.
+There are tables of the standard functions (matching functions, illuminants) here:<br/>
+<a href="http://www.cie.co.at/main/freepubs.html">http://www.cie.co.at/main/freepubs.html</a><br/>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/x2.txt">http://www.cie.co.at/publ/abst/datatables15_2004/x2.txt</a><br/>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/y2.txt">http://www.cie.co.at/publ/abst/datatables15_2004/y2.txt</a><br/>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/z2.txt">http://www.cie.co.at/publ/abst/datatables15_2004/z2.txt</a><br/>
+<a href="http://www.cie.co.at/publ/abst/datatables15_2004/sid65.txt">http://www.cie.co.at/publ/abst/datatables15_2004/sid65.txt</a><br/>
+ColorPy does not use these specific files.
+</p>
+
+<p>
+<a href="http://www.pha.jhu.edu/~kgb/cosspec/">The average color of the universe</a> - http://www.pha.jhu.edu/~kgb/cosspec/ - (accessed 17 Sep 2008)<br/>
+Karl Glazebrook and Ivan Baldry - Average color of the light in the universe.
+</p>
+
+<p>Williams et. al. - 
+Darren L. Williams et. al., <i>'Beyond lambda-max: Transforming Visible Spectra into 24-bit Color Values'</i>.<br/>
+Journal of Chemical Education, Vol 84, No 11, Nov 2007, p1873-1877.<br/>
+A student laboratory experiment to measure the transmission spectra of some common chemical solutions,
+and determine the xyz and then rgb values.
+</p>
+
+</body>
+
+</html>
