@@ -378,7 +378,7 @@ def visible_spectrum_plot ():
         tight = True,
         xlabel = r'Wavelength (nm)',
         ylabel = r'RGB Color')
-    
+
 def cie_matching_functions_plot ():
     '''Plot the CIE XYZ matching functions, as three spectral subplots.'''
     # get 'spectra' for x,y,z matching functions
@@ -417,6 +417,27 @@ def cie_matching_functions_plot ():
     print 'Saving plot %s' % str (filename)
     pylab.savefig (filename)
 
+def scattered_visual_brightness ():
+    '''Plot the perceptual brightness of Rayleigh scattered light.'''
+    # get 'spectra' for y matching functions and multiply by 1/wl^4
+    spectrum_y = ciexyz.empty_spectrum()
+    (num_wl, num_cols) = spectrum_y.shape
+    for i in xrange (0, num_wl):
+        wl_nm = spectrum_y [i][0]
+        rayleigh = math.pow (550.0 / wl_nm, 4)
+        xyz = ciexyz.xyz_from_wavelength (wl_nm)
+        spectrum_y [i][1] = xyz [1] * rayleigh
+    pylab.clf ()
+    pylab.title ('Perceptual Brightness of Rayleigh Scattered Light')
+    pylab.xlabel ('Wavelength (nm)')
+    pylab.ylabel ('CIE $Y$ / $\lambda^4$')
+    spectrum_subplot (spectrum_y)
+    tighten_x_axis (spectrum_y [:,0])
+    # done
+    filename = 'Visual_scattering'
+    print 'Saving plot %s' % str (filename)
+    pylab.savefig (filename)
+
 def shark_fin_plot ():
     '''Draw the 'shark fin' CIE chromaticity diagram of the pure spectral lines (plus purples) in xy space.'''
     # get array of (approximate) colors for the boundary of the fin
@@ -446,7 +467,8 @@ def shark_fin_plot ():
 
     # plot
     pylab.clf ()
-    # draw color patches for point in xy_list
+
+    # draw best attempt at pure spectral colors on inner edge of shark fin
     s = 0.025     # distance in xy plane towards white point
     for i in xrange (0, len (xy_list)-1):
         x0 = xy_list [i][0]
@@ -463,6 +485,44 @@ def shark_fin_plot ():
         color_string = colormodels.irgb_string_from_rgb (
             colormodels.rgb_from_xyz (xyz_list [i]))
         pylab.fill (poly_x, poly_y, color_string, edgecolor=color_string)
+        
+    # fill in the monitor gamut with true colors
+    def get_brightest_irgb_string (xyz):
+        '''Convert the xyz color to rgb, scale to maximum displayable brightness, and convert to a string.'''
+        rgb = colormodels.brightest_rgb_from_xyz (xyz)
+        color_string = colormodels.irgb_string_from_rgb (rgb)
+        return color_string        
+    
+    def fill_gamut_slice (v0, v1, v2):
+        '''Fill in a slice of the monitor gamut with the correct colors.'''
+        #num_s, num_t = 10, 10
+        #num_s, num_t = 25, 25
+        num_s, num_t = 50, 50
+        dv10 = v1 - v0
+        dv21 = v2 - v1
+        for i_s in xrange (num_s):
+            s_a = float (i_s)   / float (num_s)
+            s_b = float (i_s+1) / float (num_s)
+            for i_t in xrange (num_t):
+                t_a = float (i_t)   / float (num_t)
+                t_b = float (i_t+1) / float (num_t)
+                # vertex coords
+                v_aa = v0 + t_a * (dv10 + s_a * dv21)
+                v_ab = v0 + t_b * (dv10 + s_a * dv21)
+                v_ba = v0 + t_a * (dv10 + s_b * dv21)
+                v_bb = v0 + t_b * (dv10 + s_b * dv21)
+                # poly coords
+                poly_x = [v_aa [0], v_ba [0], v_bb [0], v_ab [0]]
+                poly_y = [v_aa [1], v_ba [1], v_bb [1], v_ab [1]]
+                # average color
+                avg = 0.25 * (v_aa + v_ab + v_ba + v_bb)
+                # convert to rgb and scale to maximum displayable brightness
+                color_string = get_brightest_irgb_string (avg)
+                pylab.fill (poly_x, poly_y, color_string, edgecolor=color_string)
+    fill_gamut_slice (white, blue,  green)
+    fill_gamut_slice (white, green, red)
+    fill_gamut_slice (white, red,   blue)
+    
     # draw the curve of the xy values of the spectral lines and purples
     pylab.plot (xy_list [:,0], xy_list [:,1], color='#808080', linewidth=3.0)
     # draw monitor gamut and white point
@@ -493,5 +553,114 @@ def figures ():
     visible_spectrum_plot()
     cie_matching_functions_plot()
     shark_fin_plot()
+
+#
+# HTML
+#
+
+def get_color_hex_string (red, green, blue):
+    '''Convert color values to a hex string.'''
+    hexstr = '#%02X%02X%02X' % (red, green, blue)
+    return hexstr
+
+def visible_spectrum_table (filename='visible_spectrum.html'):
+    '''Write an HTML table with the visible spectrum colors.'''
+    spectrum = ciexyz.empty_spectrum()
+    (num_wl, num_cols) = spectrum.shape
+    # get rgb colors for each wavelength
+    rgb_colors_1 = numpy.empty ((num_wl, 3))
+    rgb_colors_2 = numpy.empty ((num_wl, 3))
+    for i in xrange (0, num_wl):
+        xyz = ciexyz.xyz_from_wavelength (spectrum [i][0])
+        rgb_1 = colormodels.rgb_from_xyz (xyz)
+        rgb_2 = colormodels.brightest_rgb_from_xyz (xyz)
+        rgb_colors_1 [i] = rgb_1
+        rgb_colors_2 [i] = rgb_2
+    # scale 1 to make brightest rgb value = 1.0
+    rgb_max = numpy.max (rgb_colors_1)
+    scaling = 1.0 / rgb_max
+    rgb_colors_1 *= scaling        
+    # write HTML file
+
+    def write_link (f, url, text):
+        '''Write an html link.'''
+        link = '<a href="%s">%s</a><br/>\n' % (url, text)
+        f.write (link)
+
+    f = open (filename, 'w')
+    # html headers
+    f.write ('<html>\n')
+    f.write ('<head>\n')
+    f.write ('<title>Colors of Pure Spectral Lines</title>\n')
+    f.write ('</head>\n')
+    f.write ('<body>\n')
+    f.write ('<p><h1>Colors of Pure Spectral Lines</h1></p>\n')
+    f.write ('<p>%s</p>\n' % 'White added to undisplayable pure colors to fit into rgb space.')
+    f.write ('<hr/>\n')
+    # table header
+    f.write ('<table border cellpadding="5">\n')    
+    f.write ('<tr>\n')
+    f.write ('<th>Wavelength</th>\n')
+    f.write ('<th>R</th>\n')
+    f.write ('<th>G</th>\n')
+    f.write ('<th>B</th>\n')
+    f.write ('<th>Hex Code</th>\n')
+    f.write ('<th width=200>Full Brightness</th>\n')
+    f.write ('<th width=200>Perceptual Brightness</th>\n')
+    f.write ('</tr>\n')
+    # each row
+
+    for i in xrange (0, num_wl):
+        irgb_1 = colormodels.irgb_from_rgb (rgb_colors_1 [i])
+        irgb_2 = colormodels.irgb_from_rgb (rgb_colors_2 [i])
+        red   = irgb_2 [0]
+        green = irgb_2 [1]
+        blue  = irgb_2 [2]
+        hexstr_1 = colormodels.irgb_string_from_irgb (irgb_1)
+        hexstr_2 = colormodels.irgb_string_from_irgb (irgb_2)
+
+        iwl = spectrum [i][0]
+        code = '%.1f nm' % iwl
+
+        f.write ('<tr>\n')
+        f.write ('<td>%s</td>\n' % (code))
+        f.write ('<td>%d</td>\n' % (red))
+        f.write ('<td>%d</td>\n' % (green))
+        f.write ('<td>%d</td>\n' % (blue))
+        f.write ('<td>%s</td>\n' % (hexstr_2))
+        swatch = "&nbsp;"
+        f.write ('<td bgcolor="%s">%s</td>\n' % (hexstr_2, swatch))
+        f.write ('<td bgcolor="%s">%s</td>\n' % (hexstr_1, swatch))
+        f.write ('</tr>\n')
     
+    f.write ('</table>\n')
+    # references
+    f.write ('<hr/>\n')
+    f.write ('<p>References</p>\n')
+    # one source for data
+    write_link (f, 'http://goffgrafix.com/pantone-rgb-100.php', 'Goffgrafix.com')
+    # another source with basically the same data
+    write_link (f, 'http://www.sandaleo.com/pantone.asp', 'Sandaleo.com')
+    # one with more colors including metallic (also some errors), not quite consistent with the first two
+    write_link (f, 'http://www.loral.org/Z/Colors/100.html',
+        'Loral.org - Conversions based on CorelDRAW v12 Pantone Solid Coated or Pastel Coated tables and sRGB color space.')
+    # some colors for various sports teams
+    write_link (f, 'http://www.pennjersey.info/forums/questions-answers/7895-pantone-colors-colleges-university-mlb-nfl-teams.html',
+        'Pantone colors for some sports teams.')
+    # some colors for various national flags
+    write_link (f, 'http://desktoppub.about.com/od/colorpalettes/l/aa_flagcolors.htm', 'What color is your flag? Pantone colors for some flags.')
+    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpflagsrwb.htm', 'Red, White, &amp Blue - Pantone colors for some flags.')
+    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpflagsyellow.htm', 'Yellow or Gold - Pantone colors for some flags.')
+    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpflagsgreen.htm', 'Green - Pantone colors for some flags.')
+    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpatrioticswatches.htm', 'Color swatches - Pantone colors for some flags.')
+    # official Pantone webpages
+    write_link (f, 'http://pantone.com/pages/pantone/Pantone.aspx?pg=19970&ca=25', 'An official PANTONE page')
+    write_link (f, 'http://pantone.com/pages/products/product.aspx?ca=1&pid=293&', 'Another official PANTONE page')
+    # html ending
+    f.write ('</body>\n')
+    f.write ('</html>\n')
+    f.close()
+
+def vst ():
+    visible_spectrum_table ()
     

@@ -1,0 +1,7 @@
+include *.py
+include README.txt
+include COPYING.txt
+include COPYING.LESSER.txt
+include license.txt
+include ColorPy.html
+prune data/massage_CIEXYZ.py

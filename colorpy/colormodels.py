@@ -472,6 +472,17 @@ def xyz_from_rgb (rgb):
     '''Convert an rgb color to xyz.'''
     return numpy.dot (xyz_from_rgb_matrix, rgb)
 
+# Conversion from xyz to rgb, while also scaling the brightness to the maximum displayable
+
+def brightest_rgb_from_xyz (xyz, max_component=1.0):
+    '''Convert the xyz color to rgb, and scale to maximum displayable brightness, so one of the components will be 1.0 (or max_component).'''
+    rgb = rgb_from_xyz (xyz)
+    max_rgb = max (rgb)
+    if max_rgb != 0.0:
+        scale = max_component / max_rgb
+        rgb *= scale
+    return rgb
+
 #
 # Color model conversions to (nearly) perceptually uniform spaces Luv and Lab.
 #
@@ -906,7 +917,7 @@ def irgb_from_xyz (xyz):
 def irgb_string_from_xyz (xyz):
     '''Convert an xyz color directly into a displayable irgb color hex string.'''
     return irgb_string_from_rgb (rgb_from_xyz (xyz))
-    
+
 #
 # Initialization - Initialize to sRGB at module startup.
 #   If a different rgb model is needed, then the startup can be re-done to set the new conditions.
