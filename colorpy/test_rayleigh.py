@@ -29,7 +29,7 @@ import illuminants
 
 def test ():
     '''Mainly call some functions.'''
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         wl_nm = 1000.0 * random.random()
         rayleigh.rayleigh_scattering (wl_nm)
     rayleigh.rayleigh_scattering_spectrum()

@@ -28,12 +28,12 @@ import ciexyz
 
 def test (verbose=0):
     '''Test the CIE XYZ conversions.  Mainly call some functions.'''
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         wl_nm = 1000.0 * random.random()
         xyz = ciexyz.xyz_from_wavelength (wl_nm)
         if verbose >= 1:
             print 'wl_nm = %g, xyz = %s' % (wl_nm, str (xyz))
-    for i in xrange (0, 10):
+    for i in range (0, 10):
         empty = ciexyz.empty_spectrum ()
         xyz = ciexyz.xyz_from_spectrum (empty)
         if verbose >= 1:
