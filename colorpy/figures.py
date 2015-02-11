@@ -17,7 +17,7 @@ figures_clip_clamp_to_zero () -
 
 figures_gamma_245 () -
     Adjust the gamma correction to a power law gamma = 2.45 and create samples.
-    
+
 figures_white_A () -
     Adjust the white point (for Luv/Lab) and create sample figures.
 
@@ -61,7 +61,7 @@ def figures ():
     rayleigh.figures()
     thinfilm.figures()
     misc.figures()
-    
+
 def figures_clip_clamp_to_zero ():
     '''Adjust the color clipping method, and create the sample figures.'''
     colormodels.init()
@@ -83,7 +83,6 @@ def figures_white_A ():
     colormodels.init_Luv_Lab_white_point (colormodels.WhiteA)
     figures()
 
-    
+
 if __name__ == '__main__':
     figures()
-

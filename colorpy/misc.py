@@ -125,7 +125,7 @@ primary_colors = [
 ]
 
 primary_names = [ 'Black', 'Red', 'Green', 'Blue', 'Yellow', 'Magenta', 'Cyan', 'White' ]
-    
+
 def colorstring_patch_plot (colorstrings, color_names, title, filename, num_across=6):
     '''Color patch plot for colors specified as hex strings.'''
     rgb_colors = []
@@ -170,7 +170,7 @@ def MacBeth_ColorChecker_patch_plot ():
     xyz_colors.append (colormodels.xyz_color (0.189, 0.192, 0.227))
     xyz_colors.append (colormodels.xyz_color (0.067, 0.068, 0.080))
     xyz_colors.append (colormodels.xyz_color (0.000, 0.000, 0.000))
-    
+
     color_names = []
     color_names.append ('dark skin')
     color_names.append ('light skin')
@@ -271,13 +271,13 @@ def perceptually_uniform_spectral_colors (
 #    xyzs = ciexyz.get_normalized_spectral_line_colors (brightness=1.0, num_purples=200, dwl_angstroms=1)
     (xyzs, names) = ciexyz.get_normalized_spectral_line_colors_annotated (brightness=brightness, num_purples=200, dwl_angstroms=1)
     (num_colors, num_columns) = xyzs.shape
-    
+
     # pick these two functions for either Luv or Lab
     uniform_from_xyz = colormodels.luv_from_xyz
     xyz_from_uniform = colormodels.xyz_from_luv
     #uniform_from_xyz = colormodels.lab_from_xyz
     #xyz_from_uniform = colormodels.xyz_from_lab
-    
+
     # convert colors to a nearly perceptually uniform space
     uniforms = numpy.empty ((num_colors, 3))
     for i in xrange (0, num_colors):
@@ -375,4 +375,3 @@ def figures ():
     spectral_colors_plus_purples_patch_plot ()
     perceptually_uniform_spectral_color_plots ()
     spectral_line_555nm_plot ()
-    

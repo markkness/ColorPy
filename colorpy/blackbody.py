@@ -14,17 +14,17 @@ SUN_TEMPERATURE   - Surface temperature of the Sun, in K
 
 Functions:
 
-blackbody_specific_intensity (wl_nm, T_K) - 
+blackbody_specific_intensity (wl_nm, T_K) -
     Get the monochromatic specific intensity for a blackbody -
         wl_nm = wavelength [nm]
         T_K   = temperature [K]
     This is the energy radiated per second per unit wavelength per unit solid angle.
     Reference - Shu, eq. 4.6, p. 78.
 
-blackbody_spectrum (T_K) - 
+blackbody_spectrum (T_K) -
     Get the spectrum of a blackbody, as a numpy array.
 
-blackbody_color (T_K) - 
+blackbody_color (T_K) -
     Given a temperature (K), return the xyz color of a thermal blackbody.
 
 Plots:
@@ -37,7 +37,7 @@ blackbody_color_vs_temperature_plot (T_list, title, filename) -
 
 blackbody_spectrum_plot (T_K) -
     Draw the spectrum of a blackbody at the given temperature.
-    
+
 References:
 
 Frank H. Shu, The Physical Universe. An Introduction to Astronomy,
@@ -109,7 +109,7 @@ def blackbody_spectrum (T_K):
         # scale by size of wavelength interval
         spectrum [i][1] = specific_intensity * ciexyz.delta_wl_nm * 1.0e-9
     return spectrum
-        
+
 def blackbody_color (T_K):
     '''Given a temperature (K), return the xyz color of a thermal blackbody.'''
     spectrum = blackbody_spectrum (T_K)
@@ -186,4 +186,4 @@ def figures ():
     blackbody_spectrum_plot (SUN_TEMPERATURE)  # Sun
     blackbody_spectrum_plot (11000.0) # Rigel
     blackbody_spectrum_plot (15000.0)
-    
+

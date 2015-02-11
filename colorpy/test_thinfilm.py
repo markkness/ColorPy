@@ -43,4 +43,4 @@ def test ():
         film.illuminated_spectrum (illuminant)
         film.illuminated_color (illuminant)
     print 'test_thinfilm.test() passed.'     # no exceptions
-        
+

@@ -111,7 +111,7 @@ def test_blackbody (verbose=0):
 
     # determine the color for several temperatures - 10000.0 is a particularly good range
     temp_ranges = [100.0, 1000.0, 10000.0, 100000.0, 1000000.0 ]
-    for T0 in temp_ranges:    
+    for T0 in temp_ranges:
         for i in xrange (0, 20):
             T_K = T0 * random.random()
             xyz = blackbody.blackbody_color (T_K)
@@ -151,12 +151,12 @@ book_chrom_table = numpy.array ([
     [ 8500.0, 0.2908, 0.3000],
     [10000.0, 0.2807, 0.2884],
     [30000.0, 0.2501, 0.2489]])
-    
+
 def test_book (verbose=1):
     '''Test that the computed chromaticities match an existing table, from Judd and Wyszecki.'''
     num_passed = 0
     num_failed = 0
-   
+
     (num_rows, num_cols) = book_chrom_table.shape
     for i in xrange (0, num_rows):
         T = book_chrom_table [i][0]
@@ -197,4 +197,4 @@ def test (verbose=0):
     test_blackbody (verbose=verbose)
     test_book (verbose=verbose)
     #test_stefan_boltzman (verbose=verbose)
-    
+
