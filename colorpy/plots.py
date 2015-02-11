@@ -142,7 +142,7 @@ def log_interpolate (y0, y1, num_values):
     else:
         # normal case
         beta = math.log (y1 / y0) / float (num_values - 1)
-        for i in xrange (0, num_values):
+        for i in range (0, num_values):
             yi = y0 * math.exp (beta * float (i))
             rtn.append (yi)
     return rtn
@@ -185,7 +185,7 @@ def rgb_patch_plot (
     # make plot with each color with one patch
     pylab.clf()
     num_colors = len (rgb_colors)
-    for i in xrange (0, num_colors):
+    for i in range (0, num_colors):
         (iy, ix) = divmod (i, num_across)
         # get color as a displayable string
         colorstring = colormodels.irgb_string_from_rgb (rgb_colors [i])
@@ -228,7 +228,7 @@ def spectrum_subplot (spectrum):
     (num_wl, num_cols) = spectrum.shape
     # get rgb colors for each wavelength
     rgb_colors = numpy.empty ((num_wl, 3))
-    for i in xrange (0, num_wl):
+    for i in range (0, num_wl):
         wl_nm = spectrum [i][0]
         xyz = ciexyz.xyz_from_wavelength (wl_nm)
         rgb_colors [i] = colormodels.rgb_from_xyz (xyz)
@@ -237,7 +237,7 @@ def spectrum_subplot (spectrum):
     scaling = 1.0 / rgb_max
     rgb_colors *= scaling
     # draw color patches (thin vertical lines matching the spectrum curve) in color
-    for i in xrange (0, num_wl-1):    # skipping the last one here to stay in range
+    for i in range (0, num_wl-1):    # skipping the last one here to stay in range
         x0 = spectrum [i][0]
         x1 = spectrum [i+1][0]
         y0 = spectrum [i][1]
@@ -327,7 +327,7 @@ def color_vs_param_plot (
     pylab.title (title)
     # no xlabel, ylabel in upper plot
     num_points = len (param_list)
-    for i in xrange (0, num_points-1):
+    for i in range (0, num_points-1):
         x0 = param_list [i]
         x1 = param_list [i+1]
         y0 = 0.0
@@ -361,7 +361,7 @@ def visible_spectrum_plot ():
     (num_wl, num_cols) = spectrum.shape
     # get rgb colors for each wavelength
     rgb_colors = numpy.empty ((num_wl, 3))
-    for i in xrange (0, num_wl):
+    for i in range (0, num_wl):
         xyz = ciexyz.xyz_from_wavelength (spectrum [i][0])
         rgb = colormodels.rgb_from_xyz (xyz)
         rgb_colors [i] = rgb
@@ -386,7 +386,7 @@ def cie_matching_functions_plot ():
     spectrum_y = ciexyz.empty_spectrum()
     spectrum_z = ciexyz.empty_spectrum()
     (num_wl, num_cols) = spectrum_x.shape
-    for i in xrange (0, num_wl):
+    for i in range (0, num_wl):
         wl_nm = spectrum_x [i][0]
         xyz = ciexyz.xyz_from_wavelength (wl_nm)
         spectrum_x [i][1] = xyz [0]
@@ -422,7 +422,7 @@ def scattered_visual_brightness ():
     # get 'spectra' for y matching functions and multiply by 1/wl^4
     spectrum_y = ciexyz.empty_spectrum()
     (num_wl, num_cols) = spectrum_y.shape
-    for i in xrange (0, num_wl):
+    for i in range (0, num_wl):
         wl_nm = spectrum_y [i][0]
         rayleigh = math.pow (550.0 / wl_nm, 4)
         xyz = ciexyz.xyz_from_wavelength (wl_nm)
@@ -445,7 +445,7 @@ def shark_fin_plot ():
     # get normalized colors
     xy_list = xyz_list.copy()
     (num_colors, num_cols) = xy_list.shape
-    for i in xrange (0, num_colors):
+    for i in range (0, num_colors):
         colormodels.xyz_normalize (xy_list [i])
     # get phosphor colors and normalize
     red   = colormodels.PhosphorRed
@@ -470,7 +470,7 @@ def shark_fin_plot ():
 
     # draw best attempt at pure spectral colors on inner edge of shark fin
     s = 0.025     # distance in xy plane towards white point
-    for i in xrange (0, len (xy_list)-1):
+    for i in range (0, len (xy_list)-1):
         x0 = xy_list [i][0]
         y0 = xy_list [i][1]
         x1 = xy_list [i+1][0]
@@ -500,10 +500,10 @@ def shark_fin_plot ():
         num_s, num_t = 50, 50
         dv10 = v1 - v0
         dv21 = v2 - v1
-        for i_s in xrange (num_s):
+        for i_s in range (num_s):
             s_a = float (i_s)   / float (num_s)
             s_b = float (i_s+1) / float (num_s)
-            for i_t in xrange (num_t):
+            for i_t in range (num_t):
                 t_a = float (i_t)   / float (num_t)
                 t_b = float (i_t+1) / float (num_t)
                 # vertex coords
@@ -571,7 +571,7 @@ def visible_spectrum_table (filename='visible_spectrum.html'):
     # get rgb colors for each wavelength
     rgb_colors_1 = numpy.empty ((num_wl, 3))
     rgb_colors_2 = numpy.empty ((num_wl, 3))
-    for i in xrange (0, num_wl):
+    for i in range (0, num_wl):
         xyz = ciexyz.xyz_from_wavelength (spectrum [i][0])
         rgb_1 = colormodels.rgb_from_xyz (xyz)
         rgb_2 = colormodels.brightest_rgb_from_xyz (xyz)
@@ -611,7 +611,7 @@ def visible_spectrum_table (filename='visible_spectrum.html'):
     f.write ('</tr>\n')
     # each row
 
-    for i in xrange (0, num_wl):
+    for i in range (0, num_wl):
         irgb_1 = colormodels.irgb_from_rgb (rgb_colors_1 [i])
         irgb_2 = colormodels.irgb_from_rgb (rgb_colors_2 [i])
         red   = irgb_2 [0]

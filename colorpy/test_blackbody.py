@@ -32,7 +32,7 @@ STEFAN_BOLTZMAN = 5.670e-8        # W/(m^2 K^4)
 def blackbody_total_intensity (T_K, start_wl_nm, end_wl_nm):
     '''Get the sum of the specific intensity, at 1 nm increments, from start_wl_nm to end_wl_nm.'''
     total = 0.0
-    for wl_nm in xrange (start_wl_nm, end_wl_nm+1):
+    for wl_nm in range (start_wl_nm, end_wl_nm+1):
         specific = blackbody.blackbody_specific_intensity (wl_nm, T_K)
         total += specific
     return total
@@ -112,7 +112,7 @@ def test_blackbody (verbose=0):
     # determine the color for several temperatures - 10000.0 is a particularly good range
     temp_ranges = [100.0, 1000.0, 10000.0, 100000.0, 1000000.0 ]
     for T0 in temp_ranges:
-        for i in xrange (0, 20):
+        for i in range (0, 20):
             T_K = T0 * random.random()
             xyz = blackbody.blackbody_color (T_K)
             if verbose >= 1:
@@ -158,7 +158,7 @@ def test_book (verbose=1):
     num_failed = 0
 
     (num_rows, num_cols) = book_chrom_table.shape
-    for i in xrange (0, num_rows):
+    for i in range (0, num_rows):
         T = book_chrom_table [i][0]
         book_x = book_chrom_table [i][1]
         book_y = book_chrom_table [i][2]

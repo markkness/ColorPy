@@ -839,7 +839,7 @@ def clip_rgb_color (rgb_color):
         clipped_intensity = True
 
     # gamma correction
-    for index in xrange (0, 3):
+    for index in range (0, 3):
         rgb [index] = display_from_linear_component (rgb [index])
 
     # scale to 0 - 255
@@ -863,7 +863,7 @@ def clip_rgb_color (rgb_color):
 def irgb_string_from_irgb (irgb):
     '''Convert a displayable irgb color (0-255) into a hex string.'''
     # ensure that values are in the range 0-255
-    for index in xrange (0,3):
+    for index in range (0, 3):
         irgb [index] = min (255, max (0, irgb [index]))
     # convert to hex string
     irgb_string = '#%02X%02X%02X' % (irgb [0], irgb [1], irgb [2])

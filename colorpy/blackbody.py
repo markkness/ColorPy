@@ -104,7 +104,7 @@ def blackbody_spectrum (T_K):
     '''Get the spectrum of a blackbody, as a numpy array.'''
     spectrum = ciexyz.empty_spectrum()
     (num_rows, num_cols) = spectrum.shape
-    for i in xrange (0, num_rows):
+    for i in range (0, num_rows):
         specific_intensity = blackbody_specific_intensity (spectrum [i][0], T_K)
         # scale by size of wavelength interval
         spectrum [i][1] = specific_intensity * ciexyz.delta_wl_nm * 1.0e-9
@@ -135,7 +135,7 @@ def blackbody_color_vs_temperature_plot (T_list, title, filename):
     '''Draw a color vs temperature plot for the given temperature range.'''
     num_T = len (T_list)
     rgb_list = numpy.empty ((num_T, 3))
-    for i in xrange (0, num_T):
+    for i in range (0, num_T):
         T_i = T_list [i]
         xyz = blackbody_color (T_i)
         rgb_list [i] = colormodels.rgb_from_xyz (xyz)

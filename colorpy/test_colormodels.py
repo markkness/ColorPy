@@ -55,7 +55,7 @@ def test_xyz_rgb (verbose=1):
     num_passed = 0
     num_failed = 0
 
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         x0 = 10.0 * random.random()
         y0 = 10.0 * random.random()
         z0 = 10.0 * random.random()
@@ -81,7 +81,7 @@ def test_xyz_rgb (verbose=1):
 
 def test_xyz_irgb (verbose=1):
     '''Test the direct conversions from xyz to irgb.'''
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         x0 = 10.0 * random.random()
         y0 = 10.0 * random.random()
         z0 = 10.0 * random.random()
@@ -170,7 +170,7 @@ def test_L_luminance (verbose=1):
     num_failed = 0
 
     # Test A for fairly small y values (to ensure coverage of linear range)
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         y0 = 0.1 * random.random()
         passed = test_A (y0, tolerance=1.0e-13, verbose=verbose)
         if passed:
@@ -179,7 +179,7 @@ def test_L_luminance (verbose=1):
             num_failed += 1
 
     # Test A for fairly large y values
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         y0 = 10.0 * random.random()
         passed = test_A (y0, tolerance=1.0e-13, verbose=verbose)
         if passed:
@@ -188,7 +188,7 @@ def test_L_luminance (verbose=1):
             num_failed += 1
 
     # Test B for fairly small L values (to ensure coverage of linear range)
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         L0 = 50.0 * random.random()
         passed = test_B (L0, tolerance=1.0e-10, verbose=verbose)
         if passed:
@@ -197,7 +197,7 @@ def test_L_luminance (verbose=1):
             num_failed += 1
 
     # Test B for fairly large L values
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         L0 = 1000.0 * random.random()
         passed = test_B (L0, tolerance=1.0e-10, verbose=verbose)
         if passed:
@@ -259,7 +259,7 @@ def test_uv_primes (verbose=1):
     num_failed = 0
 
     # Test A
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         x0 = 10.0 * random.random()
         y0 = 10.0 * random.random()
         z0 = 10.0 * random.random()
@@ -279,7 +279,7 @@ def test_uv_primes (verbose=1):
         num_failed += 1
 
     # Test B
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         up0 = 4.0 * (2.0 * random.random() - 1.0)
         vp0 = 9.0 * (2.0 * random.random() - 1.0)
         y0 = 10.0 * random.random()
@@ -369,7 +369,7 @@ def test_Lab_f (verbose=1):
     num_failed = 0
 
     # Test A for fairly small y values (to ensure coverage of linear range)
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         y0 = 0.025 * random.random()
         passed = test_A (y0, tolerance=1.0e-13, verbose=verbose)
         if passed:
@@ -378,7 +378,7 @@ def test_Lab_f (verbose=1):
             num_failed += 1
 
     # Test A for fairly large y values
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         y0 = 10.0 * random.random()
         passed = test_A (y0, tolerance=1.0e-13, verbose=verbose)
         if passed:
@@ -387,7 +387,7 @@ def test_Lab_f (verbose=1):
             num_failed += 1
 
     # Test B for fairly small L values (to ensure coverage of linear range)
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         L0 = 0.25 * random.random()
         passed = test_B (L0, tolerance=1.0e-10, verbose=verbose)
         if passed:
@@ -396,7 +396,7 @@ def test_Lab_f (verbose=1):
             num_failed += 1
 
     # Test B for fairly large L values
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         L0 = 1000.0 * random.random()
         passed = test_B (L0, tolerance=1.0e-10, verbose=verbose)
         if passed:
@@ -441,7 +441,7 @@ def test_xyz_luv (verbose=1):
     num_passed = 0
     num_failed = 0
 
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         x0 = 10.0 * random.random()
         y0 = 10.0 * random.random()
         z0 = 10.0 * random.random()
@@ -497,7 +497,7 @@ def test_xyz_lab (verbose=1):
     num_passed = 0
     num_failed = 0
 
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         x0 = 10.0 * random.random()
         y0 = 10.0 * random.random()
         z0 = 10.0 * random.random()
@@ -528,7 +528,7 @@ def test_gamma (verbose=1):
 
     def test_gamma_corrections ():
         # test individual component gamma
-        for i in xrange (0, 100):
+        for i in range (0, 100):
             x = 10.0 * (2.0 * random.random() - 1.0)
             a = colormodels.linear_from_display_component (x)
             b = colormodels.display_from_linear_component (a)
@@ -571,7 +571,7 @@ def test_gamma (verbose=1):
 
 def test_irgb_string (verbose=1):
     '''Convert back and forth from irgb and irgb_string.'''
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         ir = random.randrange (0, 256)
         ig = random.randrange (0, 256)
         ib = random.randrange (0, 256)
@@ -590,7 +590,7 @@ def test_irgb_string (verbose=1):
 
 def test_rgb_irgb (verbose=1):
     '''Test that conversions between rgb and irgb are invertible.'''
-    for i in xrange (0, 100):
+    for i in range (0, 100):
         ir = random.randrange (0, 256)
         ig = random.randrange (0, 256)
         ib = random.randrange (0, 256)
@@ -622,21 +622,21 @@ def test_clipping (verbose=1):
     # get rgb values for standard clipping
     colormodels.init_clipping (colormodels.CLIP_ADD_WHITE)
     rgb_add_white = []
-    for i in xrange (0, num_wl):
+    for i in range (0, num_wl):
         color = colormodels.irgb_string_from_rgb (
             colormodels.rgb_from_xyz (xyz_colors [i]))
         rgb_add_white.append (color)
     # get rgb values for clamp clipping
     colormodels.init_clipping (colormodels.CLIP_CLAMP_TO_ZERO)
     rgb_clamp = []
-    for i in xrange (0, num_wl):
+    for i in range (0, num_wl):
         color = colormodels.irgb_string_from_rgb (
             colormodels.rgb_from_xyz (xyz_colors [i]))
         rgb_clamp.append (color)
     # compare
     if verbose >= 1:
         print 'colors from add white, colors from clamp'
-        for i in xrange (0, num_wl):
+        for i in range (0, num_wl):
             print rgb_add_white [i], rgb_clamp [i]
     print 'Passed test_clipping()'
 

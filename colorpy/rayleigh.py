@@ -84,7 +84,7 @@ def rayleigh_scattering_spectrum ():
     '''Get the Rayleigh scattering spectrum (independent of illuminant), as a numpy array.'''
     spectrum = ciexyz.empty_spectrum()
     (num_rows, num_cols) = spectrum.shape
-    for i in xrange (0, num_rows):
+    for i in range (0, num_rows):
         spectrum [i][1] = rayleigh_scattering (spectrum [i][0])
     return spectrum
 
@@ -92,7 +92,7 @@ def rayleigh_illuminated_spectrum (illuminant):
     '''Get the spectrum when illuminated by the specified illuminant.'''
     spectrum = rayleigh_scattering_spectrum()
     (num_wl, num_col) = spectrum.shape
-    for i in xrange (0, num_wl):
+    for i in range (0, num_wl):
         spectrum [i][1] *= illuminant [i][1]
     return spectrum
 
@@ -120,7 +120,7 @@ def rayleigh_color_vs_illuminant_temperature_plot (T_list, title, filename):
     '''Make a plot of the Rayleigh scattered color vs. temperature of blackbody illuminant.'''
     num_T = len (T_list)
     rgb_list = numpy.empty ((num_T, 3))
-    for i in xrange (0, num_T):
+    for i in range (0, num_T):
         T_i = T_list [i]
         illuminant = illuminants.get_blackbody_illuminant (T_i)
         xyz = rayleigh_illuminated_color (illuminant)
