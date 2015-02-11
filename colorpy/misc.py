@@ -280,12 +280,12 @@ def perceptually_uniform_spectral_colors (
 
     # convert colors to a nearly perceptually uniform space
     uniforms = numpy.empty ((num_colors, 3))
-    for i in xrange (0, num_colors):
+    for i in range (0, num_colors):
         uniforms [i] = uniform_from_xyz (xyzs [i])
     # determine spacing
     sum_ds = 0.0
     dss = numpy.empty ((num_colors, 1))
-    for i in xrange (0, num_colors-1):
+    for i in range (0, num_colors-1):
         dri = uniforms [i+1] - uniforms [i]
         dsi = math.sqrt (numpy.dot (dri, dri))
         dss [i] = dsi

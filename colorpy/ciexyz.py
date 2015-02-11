@@ -653,13 +653,13 @@ def init (display_intensity = DEFAULT_DISPLAY_INTENSITY):
     _wavelengths [create_table_size-1] = end_wl_nm + 1
     _xyz_colors  [create_table_size-1] = colormodels.xyz_color (0.0, 0.0, 0.0)
     # fill in the middle rows from the source data
-    for i in xrange (0, len (_CIEXYZ_1931_table)):
+    for i in range (0, len (_CIEXYZ_1931_table)):
         (wl,x,y,z) = _CIEXYZ_1931_table [i]
         _wavelengths [i+1] = wl
         _xyz_colors  [i+1] = colormodels.xyz_color (x,y,z)
     # get the integrals of each curve
     integral = numpy.zeros (3)
-    for i in xrange (0, create_table_size-1):
+    for i in range (0, create_table_size-1):
         d_integral = 0.5 * (_xyz_colors [i] + _xyz_colors [i+1]) * delta_wl_nm
         integral += d_integral
     # scale the sampling curves so that:
@@ -672,7 +672,7 @@ def init (display_intensity = DEFAULT_DISPLAY_INTENSITY):
     scaling = num_wl / (integral [1] * display_intensity)
     _xyz_colors *= scaling
     # now calculate all the deltas
-    for i in xrange (0, create_table_size-1):
+    for i in range (0, create_table_size-1):
         _xyz_deltas [i] = _xyz_colors [i+1] - _xyz_colors [i]
     _xyz_deltas [create_table_size-1] = colormodels.xyz_color (0.0, 0.0, 0.0)
 
@@ -688,10 +688,10 @@ def empty_spectrum ():
 
     The result can be passed to xyz_from_spectrum() to convert to an xyz color.
     '''
-    wl_nm_range = xrange (start_wl_nm, end_wl_nm + 1)
+    wl_nm_range = range (start_wl_nm, end_wl_nm + 1)
     num_wl = len (wl_nm_range)
     spectrum = numpy.zeros ((num_wl, 2))
-    for i in xrange (0, num_wl):
+    for i in range (0, num_wl):
         spectrum [i][0] = float (wl_nm_range [i])
     return spectrum
 
@@ -720,7 +720,7 @@ def xyz_from_spectrum (spectrum):
     assert num_col == 2, 'Expecting 2D array with each row: wavelength [nm], specific intensity [W/unit solid angle]'
     # integrate
     rtn = colormodels.xyz_color (0.0, 0.0, 0.0)
-    for i in xrange (0, num_wl):
+    for i in range (0, num_wl):
         wl_nm_i = spectrum [i][0]
         specific_intensity_i = spectrum [i][1]
         xyz = xyz_from_wavelength (wl_nm_i)
@@ -740,7 +740,7 @@ def get_normalized_spectral_line_colors (
     dwl_angstroms - Wavelength separation, in angstroms (0.1 nm).  Default 10 A. (1 nm spacing)
     '''
     # get range of wavelengths, in angstroms, so that we can have finer resolution than 1 nm
-    wl_angstrom_range = xrange (10*start_wl_nm, 10*(end_wl_nm + 1), dwl_angstroms)
+    wl_angstrom_range = range (10*start_wl_nm, 10*(end_wl_nm + 1), dwl_angstroms)
     # get total point count
     num_spectral = len (wl_angstrom_range)
     num_points   = num_spectral + num_purples
@@ -756,7 +756,7 @@ def get_normalized_spectral_line_colors (
     # interpolate from end point to start point (filling in the purples)
     first_xyz = xyzs [0]
     last_xyz  = xyzs [num_spectral - 1]
-    for ipurple in xrange (0, num_purples):
+    for ipurple in range (0, num_purples):
         t = float (ipurple) / float (num_purples - 1)
         omt = 1.0 - t
         xyz = t * first_xyz + omt * last_xyz
@@ -764,7 +764,7 @@ def get_normalized_spectral_line_colors (
         xyzs [i] = xyz
         i += 1
     # scale each color to have the max rgb component equal to the desired brightness
-    for i in xrange (0, num_points):
+    for i in range (0, num_points):
         rgb = colormodels.brightest_rgb_from_xyz (xyzs [i], brightness)
         xyzs [i] = colormodels.xyz_from_rgb (rgb)
     # done
@@ -784,7 +784,7 @@ def get_normalized_spectral_line_colors_annotated (
     dwl_angstroms - Wavelength separation, in angstroms (0.1 nm).  Default 10 A. (1 nm spacing)
     '''
     # get range of wavelengths, in angstroms, so that we can have finer resolution than 1 nm
-    wl_angstrom_range = xrange (10*start_wl_nm, 10*(end_wl_nm + 1), dwl_angstroms)
+    wl_angstrom_range = range (10*start_wl_nm, 10*(end_wl_nm + 1), dwl_angstroms)
     # get total point count
     num_spectral = len (wl_angstrom_range)
     num_points   = num_spectral + num_purples
@@ -803,7 +803,7 @@ def get_normalized_spectral_line_colors_annotated (
     # interpolate from end point to start point (filling in the purples)
     first_xyz = xyzs [0]
     last_xyz  = xyzs [num_spectral - 1]
-    for ipurple in xrange (0, num_purples):
+    for ipurple in range (0, num_purples):
         t = float (ipurple) / float (num_purples - 1)
         omt = 1.0 - t
         xyz = t * first_xyz + omt * last_xyz
@@ -813,7 +813,7 @@ def get_normalized_spectral_line_colors_annotated (
         names.append (name)
         i += 1
     # scale each color to have the max rgb component equal to the desired brightness
-    for i in xrange (0, num_points):
+    for i in range (0, num_points):
         rgb = colormodels.brightest_rgb_from_xyz (xyzs [i], brightness)
         xyzs [i] = colormodels.xyz_from_rgb (rgb)
     # done

@@ -107,8 +107,8 @@ class thin_film:
             This is the coefficient for the electric field, not the intensity.'''
             return ( (n1 - n2) / (n1 + n2) )
 
-	# R12 = field reflection coefficient for light traveling from region 1 to 2
-	# R23 = field reflection coefficient for light traveling from region 2 to 3
+        # R12 = field reflection coefficient for light traveling from region 1 to 2
+        # R23 = field reflection coefficient for light traveling from region 2 to 3
         self.R12 = field_reflection_coefficient (n1, n2)
         self.R23 = field_reflection_coefficient (n2, n3)
         self.R12sqd_plus_R23sqd = self.R12*self.R12 + self.R23*self.R23
@@ -148,7 +148,7 @@ class thin_film:
         '''Get the reflection spectrum (independent of illuminant) for the thin film.'''
         spectrum = ciexyz.empty_spectrum()
         (num_rows, num_cols) = spectrum.shape
-        for i in xrange (0, num_rows):
+        for i in range (0, num_rows):
             wl_nm = spectrum [i][0]
             spectrum [i][1] = self.get_interference_reflection_coefficient (wl_nm)
         return spectrum
@@ -157,7 +157,7 @@ class thin_film:
         '''Get the spectrum when illuminated by the specified illuminant.'''
         spectrum = self.reflection_spectrum()
         (num_wl, num_col) = spectrum.shape
-        for i in xrange (0, num_wl):
+        for i in range (0, num_wl):
             spectrum [i][1] *= illuminant [i][1]
         return spectrum
 
@@ -184,7 +184,7 @@ def thinfilm_color_vs_thickness_plot (n1, n2, n3, thickness_nm_list, illuminant,
     '''Plot the color of the thin film for the specfied thicknesses [nm].'''
     num_thick = len (thickness_nm_list)
     rgb_list = numpy.empty ((num_thick, 3))
-    for i in xrange (0, num_thick):
+    for i in range (0, num_thick):
         film = thin_film (n1, n2, n3, thickness_nm_list [i])
         xyz = film.illuminated_color (illuminant)
         rgb_list [i] = colormodels.rgb_from_xyz (xyz)
@@ -210,15 +210,15 @@ def thinfilm_spectrum_plot (n1, n2, n3, thickness_nm, illuminant, title, filenam
 def figures ():
     '''Draw some thin film plots.'''
     # simple patch plot
-    thickness_nm_list = xrange (0, 1000, 10)
+    thickness_nm_list = range (0, 1000, 10)
     illuminant = illuminants.get_illuminant_D65()
     illuminants.scale_illuminant (illuminant, 9.50)
     thinfilm_patch_plot (1.500, 1.003, 1.500, thickness_nm_list, illuminant, 'ThinFilm Patch Plot', 'ThinFilm-Patch')
 
     # plot the colors of films vs thickness.
     # we scale the illuminant to get a better range of color.
-    #thickness_nm_list = xrange (0, 1000, 2)   # faster
-    thickness_nm_list = xrange (0, 1000, 1)    # nicer
+    #thickness_nm_list = range (0, 1000, 2)   # faster
+    thickness_nm_list = range (0, 1000, 1)    # nicer
     # gap in glass/plastic
     illuminant = illuminants.get_illuminant_D65()
     illuminants.scale_illuminant (illuminant, 4.50)
