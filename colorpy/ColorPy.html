@@ -456,7 +456,7 @@ which is listed below.</p>
 &nbsp;&nbsp;&nbsp;&nbsp;'''Get the spectrum of a blackbody, as a numpy array.'''<br>
 &nbsp;&nbsp;&nbsp;&nbsp;spectrum = ciexyz.empty_spectrum()<br>
 &nbsp;&nbsp;&nbsp;&nbsp;(num_rows, num_cols) = spectrum.shape<br>
-&nbsp;&nbsp;&nbsp;&nbsp;for i in xrange (0, num_rows):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;for i in range (0, num_rows):<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;specific_intensity = blackbody_specific_intensity (spectrum [i][0], T_K)<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;# scale by size of wavelength interval<br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;spectrum [i][1] = specific_intensity * ciexyz.delta_wl_nm * 1.0e-9<br>
