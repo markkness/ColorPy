@@ -87,7 +87,7 @@ def rayleigh_scattering_spectrum ():
     for i in xrange (0, num_rows):
         spectrum [i][1] = rayleigh_scattering (spectrum [i][0])
     return spectrum
-        
+
 def rayleigh_illuminated_spectrum (illuminant):
     '''Get the spectrum when illuminated by the specified illuminant.'''
     spectrum = rayleigh_scattering_spectrum()

@@ -177,7 +177,7 @@ def test_L_luminance (verbose=1):
             num_passed += 1
         else:
             num_failed += 1
-        
+
     # Test A for fairly large y values
     for i in xrange (0, 100):
         y0 = 10.0 * random.random()
@@ -195,7 +195,7 @@ def test_L_luminance (verbose=1):
             num_passed += 1
         else:
             num_failed += 1
-        
+
     # Test B for fairly large L values
     for i in xrange (0, 100):
         L0 = 1000.0 * random.random()
@@ -254,7 +254,7 @@ def test_uv_primes (verbose=1):
             pass
             raise ValueError, msg
         return passed
-        
+
     num_passed = 0
     num_failed = 0
 
@@ -269,9 +269,9 @@ def test_uv_primes (verbose=1):
             num_passed += 1
         else:
             num_failed += 1
-            
+
     # Test black case explicitly
-    xyz0 = colormodels.xyz_color (0.0, 0.0, 0.0)    
+    xyz0 = colormodels.xyz_color (0.0, 0.0, 0.0)
     passed = test_A (xyz0, tolerance=0.0, verbose=verbose)
     if passed:
         num_passed += 1
@@ -394,7 +394,7 @@ def test_Lab_f (verbose=1):
             num_passed += 1
         else:
             num_failed += 1
-        
+
     # Test B for fairly large L values
     for i in xrange (0, 100):
         L0 = 1000.0 * random.random()
@@ -554,7 +554,7 @@ def test_gamma (verbose=1):
         linear_from_display_function = colormodels.srgb_gamma_correct)
     test_gamma_corrections()
 
-    # test simple power law gamma (can supply exponent)    
+    # test simple power law gamma (can supply exponent)
     gamma_set = [0.1, 0.5, 1.0, 1.1, 1.5, 2.0, 2.2, 2.5, 10.0]
     for gamma in gamma_set:
         if verbose >= 1:
@@ -639,7 +639,7 @@ def test_clipping (verbose=1):
         for i in xrange (0, num_wl):
             print rgb_add_white [i], rgb_clamp [i]
     print 'Passed test_clipping()'
-            
+
 #
 # Main test routine for the conversions
 #

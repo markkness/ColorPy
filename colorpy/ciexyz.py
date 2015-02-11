@@ -31,7 +31,7 @@ DEFAULT_DISPLAY_INTENSITY - Default assumed intensity of monitor display, in W/m
 def init (monitor_intensity = DEFAULT_DISPLAY_INTENSITY) -
     Initialization of color matching curves.  Called at module startup with default arguments.
     This can be called again to change the assumed display intensity.
-    
+
 def empty_spectrum () -
     Get a black (no intensity) ColorPy spectrum.
 
@@ -42,10 +42,10 @@ def empty_spectrum () -
 
     The result can be passed to xyz_from_spectrum() to convert to an xyz color.
 
-def xyz_from_wavelength (wl_nm) - 
+def xyz_from_wavelength (wl_nm) -
     Given a wavelength (nm), return the corresponding xyz color, for unit intensity.
-    
-def xyz_from_spectrum (spectrum) - 
+
+def xyz_from_spectrum (spectrum) -
     Determine the xyz color of the spectrum.
 
     The spectrum is assumed to be a 2D numpy array, with a row for each wavelength,
@@ -64,7 +64,7 @@ def get_normalized_spectral_line_colors (
     brightness - Desired maximum rgb component of each color.  Default 1.0.  (Maxiumum displayable brightness)
     num_purples - Number of colors to interpolate in the 'purple' range.  Default 0.  (No purples)
     dwl_angstroms - Wavelength separation, in angstroms (0.1 nm).  Default 10 A. (1 nm spacing)
-    
+
 References:
 
 Wyszecki and Stiles, Color Science: Concepts and Methods, Quantitative Data and Formulae,
@@ -75,7 +75,7 @@ CVRL Color and Vision Database - http://cvrl.ioo.ucl.ac.uk/index.htm - (accessed
     Provides a set of data sets related to color vision.
     ColorPy uses the tables from this site for the 1931 CIE XYZ matching functions,
     and for Illuminant D65, both at 1 nm wavelength increments.
-    
+
 CIE Standards - http://cvrl.ioo.ucl.ac.uk/cie.htm - (accessed 17 Sep 2008)
     CIE standards as maintained by CVRL.
     The 1931 CIE XYZ and D65 tables that ColorPy uses were obtained from the following files, linked here:
@@ -127,7 +127,7 @@ DEFAULT_DISPLAY_INTENSITY = 1.624
 # For reference, the physical luminance of several interesting objects ...
 # All values in cd/m^2, where 1 cd = 1 candle = 20.3 milliwatts of light at 5560 A
 # Typical monitor at full blast = 80 cd/m^2  [Poynton, Color FAQ, p.4]
-# Candle                        = 5000  
+# Candle                        = 5000
 # 40W Frosted Light Bulb        = 25000
 # Clear sky                     = 4000
 # Moon                          = 2500

@@ -46,4 +46,4 @@ def test (verbose=0):
             print 'Blackbody Illuminant : %g K' % (T)
             print str (bb)
     print 'test_illuminants.test() passed.'
-   
+

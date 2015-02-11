@@ -29,17 +29,17 @@ class thin_film (n1, n2, n3, thickness_nm) -
 
 On these class objects, the following functions are available:
 
-get_interference_reflection_coefficient (wl_nm) - 
+get_interference_reflection_coefficient (wl_nm) -
     Get the reflection coefficient for the intensity for light
     of the given wavelength impinging on the film.
 
-reflection_spectrum () - 
+reflection_spectrum () -
     Get the reflection spectrum (independent of illuminant) for the thin film.
 
-illuminated_spectrum (illuminant) - 
+illuminated_spectrum (illuminant) -
     Get the spectrum when illuminated by the specified illuminant.
-    
-illuminated_color (illuminant) - 
+
+illuminated_color (illuminant) -
     Get the xyz color when illuminated by the specified illuminant.
 
 Plots:
@@ -99,7 +99,7 @@ class thin_film:
         self.n3 = n3
         self.thickness_nm = thickness_nm
         self.too_thick = False
-        
+
         # pre-calculate
         def field_reflection_coefficient (n1, n2):
             ''' Calculate the reflection coefficient for a light wave traveling from
@@ -126,7 +126,7 @@ class thin_film:
         '''Get the reflection coefficient for the intensity for light
         of the given wavelength impinging on the film.'''
         if self.too_thick:
-            # would alias - 
+            # would alias -
             # if the layer is too thick, the cos() factor is averaged over multiple periods
             # to zero, this is the best we can do
             return self.R12sqd_plus_R23sqd
@@ -134,7 +134,7 @@ class thin_film:
         ## small-reflection approximation
         #R = self.R12sqd_plus_R23sqd + self.R12_times_R23_times_2 * math.cos (self.phase_factor / wl_nm)
         #return R
-        
+
         # exact - accounts for multiple reflections, and does not assume a small
         # reflection coefficient.  Should be correct for complex n1,n2,n3 as well.
         phase = cmath.exp (complex (0, 1.0) * (self.phase_factor / wl_nm))
@@ -214,7 +214,7 @@ def figures ():
     illuminant = illuminants.get_illuminant_D65()
     illuminants.scale_illuminant (illuminant, 9.50)
     thinfilm_patch_plot (1.500, 1.003, 1.500, thickness_nm_list, illuminant, 'ThinFilm Patch Plot', 'ThinFilm-Patch')
-    
+
     # plot the colors of films vs thickness.
     # we scale the illuminant to get a better range of color.
     #thickness_nm_list = xrange (0, 1000, 2)   # faster

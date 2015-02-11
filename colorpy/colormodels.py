@@ -134,8 +134,8 @@ simple_gamma_invert (x) -
 simple_gamma_correct (x) -
     Simple power law for gamma correction.
     Not used by default.
-    
-srgb_gamma_invert (x) - 
+
+srgb_gamma_invert (x) -
     sRGB standard for gamma inverse correction.
     This is used by default.
 
@@ -159,7 +159,7 @@ init (
     phosphor_green = SRGB_Green,
     phosphor_blue  = SRGB_Blue,
     white_point    = SRGB_White) -
-    
+
     Setup the conversions between CIE XYZ and linear RGB spaces.
     Also do other initializations (gamma, conversions with Luv and Lab spaces, clipping model).
     The default arguments correspond to the sRGB standard RGB space.
@@ -175,7 +175,7 @@ init_gamma_correction (
     display_from_linear_function = srgb_gamma_invert,
     linear_from_display_function = srgb_gamma_correct,
     gamma = STANDARD_GAMMA) -
-    
+
     Setup gamma correction.
     The functions used for gamma correction/inversion can be specified,
     as well as a gamma value.
@@ -187,7 +187,7 @@ init_gamma_correction (
     into a linear component [proportional to light intensity].
     The choices for the functions:
     display_from_linear_function -
-        srgb_gamma_invert [default] - sRGB standard 
+        srgb_gamma_invert [default] - sRGB standard
         simple_gamma_invert - simple power function, can specify gamma.
     linear_from_display_function -
         srgb_gamma_correct [default] - sRGB standard
@@ -220,7 +220,7 @@ Charles Poynton - Frequently asked questions about Gamma and Color,
 sRGB - http://www.color.org/sRGB.xalter - (accessed 15 Sep 2008)
     A Standard Default Color Space for the Internet: sRGB,
     Michael Stokes (Hewlett-Packard), Matthew Anderson (Microsoft), Srinivasan Chandrasekar (Microsoft),
-    Ricardo Motta (Hewlett-Packard), Version 1.10, November 5, 1996. 
+    Ricardo Motta (Hewlett-Packard), Version 1.10, November 5, 1996.
 
 License:
 
@@ -300,7 +300,7 @@ def luv_color (L, u, v):
     '''Construct a Luv color from components.'''
     rtn = numpy.array ([L, u, v])
     return rtn
-    
+
 def lab_color (L, a, b):
     '''Construct a Lab color from components.'''
     rtn = numpy.array ([L, a, b])
@@ -332,7 +332,7 @@ HDTV_Blue  = xyz_color (0.150, 0.060)
 SMPTE_Red   = xyz_color (0.630, 0.340)
 SMPTE_Green = xyz_color (0.310, 0.595)
 SMPTE_Blue  = xyz_color (0.155, 0.070)
-# use D65 as white point for SMPTE 
+# use D65 as white point for SMPTE
 
 # NTSC phosphors [original standard for TV, but no longer used in TV sets]
 # From Hall p. 119 and Foley/Van Dam p. 589
@@ -422,9 +422,9 @@ def init (
     white_point    = SRGB_White):
     '''Setup the conversions between CIE XYZ and linear RGB spaces.
     Also do other initializations (gamma, conversions with Luv and Lab spaces, clipping model).
-    
+
     The default arguments correspond to the sRGB standard RGB space.
-    
+
     The conversion is defined by supplying the chromaticities of each of
     the monitor phosphors, as well as the resulting white color when all
     of the phosphors are at full strength.
@@ -467,7 +467,7 @@ def init (
 def rgb_from_xyz (xyz):
     '''Convert an xyz color to rgb.'''
     return numpy.dot (rgb_from_xyz_matrix, xyz)
-    
+
 def xyz_from_rgb (rgb):
     '''Convert an rgb color to xyz.'''
     return numpy.dot (xyz_from_rgb_matrix, rgb)
@@ -669,7 +669,7 @@ def xyz_from_lab (Lab):
 
 # Gamma correction
 #
-# Non-gamma corrected rgb values, also called non-linear rgb values, 
+# Non-gamma corrected rgb values, also called non-linear rgb values,
 # correspond to palette register entries [although here they are kept
 # in the range 0.0 to 1.0.]  The numerical values are not proportional
 # to the amount of light energy present.
@@ -691,9 +691,9 @@ gamma_exponent = None
 STANDARD_GAMMA = 2.2
 
 # Although NTSC specifies a gamma of 2.2 as standard, this is designed
-# to account for the dim viewing environments typical of TV, but not 
-# computers.  Well-adjusted CRT displays have a true gamma in the range 
-# 2.35 through 2.55.  We use the physical gamma value here, not 2.2, 
+# to account for the dim viewing environments typical of TV, but not
+# computers.  Well-adjusted CRT displays have a true gamma in the range
+# 2.35 through 2.55.  We use the physical gamma value here, not 2.2,
 # thus not correcting for a dim viewing environment.
 # [Poynton, Gamma FAQ p.5, p.9, Hall, p. 121]
 POYNTON_GAMMA = 2.45
@@ -743,7 +743,7 @@ def init_gamma_correction (
     '''Setup gamma correction.
     The functions used for gamma correction/inversion can be specified,
     as well as a gamma value.
-    
+
     The specified display_from_linear_function should convert a
     linear (rgb) component [proportional to light intensity] into
     displayable component [proportional to palette values].
@@ -754,7 +754,7 @@ def init_gamma_correction (
 
     The choices for the functions:
     display_from_linear_function -
-        srgb_gamma_invert [default] - sRGB standard 
+        srgb_gamma_invert [default] - sRGB standard
         simple_gamma_invert - simple power function, can specify gamma.
     linear_from_display_function -
         srgb_gamma_correct [default] - sRGB standard
@@ -827,7 +827,7 @@ def clip_rgb_color (rgb_color):
             clipped_chromaticity = True
     else:
         raise ValueError, 'Invalid color clipping method %s' % (str(_clip_method))
-            
+
     # clip intensity if needed (rgb values > 1.0) by scaling
     rgb_max = max (rgb)
     # we actually don't overflow until 255.0 * intensity > 255.5, so instead of 1.0 use ...
@@ -851,7 +851,7 @@ def clip_rgb_color (rgb_color):
     ig = min (255, max (0, ig))
     ib = min (255, max (0, ib))
     irgb = irgb_color (ir, ig, ib)
-    return (irgb, (clipped_chromaticity, clipped_intensity))    
+    return (irgb, (clipped_chromaticity, clipped_intensity))
 
 #
 # Conversions between linear rgb colors (range 0.0 - 1.0, values proportional to light intensity)
@@ -903,7 +903,7 @@ def rgb_from_irgb (irgb):
     b = linear_from_display_component (b0)
     rgb = rgb_color (r, g, b)
     return rgb
-    
+
 def irgb_string_from_rgb (rgb):
     '''Clip the rgb color, convert to a displayable color, and convert to a hex string.'''
     return irgb_string_from_irgb (irgb_from_rgb (rgb))
@@ -922,6 +922,6 @@ def irgb_string_from_xyz (xyz):
 # Initialization - Initialize to sRGB at module startup.
 #   If a different rgb model is needed, then the startup can be re-done to set the new conditions.
 #
-   
+
 init()
 # Default conversions setup on module load
