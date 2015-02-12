@@ -42,6 +42,8 @@ def test ():
     # no test cases for plots/misc - but figures.py will exercise those.
     # Explicitly run the unittest cases in the modules.
     # This is perhaps a bit clumsy.
+    # A more conventional way to run all of the tests, is at the command line:
+    #     python -m unittest discover
     modules = [
         test_blackbody,
         test_ciexyz,
