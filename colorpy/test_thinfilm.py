@@ -22,6 +22,8 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import print_function
+
 import random
 
 import illuminants
@@ -42,5 +44,8 @@ def test ():
         film.reflection_spectrum ()
         film.illuminated_spectrum (illuminant)
         film.illuminated_color (illuminant)
-    print 'test_thinfilm.test() passed.'     # no exceptions
+    print ('test_thinfilm.test() passed.')     # no exceptions
 
+
+if __name__ == '__main__':
+    test()

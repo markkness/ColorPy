@@ -22,6 +22,8 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import print_function
+
 import math, random, numpy
 
 import colormodels
@@ -53,7 +55,7 @@ def test_Wyszecki_p29 ():
     '''Calculations re Wyszecki p29 table.'''
     T = 1336.0     # 'Gold' point
     xyz = blackbody.blackbody_color (T)
-    print 'blackbody color at gold point', str (xyz)
+    print ('blackbody color at gold point', str (xyz))
     # this source is supposed to be 0.11 cd/cm^2 = 1100 cd/m^2
     # whereas monitors are c. 80 cd/m^2 to 300 cd/m^2
 
@@ -62,18 +64,18 @@ def test_stefan_boltzman (verbose=1):
     NOTE - This currently does not match.  I am not sure what the situation is.'''
     T = 100.0
     sb_test0 = blackbody_total_intensity_stefan_boltzman (T)
-    print 'sb_test0', sb_test0
+    print ('sb_test0', sb_test0)
     sb_test1 = blackbody_total_intensity (T, 0, 1000)
-    print 'sb_test1', sb_test1
+    print ('sb_test1', sb_test1)
     sb_test2 = blackbody_total_intensity (T, 0, 10000)
-    print 'sb_test2', sb_test2
+    print ('sb_test2', sb_test2)
     sb_test3 = blackbody_total_intensity (T, 0, 100000)
-    print 'sb_test3', sb_test3
+    print ('sb_test3', sb_test3)
     # following start to get slow...
     #sb_test4 = blackbody_total_intensity (T, 0, 1000000)
-    #print 'sb_test4', sb_test4
+    #print ('sb_test4', sb_test4)
     #sb_test5 = blackbody_total_intensity (T, 0, 10000000)
-    #print 'sb_test5', sb_test5
+    #print ('sb_test5', sb_test5)
 
     # compare the computed result with the stefan-boltzman formula
     # TODO - these do not match, although the T^4 behavior is observed...
@@ -88,13 +90,13 @@ def test_stefan_boltzman (verbose=1):
         ratio = total4 / total_sb
         #if verbose >= 1:
         if True:
-            print 'T', T
-            print 'total_sb', total_sb
-            print 'total1', total1
-            print 'total2', total2
-            print 'total3', total3
-            print 'total4', total4
-            print 'ratio', ratio
+            print ('T', T)
+            print ('total_sb', total_sb)
+            print ('total1', total1)
+            print ('total2', total2)
+            print ('total3', total3)
+            print ('total4', total4)
+            print ('ratio', ratio)
 
 def test_blackbody (verbose=0):
     '''Test the blackbody functions.'''
@@ -116,12 +118,12 @@ def test_blackbody (verbose=0):
             T_K = T0 * random.random()
             xyz = blackbody.blackbody_color (T_K)
             if verbose >= 1:
-                print 'T = %g K, xyz = %s' % (T_K, str (xyz))
+                print ('T = %g K, xyz = %s' % (T_K, str (xyz)))
             num_passed += 1   # didn't exception
 
     msg = 'test_blackbody() : %d tests passed, %d tests failed' % (
         num_passed, num_failed)
-    print msg
+    print (msg)
 
 # Table of xy chromaticities for blackbodies
 # From (I think): Judd and Wyszecki, Color in Business, Science and Industry, 1975, p. 164
@@ -177,7 +179,7 @@ def test_book (verbose=1):
         msg = 'test_book() : T = %g : calculated x,y = %g,%g : book values x,y = %g,%g : errors = %g,%g' % (
             T, xyz [0], xyz [1], book_x, book_y, dx, dy)
         if verbose >= 1:
-            print msg
+            print (msg)
         if not passed:
             raise ValueError(msg)
         if passed:
@@ -187,7 +189,7 @@ def test_book (verbose=1):
 
     msg = 'test_book() : %d tests passed, %d tests failed' % (
         num_passed, num_failed)
-    print msg
+    print (msg)
 
 # Tests
 
