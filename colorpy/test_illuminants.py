@@ -22,28 +22,33 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import print_function
+
 import illuminants
 
 def test (verbose=0):
     '''Mainly call some functions.'''
     D65 = illuminants.get_illuminant_D65()
     if verbose >= 1:
-        print 'Illuminant D65'
-        print str (D65)
+        print ('Illuminant D65')
+        print (str (D65))
     A = illuminants.get_illuminant_A()
     if verbose >= 1:
-        print 'Illuminant A'
-        print str (A)
+        print ('Illuminant A')
+        print (str (A))
     const = illuminants.get_constant_illuminant()
     if verbose >= 1:
-        print 'Constant Illuminant'
-        print str (const)
+        print ('Constant Illuminant')
+        print (str (const))
 
     T_list = [0.0, 1.0, 100.0, 1000.0, 5778.0, 10000.0, 100000.0]
     for T in T_list:
         bb = illuminants.get_blackbody_illuminant (T)
         if verbose >= 1:
-            print 'Blackbody Illuminant : %g K' % (T)
-            print str (bb)
-    print 'test_illuminants.test() passed.'
+            print ('Blackbody Illuminant : %g K' % (T))
+            print (str (bb))
+    print ('test_illuminants.test() passed.')
 
+
+if __name__ == '__main__':
+    test()

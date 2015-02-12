@@ -22,6 +22,8 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import print_function
+
 import random
 
 import rayleigh
@@ -36,5 +38,8 @@ def test ():
     illum = illuminants.get_illuminant_D65()
     rayleigh.rayleigh_illuminated_spectrum (illum)
     rayleigh.rayleigh_illuminated_color (illum)
-    print 'test_rayleigh.test() passed.'  # didnt exception
+    print ('test_rayleigh.test() passed.')  # didnt exception
 
+
+if __name__ == '__main__':
+    test()

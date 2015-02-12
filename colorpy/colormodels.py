@@ -243,6 +243,8 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import print_function
+
 import math, numpy
 
 # The xyz constructors have some special versions to handle some common situations
@@ -451,8 +453,8 @@ def init (
          phosphor_blue  * intensities [2]))
     # invert to get rgb_from_xyz matrix
     rgb_from_xyz_matrix = numpy.linalg.inv (xyz_from_rgb_matrix)
-    #print 'xyz_from_rgb', str (xyz_from_rgb_matrix)
-    #print 'rgb_from_xyz', str (rgb_from_xyz_matrix)
+    #print ('xyz_from_rgb', str (xyz_from_rgb_matrix))
+    #print ('rgb_from_xyz', str (rgb_from_xyz_matrix))
 
     # conversions between the (almost) perceptually uniform
     # spaces (Luv, Lab) require the definition of a white point.

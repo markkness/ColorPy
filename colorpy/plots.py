@@ -121,6 +121,8 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import print_function
+
 import math, random
 import numpy, pylab
 
@@ -196,7 +198,7 @@ def rgb_patch_plot (
         draw_patch (float (ix), float (-iy), colorstring, name, patch_gap)
     pylab.axis ('off')
     pylab.title (title)
-    print 'Saving plot %s' % str (filename)
+    print ('Saving plot %s' % str (filename))
     pylab.savefig (filename)
 
 def xyz_patch_plot (
@@ -292,7 +294,7 @@ def spectrum_plot (
     pylab.xlabel (xlabel)
     pylab.ylabel (ylabel)
     # done
-    print 'Saving plot %s' % str (filename)
+    print ('Saving plot %s' % str (filename))
     pylab.savefig (filename)
 
 #
@@ -348,7 +350,7 @@ def color_vs_param_plot (
         tighten_x_axis (param_list)
     pylab.xlabel (xlabel)
     pylab.ylabel (ylabel)
-    print 'Saving plot %s' % str (filename)
+    print ('Saving plot %s' % str (filename))
     pylab.savefig (filename)
 
 #
@@ -414,7 +416,7 @@ def cie_matching_functions_plot ():
     tighten_x_axis (spectrum_x [:,0])
     # done
     filename = 'CIEXYZ_Matching'
-    print 'Saving plot %s' % str (filename)
+    print ('Saving plot %s' % str (filename))
     pylab.savefig (filename)
 
 def scattered_visual_brightness ():
@@ -435,7 +437,7 @@ def scattered_visual_brightness ():
     tighten_x_axis (spectrum_y [:,0])
     # done
     filename = 'Visual_scattering'
-    print 'Saving plot %s' % str (filename)
+    print ('Saving plot %s' % str (filename))
     pylab.savefig (filename)
 
 def shark_fin_plot ():
@@ -543,7 +545,7 @@ def shark_fin_plot ():
     pylab.ylabel (r'CIE $y$')
     pylab.title (r'CIE Chromaticity Diagram')
     filename = 'ChromaticityDiagram'
-    print 'Saving plot %s' % (str (filename))
+    print ('Saving plot %s' % (str (filename)))
     pylab.savefig (filename)
 
 # Special figures

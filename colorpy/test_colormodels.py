@@ -22,6 +22,8 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import print_function
+
 import math, random, numpy
 import colormodels
 import ciexyz
@@ -46,7 +48,7 @@ def test_xyz_rgb (verbose=1):
         msg = 'test_xyz_rgb.test_A() : xyz0 = %s, rgb(xyz0) = %s, xyz(rgb(xyz0)) = %s, rgb(xyz(rgb(xyz0))) = %s, errors = (%g, %g), %s' % (
             str (xyz0), str (rgb0), str (xyz1), str (rgb1), error_rgb, error_xyz, status)
         if verbose >= 1:
-            print msg
+            print (msg)
         if not passed:
             raise ValueError(msg)
         return passed
@@ -76,7 +78,7 @@ def test_xyz_rgb (verbose=1):
 
     msg = 'test_xyz_rgb() : %d tests passed, %d tests failed' % (
         num_passed, num_failed)
-    print msg
+    print (msg)
 
 def test_xyz_irgb (verbose=1):
     '''Test the direct conversions from xyz to irgb.'''
@@ -95,7 +97,7 @@ def test_xyz_irgb (verbose=1):
         irgbs1 = colormodels.irgb_string_from_xyz (xyz0)
         if irgbs0 != irgbs1:
             raise ValueError('Error in conversion.')
-    print 'Passed test_xyz_irgb()'
+    print ('Passed test_xyz_irgb()')
 
 #
 # Color model conversions to (nearly) perceptually uniform spaces Luv and Lab.
@@ -109,7 +111,7 @@ def calc_L_LUM_C ():
     '''L_LUM_C should be ideally chosen so that the two models in L_luminance() agree exactly at the cutoff point.
     This is where the extra digits in L_LUM_C, over Kasson, come from.'''
     wanted = (colormodels.L_LUM_A * math.pow (colormodels.L_LUM_CUTOFF, 1.0/3.0) - colormodels.L_LUM_B) / colormodels.L_LUM_CUTOFF
-    print 'optimal L_LUM_C = %.16e' % (wanted)
+    print ('optimal L_LUM_C = %.16e' % (wanted))
 
 def test_L_luminance (verbose=1):
     '''Test that L_luminance() and L_luminance_inverse() are really inverses.'''
@@ -133,7 +135,7 @@ def test_L_luminance (verbose=1):
         msg = 'test_L_luminance.test_A() : y0 = %g (%s), L(y0) = %g, y(L(y0)) = %g, error = %g, %s' % (
             y0, range_info, L0, y1, error, status)
         if verbose >= 1:
-            print msg
+            print (msg)
         if not passed:
             raise ValueError(msg)
         return passed
@@ -158,7 +160,7 @@ def test_L_luminance (verbose=1):
         msg = 'test_L_luminance.test_B() : L0 = %g (%s), y(L0) = %g, L(y(L0)) = %g, error = %g, %s' % (
             L0, range_info, y0, L1, error, status)
         if verbose >= 1:
-            print msg
+            print (msg)
         if not passed:
             raise ValueError(msg)
         return passed
@@ -204,7 +206,7 @@ def test_L_luminance (verbose=1):
 
     msg = 'test_L_luminance() : %d tests passed, %d tests failed' % (
         num_passed, num_failed)
-    print msg
+    print (msg)
 
 # Utility function for Luv
 
@@ -225,7 +227,7 @@ def test_uv_primes (verbose=1):
         msg = 'test_uv_primes.test_A() : xyz0 = %s, (up,vp) = (%g,%g), xyz(up,vp) = %s, error = %g, %s' % (
             str (xyz0), up0, vp0, str(xyz1), error, status)
         if verbose >= 1:
-            print msg
+            print (msg)
         if not passed:
             raise ValueError(msg)
         return passed
@@ -245,7 +247,7 @@ def test_uv_primes (verbose=1):
         msg = 'test_uv_primes.test_B() : (up0,vp0,y0) = (%g,%g,%g), xyz (up0,vp0,y0) = %s, (up,vp)(xyz) = (%g,%g), error = %g, %s' % (
             up0, vp0, y0, str (xyz0), up1, vp1, error, status)
         if verbose >= 1:
-            print msg
+            print (msg)
         if not passed:
             raise ValueError(msg)
         return passed
@@ -293,7 +295,7 @@ def test_uv_primes (verbose=1):
 
     msg = 'test_uv_primes() : %d tests passed, %d tests failed' % (
         num_passed, num_failed)
-    print msg
+    print (msg)
 
 # Utility function for Lab
 #     See [Kasson p.399] for details.
@@ -304,7 +306,7 @@ def calc_LAB_F_A ():
     '''LAB_F_A should be ideally chosen so that the two models in Lab_f() agree exactly at the cutoff point.
     This is where the extra digits in LAB_F_A, over Kasson, come from.'''
     wanted = (math.pow (colormodels.L_LUM_CUTOFF, 1.0/3.0) - colormodels.LAB_F_B) / colormodels.L_LUM_CUTOFF
-    print 'optimal LAB_F_A = %.16e' % (wanted)
+    print ('optimal LAB_F_A = %.16e' % (wanted))
 
 def test_Lab_f (verbose=1):
     '''Test that Lab_f() and Lab_f_inverse() are really inverses.'''
@@ -328,7 +330,7 @@ def test_Lab_f (verbose=1):
         msg = 'test_Lab_f.test_A() : t0 = %g (%s), f(t0) = %g, t(f(t0)) = %g, error = %g, %s' % (
             t0, range_info, f0, t1, error, status)
         if verbose >= 1:
-            print msg
+            print (msg)
         if not passed:
             raise ValueError(msg)
         return passed
@@ -353,7 +355,7 @@ def test_Lab_f (verbose=1):
         msg = 'test_Lab_f.test_B() : f0 = %g (%s), t(f0) = %g, f(t(f0)) = %g, error = %g, %s' % (
             f0, range_info, t0, f1, error, status)
         if verbose >= 1:
-            print msg
+            print (msg)
         if not passed:
             raise ValueError(msg)
         return passed
@@ -399,7 +401,7 @@ def test_Lab_f (verbose=1):
 
     msg = 'test_Lab_f() : %d tests passed, %d tests failed' % (
         num_passed, num_failed)
-    print msg
+    print (msg)
 
 # Conversions between standard device independent color space (CIE XYZ)
 # and the almost perceptually uniform space Luv.
@@ -425,7 +427,7 @@ def test_xyz_luv (verbose=1):
         msg = 'test_xyz_luv.test_A() : xyz0 = %s, luv(xyz0) = %s, xyz(luv(xyz0)) = %s, luv(xyz(luv(xyz0))) = %s, errors = (%g, %g), %s' % (
             str (xyz0), str (luv0), str (xyz1), str (luv1), error_luv, error_xyz, status)
         if verbose >= 1:
-            print msg
+            print (msg)
         if not passed:
             raise ValueError(msg)
         return passed
@@ -454,7 +456,7 @@ def test_xyz_luv (verbose=1):
 
     msg = 'test_xyz_luv() : %d tests passed, %d tests failed' % (
         num_passed, num_failed)
-    print msg
+    print (msg)
 
 # Conversions between standard device independent color space (CIE XYZ)
 # and the almost perceptually uniform space Lab.
@@ -480,7 +482,7 @@ def test_xyz_lab (verbose=1):
         msg = 'test_xyz_lab.test_A() : xyz0 = %s, lab(xyz0) = %s, xyz(lab(xyz0)) = %s, lab(xyz(lab(xyz0))) = %s, errors = (%g, %g), %s' % (
             str (xyz0), str (lab0), str (xyz1), str (lab1), error_lab, error_xyz, status)
         if verbose >= 1:
-            print msg
+            print (msg)
         if not passed:
             raise ValueError(msg)
         return passed
@@ -509,13 +511,13 @@ def test_xyz_lab (verbose=1):
 
     msg = 'test_xyz_lab() : %d tests passed, %d tests failed' % (
         num_passed, num_failed)
-    print msg
+    print (msg)
 
 # Gamma correction
 
 def test_gamma (verbose=1):
     if verbose >= 1:
-        print 'Testing gamma corrections...'
+        print ('Testing gamma corrections...')
 
     def test_gamma_corrections ():
         # test individual component gamma
@@ -529,8 +531,8 @@ def test_gamma (verbose=1):
             rel1 = math.fabs (err1 / (b + x))
             err2 = math.fabs (c - a)
             rel2 = math.fabs (err2 / (c + a))
-            #print 'x = %g, b = %g, err = %g, rel = %g' % (x, b, err1, rel1)
-            #print 'a = %g, c = %g, err = %g, rel = %g' % (a, c, err2, rel2)
+            #print ('x = %g, b = %g, err = %g, rel = %g' % (x, b, err1, rel1))
+            #print ('a = %g, c = %g, err = %g, rel = %g' % (a, c, err2, rel2))
             tolerance = 1.0e-14
             if rel1 > tolerance:
                 raise ValueError('Error exceeds tolerance.')
@@ -539,7 +541,7 @@ def test_gamma (verbose=1):
 
     # test default sRGB component (cannot supply exponent)
     if verbose >= 1:
-        print 'testing sRGB gamma'
+        print ('testing sRGB gamma')
     colormodels.init_gamma_correction (
         display_from_linear_function = colormodels.srgb_gamma_invert,
         linear_from_display_function = colormodels.srgb_gamma_correct)
@@ -549,14 +551,14 @@ def test_gamma (verbose=1):
     gamma_set = [0.1, 0.5, 1.0, 1.1, 1.5, 2.0, 2.2, 2.5, 10.0]
     for gamma in gamma_set:
         if verbose >= 1:
-            print 'testing gamma', gamma
+            print ('testing gamma', gamma)
         colormodels.init_gamma_correction (
             display_from_linear_function = colormodels.simple_gamma_invert,
             linear_from_display_function = colormodels.simple_gamma_correct,
             gamma = gamma)
         test_gamma_corrections()
 
-    print 'Passed test_gamma()'
+    print ('Passed test_gamma()')
 
 # Linear (0.0-1.0) rgb to/from displayable (0-255) irgb
 
@@ -577,7 +579,7 @@ def test_irgb_string (verbose=1):
             msg = 'irgb_string %s and irgb_string2 %s do not match' % (irgb_string, irgb_string2)
             raise ValueError(msg)
     if verbose >= 1:
-        print 'Passed test_irgb_string()'
+        print ('Passed test_irgb_string()')
 
 def test_rgb_irgb (verbose=1):
     '''Test that conversions between rgb and irgb are invertible.'''
@@ -601,14 +603,14 @@ def test_rgb_irgb (verbose=1):
             msg = 'rgb0 %s and rgb1 %s differ by %g' % (str (rgb0), str (rgb1), max (err_r,err_g,err_b))
             raise ValueError(msg)
     if verbose >= 1:
-        print 'Passed test_rgb_irgb()'
+        print ('Passed test_rgb_irgb()')
 
 # Clipping
 
 def test_clipping (verbose=1):
     '''Test the various color clipping methods.'''
     xyz_colors = ciexyz.get_normalized_spectral_line_colors ()
-    #print 'xyz_colors', xyz_colors
+    #print ('xyz_colors', xyz_colors)
     (num_wl, num_cols) = xyz_colors.shape
     # get rgb values for standard clipping
     colormodels.init_clipping (colormodels.CLIP_ADD_WHITE)
@@ -626,10 +628,10 @@ def test_clipping (verbose=1):
         rgb_clamp.append (color)
     # compare
     if verbose >= 1:
-        print 'colors from add white, colors from clamp'
+        print ('colors from add white, colors from clamp')
         for i in range (0, num_wl):
-            print rgb_add_white [i], rgb_clamp [i]
-    print 'Passed test_clipping()'
+            print (rgb_add_white [i], rgb_clamp [i])
+    print ('Passed test_clipping()')
 
 #
 # Main test routine for the conversions
