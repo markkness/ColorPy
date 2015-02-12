@@ -179,8 +179,7 @@ def test_book (verbose=1):
         if verbose >= 1:
             print msg
         if not passed:
-            pass
-            raise ValueError, msg
+            raise ValueError(msg)
         if passed:
             num_passed += 1
         else:
@@ -198,3 +197,6 @@ def test (verbose=0):
     test_book (verbose=verbose)
     #test_stefan_boltzman (verbose=verbose)
 
+
+if __name__ == '__main__':
+    test()

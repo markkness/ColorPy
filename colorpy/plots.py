@@ -134,7 +134,7 @@ def log_interpolate (y0, y1, num_values):
     between y0 and y1. The first value will be y0, the last y1.'''
     rtn = []
     if num_values <= 0:
-        raise ValueError, 'Invalid number of divisions %s in log_interpolate' % (str (num_values))
+        raise ValueError('Invalid number of divisions %s in log_interpolate' % (str (num_values)))
     if num_values == 1:
         # can't use both endpoints, too constrained
         yi = math.sqrt (y0 * y1)
