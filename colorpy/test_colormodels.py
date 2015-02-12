@@ -30,77 +30,6 @@ import unittest
 import colormodels
 import ciexyz
 
-def XXXtest_xyz_rgb (verbose=1):
-    '''Test that xyz_to_rgb() and rgb_to_xyz() are inverses.'''
-
-    def test_A (xyz0, tolerance=1.0e-10, verbose=1):
-        rgb0 = colormodels.rgb_from_xyz (xyz0)
-        xyz1 = colormodels.xyz_from_rgb (rgb0)
-        rgb1 = colormodels.rgb_from_xyz (xyz1)
-        # check errors
-        err_rgb = rgb1 - rgb0
-        error_rgb = math.sqrt (numpy.dot (err_rgb, err_rgb))
-        err_xyz = xyz1 - xyz0
-        error_xyz = math.sqrt (numpy.dot (err_xyz, err_xyz))
-        passed = (error_rgb <= tolerance) and (error_xyz <= tolerance)
-        if passed:
-            status = 'pass'
-        else:
-            status = 'FAILED'
-        msg = 'test_xyz_rgb.test_A() : xyz0 = %s, rgb(xyz0) = %s, xyz(rgb(xyz0)) = %s, rgb(xyz(rgb(xyz0))) = %s, errors = (%g, %g), %s' % (
-            str (xyz0), str (rgb0), str (xyz1), str (rgb1), error_rgb, error_xyz, status)
-        if verbose >= 1:
-            print (msg)
-        if not passed:
-            raise ValueError(msg)
-        return passed
-
-    num_passed = 0
-    num_failed = 0
-
-    for i in range (0, 100):
-        x0 = 10.0 * random.random()
-        y0 = 10.0 * random.random()
-        z0 = 10.0 * random.random()
-        xyz0 = colormodels.xyz_color (x0,y0,z0)
-        passed = test_A (xyz0, tolerance=1.0e-10, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    # Test that the conversion matrices are inverses
-    test_eye0 = numpy.dot (colormodels.rgb_from_xyz_matrix, colormodels.xyz_from_rgb_matrix)
-    test_eye1 = numpy.dot (colormodels.xyz_from_rgb_matrix, colormodels.rgb_from_xyz_matrix)
-    passed = numpy.allclose (test_eye0, numpy.eye (3)) and numpy.allclose (test_eye1, numpy.eye (3))
-    if passed:
-        num_passed += 1
-    else:
-        num_failed += 1
-
-    msg = 'test_xyz_rgb() : %d tests passed, %d tests failed' % (
-        num_passed, num_failed)
-    print (msg)
-
-def XXXtest_xyz_irgb (verbose=1):
-    '''Test the direct conversions from xyz to irgb.'''
-    for i in range (0, 100):
-        x0 = 10.0 * random.random()
-        y0 = 10.0 * random.random()
-        z0 = 10.0 * random.random()
-        xyz0 = colormodels.xyz_color (x0,y0,z0)
-        irgb0 = colormodels.irgb_from_rgb (
-            colormodels.rgb_from_xyz (xyz0))
-        irgb1 = colormodels.irgb_from_xyz (xyz0)
-        if (irgb0[0] != irgb1[0]) or (irgb0[1] != irgb1[1]) or (irgb0[2] != irgb1[2]):
-            raise ValueError('Error in conversion.')
-        irgbs0 = colormodels.irgb_string_from_rgb (
-            colormodels.rgb_from_xyz (xyz0))
-        irgbs1 = colormodels.irgb_string_from_xyz (xyz0)
-        if irgbs0 != irgbs1:
-            raise ValueError('Error in conversion.')
-    print ('Passed test_xyz_irgb()')
-
 #
 # Color model conversions to (nearly) perceptually uniform spaces Luv and Lab.
 #
@@ -405,253 +334,15 @@ def test_Lab_f (verbose=1):
         num_passed, num_failed)
     print (msg)
 
-# Conversions between standard device independent color space (CIE XYZ)
-# and the almost perceptually uniform space Luv.
-
-def test_xyz_luv (verbose=1):
-    '''Test that luv_from_xyz() and xyz_from_luv() are inverses.'''
-
-    def test_A (xyz0, tolerance=1.0e-10, verbose=1):
-        '''Test that luv_from_xyz() and xyz_from_luv() are inverses.'''
-        luv0 = colormodels.luv_from_xyz (xyz0)
-        xyz1 = colormodels.xyz_from_luv (luv0)
-        luv1 = colormodels.luv_from_xyz (xyz1)
-        # check errors
-        dluv = luv1 - luv0
-        error_luv = math.sqrt (numpy.dot (dluv, dluv))
-        dxyz = xyz1 - xyz0
-        error_xyz = math.sqrt (numpy.dot (dxyz, dxyz))
-        passed = (error_luv <= tolerance) and (error_xyz <= tolerance)
-        if passed:
-            status = 'pass'
-        else:
-            status = 'FAILED'
-        msg = 'test_xyz_luv.test_A() : xyz0 = %s, luv(xyz0) = %s, xyz(luv(xyz0)) = %s, luv(xyz(luv(xyz0))) = %s, errors = (%g, %g), %s' % (
-            str (xyz0), str (luv0), str (xyz1), str (luv1), error_luv, error_xyz, status)
-        if verbose >= 1:
-            print (msg)
-        if not passed:
-            raise ValueError(msg)
-        return passed
-
-    num_passed = 0
-    num_failed = 0
-
-    for i in range (0, 100):
-        x0 = 10.0 * random.random()
-        y0 = 10.0 * random.random()
-        z0 = 10.0 * random.random()
-        xyz0 = colormodels.xyz_color (x0,y0,z0)
-        passed = test_A (xyz0, tolerance=1.0e-10, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    # Test black explicitly
-    xyz0 = colormodels.xyz_color (0.0, 0.0, 0.0)
-    passed = test_A (xyz0, tolerance=1.0e-10, verbose=verbose)
-    if passed:
-        num_passed += 1
-    else:
-        num_failed += 1
-
-    msg = 'test_xyz_luv() : %d tests passed, %d tests failed' % (
-        num_passed, num_failed)
-    print (msg)
-
-# Conversions between standard device independent color space (CIE XYZ)
-# and the almost perceptually uniform space Lab.
-
-def test_xyz_lab (verbose=1):
-    '''Test that lab_from_xyz() and xyz_from_lab() are inverses.'''
-
-    def test_A (xyz0, tolerance=1.0e-10, verbose=1):
-        '''Test that lab_from_xyz() and xyz_from_lab() are inverses.'''
-        lab0 = colormodels.lab_from_xyz (xyz0)
-        xyz1 = colormodels.xyz_from_lab (lab0)
-        lab1 = colormodels.lab_from_xyz (xyz1)
-        # check errors
-        dlab = lab1 - lab0
-        error_lab = math.sqrt (numpy.dot (dlab, dlab))
-        dxyz = xyz1 - xyz0
-        error_xyz = math.sqrt (numpy.dot (dxyz, dxyz))
-        passed = (error_lab <= tolerance) and (error_xyz <= tolerance)
-        if passed:
-            status = 'pass'
-        else:
-            status = 'FAILED'
-        msg = 'test_xyz_lab.test_A() : xyz0 = %s, lab(xyz0) = %s, xyz(lab(xyz0)) = %s, lab(xyz(lab(xyz0))) = %s, errors = (%g, %g), %s' % (
-            str (xyz0), str (lab0), str (xyz1), str (lab1), error_lab, error_xyz, status)
-        if verbose >= 1:
-            print (msg)
-        if not passed:
-            raise ValueError(msg)
-        return passed
-
-    num_passed = 0
-    num_failed = 0
-
-    for i in range (0, 100):
-        x0 = 10.0 * random.random()
-        y0 = 10.0 * random.random()
-        z0 = 10.0 * random.random()
-        xyz0 = colormodels.xyz_color (x0,y0,z0)
-        passed = test_A (xyz0, tolerance=1.0e-10, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    # Test black explicitly
-    xyz0 = colormodels.xyz_color (0.0, 0.0, 0.0)
-    passed = test_A (xyz0, tolerance=1.0e-10, verbose=verbose)
-    if passed:
-        num_passed += 1
-    else:
-        num_failed += 1
-
-    msg = 'test_xyz_lab() : %d tests passed, %d tests failed' % (
-        num_passed, num_failed)
-    print (msg)
-
-# Gamma correction
-
-def test_gamma (verbose=1):
-    if verbose >= 1:
-        print ('Testing gamma corrections...')
-
-    def test_gamma_corrections ():
-        # test individual component gamma
-        for i in range (0, 100):
-            x = 10.0 * (2.0 * random.random() - 1.0)
-            a = colormodels.linear_from_display_component (x)
-            b = colormodels.display_from_linear_component (a)
-            c = colormodels.linear_from_display_component (b)
-            # check
-            err1 = math.fabs (b - x)
-            rel1 = math.fabs (err1 / (b + x))
-            err2 = math.fabs (c - a)
-            rel2 = math.fabs (err2 / (c + a))
-            #print ('x = %g, b = %g, err = %g, rel = %g' % (x, b, err1, rel1))
-            #print ('a = %g, c = %g, err = %g, rel = %g' % (a, c, err2, rel2))
-            tolerance = 1.0e-14
-            if rel1 > tolerance:
-                raise ValueError('Error exceeds tolerance.')
-            if rel2 > tolerance:
-                raise ValueError('Error exceeds tolerance.')
-
-    # test default sRGB component (cannot supply exponent)
-    if verbose >= 1:
-        print ('testing sRGB gamma')
-    colormodels.init_gamma_correction (
-        display_from_linear_function = colormodels.srgb_gamma_invert,
-        linear_from_display_function = colormodels.srgb_gamma_correct)
-    test_gamma_corrections()
-
-    # test simple power law gamma (can supply exponent)
-    gamma_set = [0.1, 0.5, 1.0, 1.1, 1.5, 2.0, 2.2, 2.5, 10.0]
-    for gamma in gamma_set:
-        if verbose >= 1:
-            print ('testing gamma', gamma)
-        colormodels.init_gamma_correction (
-            display_from_linear_function = colormodels.simple_gamma_invert,
-            linear_from_display_function = colormodels.simple_gamma_correct,
-            gamma = gamma)
-        test_gamma_corrections()
-
-    print ('Passed test_gamma()')
-
-# Linear (0.0-1.0) rgb to/from displayable (0-255) irgb
-
-def XXXtest_irgb_string (verbose=1):
-    '''Convert back and forth from irgb and irgb_string.'''
-    for i in range (0, 100):
-        ir = random.randrange (0, 256)
-        ig = random.randrange (0, 256)
-        ib = random.randrange (0, 256)
-        irgb = colormodels.irgb_color (ir, ig, ib)
-        irgb_string = colormodels.irgb_string_from_irgb (irgb)
-        irgb2 = colormodels.irgb_from_irgb_string (irgb_string)
-        irgb_string2 = colormodels.irgb_string_from_irgb (irgb2)
-        if (irgb[0] != irgb2[0]) or (irgb[1] != irgb2[1]) or (irgb[2] != irgb2[2]):
-            msg = 'irgb %s and irgb2 %s do not match' % (str (irgb), str (irgb2))
-            raise ValueError(msg)
-        if (irgb_string != irgb_string2):
-            msg = 'irgb_string %s and irgb_string2 %s do not match' % (irgb_string, irgb_string2)
-            raise ValueError(msg)
-    if verbose >= 1:
-        print ('Passed test_irgb_string()')
-
-def XXXtest_rgb_irgb (verbose=1):
-    '''Test that conversions between rgb and irgb are invertible.'''
-    for i in range (0, 100):
-        ir = random.randrange (0, 256)
-        ig = random.randrange (0, 256)
-        ib = random.randrange (0, 256)
-        irgb0 = colormodels.irgb_color (ir, ig, ib)
-        rgb0 = colormodels.rgb_from_irgb (irgb0)
-        irgb1 = colormodels.irgb_from_rgb (rgb0)
-        rgb1 = colormodels.rgb_from_irgb (irgb1)
-        if (irgb0[0] != irgb1[0]) or (irgb0[1] != irgb1[1]) or (irgb0[2] != irgb1[2]):
-            msg = 'irgb0 %s and irgb1 %s do not match' % (str (irgb0), str (irgb1))
-            raise ValueError(msg)
-        tolerance = 1.0e-14
-        err_rgb = rgb1 - rgb0
-        err_r = math.fabs (err_rgb [0])
-        err_g = math.fabs (err_rgb [1])
-        err_b = math.fabs (err_rgb [2])
-        if (err_r > tolerance) or (err_g > tolerance) or (err_b > tolerance):
-            msg = 'rgb0 %s and rgb1 %s differ by %g' % (str (rgb0), str (rgb1), max (err_r,err_g,err_b))
-            raise ValueError(msg)
-    if verbose >= 1:
-        print ('Passed test_rgb_irgb()')
-
-# Clipping
-
-def XXXtest_clipping (verbose=1):
-    '''Test the various color clipping methods.'''
-    xyz_colors = ciexyz.get_normalized_spectral_line_colors ()
-    #print ('xyz_colors', xyz_colors)
-    (num_wl, num_cols) = xyz_colors.shape
-    # get rgb values for standard clipping
-    colormodels.init_clipping (colormodels.CLIP_ADD_WHITE)
-    rgb_add_white = []
-    for i in range (0, num_wl):
-        color = colormodels.irgb_string_from_rgb (
-            colormodels.rgb_from_xyz (xyz_colors [i]))
-        rgb_add_white.append (color)
-    # get rgb values for clamp clipping
-    colormodels.init_clipping (colormodels.CLIP_CLAMP_TO_ZERO)
-    rgb_clamp = []
-    for i in range (0, num_wl):
-        color = colormodels.irgb_string_from_rgb (
-            colormodels.rgb_from_xyz (xyz_colors [i]))
-        rgb_clamp.append (color)
-    # compare
-    if verbose >= 1:
-        print ('colors from add white, colors from clamp')
-        for i in range (0, num_wl):
-            print (rgb_add_white [i], rgb_clamp [i])
-    print ('Passed test_clipping()')
-
 #
 # Main test routine for the conversions
 #
 
 def test (verbose=0):
     '''Test suite for color model conversions.'''
-    XXXtest_xyz_rgb (verbose=verbose)
-    XXXtest_xyz_irgb (verbose=verbose)
     test_L_luminance (verbose=verbose)
     test_Lab_f (verbose=verbose)
     test_uv_primes (verbose=verbose)
-    test_xyz_luv (verbose=verbose)
-    test_xyz_lab (verbose=verbose)
-    test_gamma (verbose=0)
-    XXXtest_irgb_string (verbose=1)
-    XXXtest_rgb_irgb (verbose=1)
-    XXXtest_clipping (verbose=0)
 
 
 class TestColormodels(unittest.TestCase):
@@ -697,7 +388,7 @@ class TestColormodels(unittest.TestCase):
             y0 = 10.0 * random.random()
             z0 = 10.0 * random.random()
             xyz0 = colormodels.xyz_color (x0, y0, z0)
-            self.check_xyz_rgb (xyz0, verbose=verbose)
+            self.check_xyz_rgb (xyz0, verbose)
 
     def check_xyz_irgb(self, xyz0, verbose):
         '''Check the direct conversions from xyz to irgb.'''
@@ -724,7 +415,7 @@ class TestColormodels(unittest.TestCase):
             y0 = 10.0 * random.random()
             z0 = 10.0 * random.random()
             xyz0 = colormodels.xyz_color (x0,y0,z0)
-            self.check_xyz_irgb(xyz0, verbose=verbose)
+            self.check_xyz_irgb(xyz0, verbose)
 
     def check_rgb_irgb(self, irgb0, verbose):
         '''Check that conversions between rgb and irgb are invertible.'''
@@ -786,6 +477,8 @@ class TestColormodels(unittest.TestCase):
             irgb = colormodels.irgb_color (ir, ig, ib)
             self.check_irgb_string(irgb, verbose)
 
+    # Clipping.
+
     def test_clipping(self, verbose=False):
         '''Test the various color clipping methods.'''
         # This is just a coverage test.
@@ -808,6 +501,123 @@ class TestColormodels(unittest.TestCase):
                 rgb_clamp_color)
             if verbose:
                 print (msg)
+
+    # Gamma correction.
+
+    def check_gamma_correction(self, verbose):
+        ''' Check if the current gamma correction is consistent. '''
+        for i in range (10):
+            x = 10.0 * (2.0 * random.random() - 1.0)
+            a = colormodels.linear_from_display_component (x)
+            y = colormodels.display_from_linear_component (a)
+            b = colormodels.linear_from_display_component (y)
+            # Check errors.
+            abs_err1 = math.fabs (y - x)
+            rel_err1 = math.fabs (abs_err1 / (y + x))
+            abs_err2 = math.fabs (b - a)
+            rel_err2 = math.fabs (abs_err2 / (b + a))
+            msg1 = 'x = %g, y = %g, err = %g, rel = %g' % (x, y, abs_err1, rel_err1)
+            msg2 = 'a = %g, b = %g, err = %g, rel = %g' % (a, b, abs_err2, rel_err2)
+            if verbose:
+                print (msg1)
+                print (msg2)
+            tolerance = 1.0e-14
+            self.assertLessEqual(rel_err1, tolerance)
+            self.assertLessEqual(rel_err2, tolerance)
+
+    def test_gamma_srgb(self, verbose=False):
+        ''' Test default sRGB component (cannot supply exponent). '''
+        msg = 'Testing sRGB gamma:'
+        if verbose:
+            print (msg)
+        colormodels.init_gamma_correction (
+            display_from_linear_function = colormodels.srgb_gamma_invert,
+            linear_from_display_function = colormodels.srgb_gamma_correct)
+        self.check_gamma_correction(verbose)
+
+    def test_gamma_power(self, verbose=False):
+        ''' Test simple power law gamma (can supply exponent). '''
+        gamma_set = [0.1, 0.5, 1.0, 1.1, 1.5, 2.0, 2.2, 2.5, 10.0]
+        for gamma in gamma_set:
+            msg = 'Testing power-law gamma: %g' % (gamma)
+            if verbose:
+                print (msg)
+            colormodels.init_gamma_correction (
+                display_from_linear_function = colormodels.simple_gamma_invert,
+                linear_from_display_function = colormodels.simple_gamma_correct,
+                gamma = gamma)
+            self.check_gamma_correction(verbose)
+
+
+    # Conversions between standard device independent color space (CIE XYZ)
+    # and the almost perceptually uniform space Luv.
+
+    def check_xyz_luv(self, xyz0, verbose):
+        '''Check that luv_from_xyz() and xyz_from_luv() are inverses.'''
+        tolerance = 1.0e-10
+        luv0 = colormodels.luv_from_xyz (xyz0)
+        xyz1 = colormodels.xyz_from_luv (luv0)
+        luv1 = colormodels.luv_from_xyz (xyz1)
+        # Check errors.
+        dluv = luv1 - luv0
+        error_luv = math.sqrt (numpy.dot (dluv, dluv))
+        dxyz = xyz1 - xyz0
+        error_xyz = math.sqrt (numpy.dot (dxyz, dxyz))
+        self.assertLessEqual(error_luv, tolerance)
+        self.assertLessEqual(error_xyz, tolerance)
+        msg = 'xyz0: %s    luv0: %s    xyz1: %s    luv1: %s' % (
+            str(xyz0), str(luv0), str(xyz1), str(luv1))
+        if verbose:
+            print (msg)
+
+    def test_xyz_luv_black(self, verbose=False):
+        ''' Test Luv conversions on black. '''
+        xyz0 = colormodels.xyz_color (0.0, 0.0, 0.0)
+        self.check_xyz_luv(xyz0, verbose)
+
+    def test_xyz_luv(self, verbose=False):
+        '''Test that luv_from_xyz() and xyz_from_luv() are inverses.'''
+        for i in range (100):
+            x0 = 10.0 * random.random()
+            y0 = 10.0 * random.random()
+            z0 = 10.0 * random.random()
+            xyz0 = colormodels.xyz_color (x0, y0, z0)
+            self.check_xyz_luv(xyz0, verbose)
+
+    # Conversions between standard device independent color space (CIE XYZ)
+    # and the almost perceptually uniform space Lab.
+
+    def check_xyz_lab(self, xyz0, verbose):
+        '''Check that lab_from_xyz() and xyz_from_lab() are inverses.'''
+        tolerance = 1.0e-10
+        lab0 = colormodels.lab_from_xyz (xyz0)
+        xyz1 = colormodels.xyz_from_lab (lab0)
+        lab1 = colormodels.lab_from_xyz (xyz1)
+        # Check errors.
+        dlab = lab1 - lab0
+        error_lab = math.sqrt (numpy.dot (dlab, dlab))
+        dxyz = xyz1 - xyz0
+        error_xyz = math.sqrt (numpy.dot (dxyz, dxyz))
+        self.assertLessEqual(error_lab, tolerance)
+        self.assertLessEqual(error_xyz, tolerance)
+        msg = 'xyz0: %s    lab0: %s    xyz1: %s    lab1: %s' % (
+            str(xyz0), str(lab0), str(xyz1), str(lab1))
+        if verbose:
+            print (msg)
+
+    def test_xyz_lab_black(self, verbose=False):
+        ''' Test Lab conversions on black. '''
+        xyz0 = colormodels.xyz_color (0.0, 0.0, 0.0)
+        self.check_xyz_lab(xyz0, verbose)
+
+    def test_xyz_lab(self, verbose=False):
+        '''Test that lab_from_xyz() and xyz_from_lab() are inverses.'''
+        for i in range (100):
+            x0 = 10.0 * random.random()
+            y0 = 10.0 * random.random()
+            z0 = 10.0 * random.random()
+            xyz0 = colormodels.xyz_color (x0, y0, z0)
+            self.check_xyz_lab(xyz0, verbose)
 
 
 if __name__ == '__main__':
