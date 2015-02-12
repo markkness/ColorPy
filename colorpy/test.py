@@ -27,6 +27,10 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import print_function
+
+import unittest
+
 import test_colormodels
 import test_ciexyz
 import test_illuminants
@@ -39,11 +43,24 @@ def test ():
     test_colormodels.test()
     test_ciexyz.test()
     test_illuminants.test()
-    test_blackbody.test()
     test_rayleigh.test()
     test_thinfilm.test()
-
+    # Explicitly run the unittest cases in the modules.
+    # This is perhaps a bit clumsy.
+    result = unittest.TestResult()
+    loader = unittest.TestLoader()
+    suite = loader.loadTestsFromModule(test_blackbody)
+    suite.run(result)
+    result_txt = str(result)
+    print (result_txt)
+    # Raise an exception if there were problems.
+    ok = (len(result.errors) == 0) and (len(result.failures) == 0)
+    if not ok:
+        msg = 'Test Suite Errors: %s    Failures: %s' % (
+            result.errors, result.failures)
+        # Perhaps not the right exception type...
+        print (msg)
+        raise ValueError(msg)
 
 if __name__ == '__main__':
     test()
-
