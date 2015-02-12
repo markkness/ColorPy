@@ -12,7 +12,7 @@ CVRL Color and Vision Database - http://cvrl.ioo.ucl.ac.uk/index.htm - (accessed
     Provides a set of data sets related to color vision.
     ColorPy uses the tables from this site for the 1931 CIE XYZ matching functions,
     and for Illuminant D65, both at 1 nm wavelength increments.
-    
+
 CIE Standards - http://cvrl.ioo.ucl.ac.uk/cie.htm - (accessed 17 Sep 2008)
     CIE standards as maintained by CVRL.
     The 1931 CIE XYZ and D65 tables that ColorPy uses were obtained from the following files, linked here:
@@ -50,6 +50,7 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import print_function
 
 # Conversions for data (5 nm increments) from CIE website:
 #   http://www.cie.co.at/main/freepubs.html
@@ -106,7 +107,7 @@ def doit_CIE_XYZ_1931_5nm ():
     '''Create tables from the official CIE data.'''
     msgs = create_CIE_XYZ_1931_table_5nm()
     for i in msgs:
-        print i,
+        print (i, end='')
     f = open ('CIE_XYZ_1931_5nm.txt', 'w')
     f.writelines (msgs)
     f.close()
@@ -135,7 +136,7 @@ def create_CVRL_XYZ_1931_table_1nm ():
 def doit_CVRL_XYZ_1931_table_1nm ():
     msgs = create_CVRL_XYZ_1931_table_1nm()
     for i in msgs:
-        print i,
+        print (i, end='')
     f = open ('CVRL_XYZ_1931_1nm.txt', 'w')
     f.writelines (msgs)
     f.close()
@@ -161,7 +162,7 @@ def create_CVRL_D65_table_1nm ():
 def doit_CVRL_D65_table_1nm ():
     msgs = create_CVRL_D65_table_1nm()
     for i in msgs:
-        print i,
+        print (i, end='')
     f = open ('CVRL_D65_1nm.txt', 'w')
     f.writelines (msgs)
     f.close()
@@ -173,4 +174,7 @@ def main ():
     doit_CIE_XYZ_1931_5nm ()
     doit_CVRL_XYZ_1931_table_1nm ()
     doit_CVRL_D65_table_1nm ()
-    
+
+
+if __name__ == '__main__':
+    main()
