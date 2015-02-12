@@ -25,10 +25,12 @@ along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 
 import math, random, numpy
+import unittest
+
 import colormodels
 import ciexyz
 
-def test_xyz_rgb (verbose=1):
+def XXXtest_xyz_rgb (verbose=1):
     '''Test that xyz_to_rgb() and rgb_to_xyz() are inverses.'''
 
     def test_A (xyz0, tolerance=1.0e-10, verbose=1):
@@ -80,7 +82,7 @@ def test_xyz_rgb (verbose=1):
         num_passed, num_failed)
     print (msg)
 
-def test_xyz_irgb (verbose=1):
+def XXXtest_xyz_irgb (verbose=1):
     '''Test the direct conversions from xyz to irgb.'''
     for i in range (0, 100):
         x0 = 10.0 * random.random()
@@ -562,7 +564,7 @@ def test_gamma (verbose=1):
 
 # Linear (0.0-1.0) rgb to/from displayable (0-255) irgb
 
-def test_irgb_string (verbose=1):
+def XXXtest_irgb_string (verbose=1):
     '''Convert back and forth from irgb and irgb_string.'''
     for i in range (0, 100):
         ir = random.randrange (0, 256)
@@ -581,7 +583,7 @@ def test_irgb_string (verbose=1):
     if verbose >= 1:
         print ('Passed test_irgb_string()')
 
-def test_rgb_irgb (verbose=1):
+def XXXtest_rgb_irgb (verbose=1):
     '''Test that conversions between rgb and irgb are invertible.'''
     for i in range (0, 100):
         ir = random.randrange (0, 256)
@@ -607,7 +609,7 @@ def test_rgb_irgb (verbose=1):
 
 # Clipping
 
-def test_clipping (verbose=1):
+def XXXtest_clipping (verbose=1):
     '''Test the various color clipping methods.'''
     xyz_colors = ciexyz.get_normalized_spectral_line_colors ()
     #print ('xyz_colors', xyz_colors)
@@ -639,18 +641,175 @@ def test_clipping (verbose=1):
 
 def test (verbose=0):
     '''Test suite for color model conversions.'''
-    test_xyz_rgb (verbose=verbose)
-    test_xyz_irgb (verbose=verbose)
+    XXXtest_xyz_rgb (verbose=verbose)
+    XXXtest_xyz_irgb (verbose=verbose)
     test_L_luminance (verbose=verbose)
     test_Lab_f (verbose=verbose)
     test_uv_primes (verbose=verbose)
     test_xyz_luv (verbose=verbose)
     test_xyz_lab (verbose=verbose)
     test_gamma (verbose=0)
-    test_irgb_string (verbose=1)
-    test_rgb_irgb (verbose=1)
-    test_clipping (verbose=0)
+    XXXtest_irgb_string (verbose=1)
+    XXXtest_rgb_irgb (verbose=1)
+    XXXtest_clipping (verbose=0)
+
+
+class TestColormodels(unittest.TestCase):
+    ''' Test cases for colormodel conversions. '''
+
+    def test_rgb_xyz_matrices_inverses(self, verbose=False):
+        ''' Test that the rgb<--->xyz conversion matrices are inverses of each other. '''
+        test_eye0 = numpy.dot (colormodels.rgb_from_xyz_matrix, colormodels.xyz_from_rgb_matrix)
+        test_eye1 = numpy.dot (colormodels.xyz_from_rgb_matrix, colormodels.rgb_from_xyz_matrix)
+        msg0 = 'RGB_from_XYZ * XYZ_from_RGB =\n%s' % (str(test_eye0))
+        msg1 = 'XYZ_from_RGB * RGB_from_XYZ =\n%s' % (str(test_eye1))
+        if verbose:
+            print (msg0)
+            print (msg1)
+        atol = 1.0e-8
+        ok0 = numpy.allclose (test_eye0, numpy.eye (3), atol=atol)
+        ok1 = numpy.allclose (test_eye1, numpy.eye (3), atol=atol)
+        self.assertTrue(ok0)
+        self.assertTrue(ok1)
+
+    def check_xyz_rgb(self, xyz0, verbose):
+        ''' Check that the xyz color, converted to rgb then back, remains the same. '''
+        rgb0 = colormodels.rgb_from_xyz (xyz0)
+        xyz1 = colormodels.xyz_from_rgb (rgb0)
+        rgb1 = colormodels.rgb_from_xyz (xyz1)
+        # Check errors.
+        err_rgb = rgb1 - rgb0
+        error_rgb = math.sqrt (numpy.dot (err_rgb, err_rgb))
+        err_xyz = xyz1 - xyz0
+        error_xyz = math.sqrt (numpy.dot (err_xyz, err_xyz))
+        tolerance = 1.0e-10
+        self.assertLess(error_xyz, tolerance)
+        self.assertLess(error_rgb, tolerance)
+        msg = 'xyz: %s    rgb: %s    xyz2: %s    rgb2: %s' % (
+            str(xyz0), str(rgb0), str(xyz1), str(rgb1))
+        if verbose:
+            print (msg)
+
+    def test_xyz_rgb(self, verbose=False):
+        ''' Test some color values via check_xyz_rgb(). '''
+        for i in range (100):
+            x0 = 10.0 * random.random()
+            y0 = 10.0 * random.random()
+            z0 = 10.0 * random.random()
+            xyz0 = colormodels.xyz_color (x0, y0, z0)
+            self.check_xyz_rgb (xyz0, verbose=verbose)
+
+    def check_xyz_irgb(self, xyz0, verbose):
+        '''Check the direct conversions from xyz to irgb.'''
+        irgb0 = colormodels.irgb_from_rgb (
+            colormodels.rgb_from_xyz (xyz0))
+        irgb1 = colormodels.irgb_from_xyz (xyz0)
+        self.assertEqual(irgb0[0], irgb1[0])
+        self.assertEqual(irgb0[1], irgb1[1])
+        self.assertEqual(irgb0[2], irgb1[2])
+        # The string should also match.
+        irgbs0 = colormodels.irgb_string_from_rgb (
+            colormodels.rgb_from_xyz (xyz0))
+        irgbs1 = colormodels.irgb_string_from_xyz (xyz0)
+        msg = 'irgb0: %s    text0: %s        irgb1: %s    text1: %s' % (
+            str(irgb0), irgbs0, str(irgb1), irgbs1)
+        if verbose:
+            print (msg)
+        self.assertEqual(irgbs0, irgbs1)
+
+    def test_xyz_irgb(self, verbose=False):
+        '''Test the direct conversions from xyz to irgb.'''
+        for i in range (100):
+            x0 = 10.0 * random.random()
+            y0 = 10.0 * random.random()
+            z0 = 10.0 * random.random()
+            xyz0 = colormodels.xyz_color (x0,y0,z0)
+            self.check_xyz_irgb(xyz0, verbose=verbose)
+
+    def check_rgb_irgb(self, irgb0, verbose):
+        '''Check that conversions between rgb and irgb are invertible.'''
+        rgb0  = colormodels.rgb_from_irgb (irgb0)
+        irgb1 = colormodels.irgb_from_rgb (rgb0)
+        rgb1  = colormodels.rgb_from_irgb (irgb1)
+        # Integer conversion should match exactly.
+        self.assertEqual(irgb0[0], irgb1[0])
+        self.assertEqual(irgb0[1], irgb1[1])
+        self.assertEqual(irgb0[2], irgb1[2])
+        msg = 'irgb0: %s    irgb1: %s' % (str(irgb0), str(irgb1))
+        if verbose:
+            print (msg)
+        # Float conversion should match closely.
+        # (It actually seems to match exactly for me.)
+        tolerance = 1.0e-14
+        err_rgb = rgb1 - rgb0
+        err_r = math.fabs (err_rgb [0])
+        err_g = math.fabs (err_rgb [1])
+        err_b = math.fabs (err_rgb [2])
+        self.assertLessEqual(err_r, tolerance)
+        self.assertLessEqual(err_g, tolerance)
+        self.assertLessEqual(err_b, tolerance)
+        msg = 'rgb0: %s    rgb1: %s' % (str(rgb0), str(rgb1))
+        if verbose:
+            print (msg)
+
+    def test_rgb_irgb(self, verbose=False):
+        '''Test that conversions between rgb and irgb are invertible.'''
+        for i in range (100):
+            ir = random.randrange (0, 256)
+            ig = random.randrange (0, 256)
+            ib = random.randrange (0, 256)
+            irgb0 = colormodels.irgb_color (ir, ig, ib)
+            self.check_rgb_irgb(irgb0, verbose)
+
+    def check_irgb_string(self, irgb, verbose):
+        '''Convert back and forth from irgb and irgb_string.'''
+        irgb_string = colormodels.irgb_string_from_irgb (irgb)
+        irgb2 = colormodels.irgb_from_irgb_string (irgb_string)
+        irgb_string2 = colormodels.irgb_string_from_irgb (irgb2)
+        # Values should match.
+        self.assertEqual(irgb[0], irgb2[0])
+        self.assertEqual(irgb[1], irgb2[1])
+        self.assertEqual(irgb[2], irgb2[2])
+        # String should match.
+        self.assertEqual(irgb_string, irgb_string2)
+        msg = 'irgb: %s    irgb2: %s        irgb_string: %s    irgb_string2: %s' % (
+            str(irgb), str(irgb2), irgb_string, irgb_string2)
+        if verbose:
+            print (msg)
+
+    def test_irgb_string(self, verbose=False):
+        '''Convert back and forth from irgb and irgb_string.'''
+        for i in range (100):
+            ir = random.randrange (0, 256)
+            ig = random.randrange (0, 256)
+            ib = random.randrange (0, 256)
+            irgb = colormodels.irgb_color (ir, ig, ib)
+            self.check_irgb_string(irgb, verbose)
+
+    def test_clipping(self, verbose=False):
+        '''Test the various color clipping methods.'''
+        # This is just a coverage test.
+        xyz_colors = ciexyz.get_normalized_spectral_line_colors ()
+        num_wl = xyz_colors.shape[0]
+        for i in range (num_wl):
+            # Get rgb values for standard add white clipping.
+            colormodels.init_clipping (colormodels.CLIP_ADD_WHITE)
+            rgb_white_color = colormodels.irgb_string_from_rgb (
+                colormodels.rgb_from_xyz (xyz_colors [i]))
+
+            # Get rgb values for clamp-to-zero clipping.
+            colormodels.init_clipping (colormodels.CLIP_CLAMP_TO_ZERO)
+            rgb_clamp_color = colormodels.irgb_string_from_rgb (
+                colormodels.rgb_from_xyz (xyz_colors [i]))
+
+            msg = 'Wavelength: %s    White: %s    Clamp: %s' % (
+                str(i),    # FIXME: Put in Angstroms.
+                rgb_white_color,
+                rgb_clamp_color)
+            if verbose:
+                print (msg)
 
 
 if __name__ == '__main__':
     test()
+    unittest.main()

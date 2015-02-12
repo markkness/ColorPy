@@ -46,6 +46,7 @@ def test ():
     modules = [
         test_blackbody,
         test_ciexyz,
+        test_colormodels,
         test_illuminants,
         test_rayleigh,
         test_thinfilm,
