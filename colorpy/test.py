@@ -41,12 +41,15 @@ import test_thinfilm
 def test ():
     # no test cases for plots/misc - but figures.py will exercise those.
     test_colormodels.test()
-    test_ciexyz.test()
-    test_illuminants.test()
-    test_thinfilm.test()
     # Explicitly run the unittest cases in the modules.
     # This is perhaps a bit clumsy.
-    modules = [test_blackbody, test_rayleigh]
+    modules = [
+        test_blackbody,
+        test_ciexyz,
+        test_illuminants,
+        test_rayleigh,
+        test_thinfilm,
+    ]
     for module in modules:
         result = unittest.TestResult()
         loader = unittest.TestLoader()
