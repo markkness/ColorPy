@@ -44,7 +44,7 @@ def calc_L_LUM_C ():
     wanted = (colormodels.L_LUM_A * math.pow (colormodels.L_LUM_CUTOFF, 1.0/3.0) - colormodels.L_LUM_B) / colormodels.L_LUM_CUTOFF
     print ('optimal L_LUM_C = %.16e' % (wanted))
 
-def test_L_luminance (verbose=1):
+def XXXtest_L_luminance (verbose=1):
     '''Test that L_luminance() and L_luminance_inverse() are really inverses.'''
     # Test A - Check that L_luminance_inverse() is the inverse of L_luminance()
     def test_A (y0, tolerance=1.0e-13, verbose=1):
@@ -141,7 +141,7 @@ def test_L_luminance (verbose=1):
 
 # Utility function for Luv
 
-def test_uv_primes (verbose=1):
+def XXXtest_uv_primes (verbose=1):
     '''Test that uv_primes() and uv_primes_inverse() are inverses.'''
 
     def test_A (xyz0, tolerance=0.0, verbose=1):
@@ -239,7 +239,7 @@ def calc_LAB_F_A ():
     wanted = (math.pow (colormodels.L_LUM_CUTOFF, 1.0/3.0) - colormodels.LAB_F_B) / colormodels.L_LUM_CUTOFF
     print ('optimal LAB_F_A = %.16e' % (wanted))
 
-def test_Lab_f (verbose=1):
+def XXXtest_Lab_f (verbose=1):
     '''Test that Lab_f() and Lab_f_inverse() are really inverses.'''
     # Test A - Check that Lab_f_inverse() is the inverse of Lab_f()
     def test_A (t0, tolerance=1.0e-13, verbose=1):
@@ -340,9 +340,9 @@ def test_Lab_f (verbose=1):
 
 def test (verbose=0):
     '''Test suite for color model conversions.'''
-    test_L_luminance (verbose=verbose)
-    test_Lab_f (verbose=verbose)
-    test_uv_primes (verbose=verbose)
+    XXXtest_L_luminance (verbose=verbose)
+    XXXtest_Lab_f (verbose=verbose)
+    XXXtest_uv_primes (verbose=verbose)
 
 
 class TestColormodels(unittest.TestCase):
@@ -391,7 +391,7 @@ class TestColormodels(unittest.TestCase):
             self.check_xyz_rgb (xyz0, verbose)
 
     def check_xyz_irgb(self, xyz0, verbose):
-        '''Check the direct conversions from xyz to irgb.'''
+        ''' Check the direct conversions from xyz to irgb. '''
         irgb0 = colormodels.irgb_from_rgb (
             colormodels.rgb_from_xyz (xyz0))
         irgb1 = colormodels.irgb_from_xyz (xyz0)
@@ -409,7 +409,7 @@ class TestColormodels(unittest.TestCase):
         self.assertEqual(irgbs0, irgbs1)
 
     def test_xyz_irgb(self, verbose=False):
-        '''Test the direct conversions from xyz to irgb.'''
+        ''' Test the direct conversions from xyz to irgb. '''
         for i in range (100):
             x0 = 10.0 * random.random()
             y0 = 10.0 * random.random()
@@ -418,7 +418,7 @@ class TestColormodels(unittest.TestCase):
             self.check_xyz_irgb(xyz0, verbose)
 
     def check_rgb_irgb(self, irgb0, verbose):
-        '''Check that conversions between rgb and irgb are invertible.'''
+        ''' Check that conversions between rgb and irgb are invertible. '''
         rgb0  = colormodels.rgb_from_irgb (irgb0)
         irgb1 = colormodels.irgb_from_rgb (rgb0)
         rgb1  = colormodels.rgb_from_irgb (irgb1)
@@ -444,7 +444,7 @@ class TestColormodels(unittest.TestCase):
             print (msg)
 
     def test_rgb_irgb(self, verbose=False):
-        '''Test that conversions between rgb and irgb are invertible.'''
+        ''' Test that conversions between rgb and irgb are invertible. '''
         for i in range (100):
             ir = random.randrange (0, 256)
             ig = random.randrange (0, 256)
@@ -453,7 +453,7 @@ class TestColormodels(unittest.TestCase):
             self.check_rgb_irgb(irgb0, verbose)
 
     def check_irgb_string(self, irgb, verbose):
-        '''Convert back and forth from irgb and irgb_string.'''
+        ''' Convert back and forth from irgb and irgb_string. '''
         irgb_string = colormodels.irgb_string_from_irgb (irgb)
         irgb2 = colormodels.irgb_from_irgb_string (irgb_string)
         irgb_string2 = colormodels.irgb_string_from_irgb (irgb2)
@@ -469,7 +469,7 @@ class TestColormodels(unittest.TestCase):
             print (msg)
 
     def test_irgb_string(self, verbose=False):
-        '''Convert back and forth from irgb and irgb_string.'''
+        ''' Convert back and forth from irgb and irgb_string. '''
         for i in range (100):
             ir = random.randrange (0, 256)
             ig = random.randrange (0, 256)
@@ -480,7 +480,7 @@ class TestColormodels(unittest.TestCase):
     # Clipping.
 
     def test_clipping(self, verbose=False):
-        '''Test the various color clipping methods.'''
+        ''' Test the various color clipping methods. '''
         # This is just a coverage test.
         xyz_colors = ciexyz.get_normalized_spectral_line_colors ()
         num_wl = xyz_colors.shape[0]
@@ -553,7 +553,7 @@ class TestColormodels(unittest.TestCase):
     # and the almost perceptually uniform space Luv.
 
     def check_xyz_luv(self, xyz0, verbose):
-        '''Check that luv_from_xyz() and xyz_from_luv() are inverses.'''
+        ''' Check that luv_from_xyz() and xyz_from_luv() are inverses. '''
         tolerance = 1.0e-10
         luv0 = colormodels.luv_from_xyz (xyz0)
         xyz1 = colormodels.xyz_from_luv (luv0)
@@ -576,7 +576,7 @@ class TestColormodels(unittest.TestCase):
         self.check_xyz_luv(xyz0, verbose)
 
     def test_xyz_luv(self, verbose=False):
-        '''Test that luv_from_xyz() and xyz_from_luv() are inverses.'''
+        ''' Test that luv_from_xyz() and xyz_from_luv() are inverses. '''
         for i in range (100):
             x0 = 10.0 * random.random()
             y0 = 10.0 * random.random()
@@ -588,7 +588,7 @@ class TestColormodels(unittest.TestCase):
     # and the almost perceptually uniform space Lab.
 
     def check_xyz_lab(self, xyz0, verbose):
-        '''Check that lab_from_xyz() and xyz_from_lab() are inverses.'''
+        ''' Check that lab_from_xyz() and xyz_from_lab() are inverses. '''
         tolerance = 1.0e-10
         lab0 = colormodels.lab_from_xyz (xyz0)
         xyz1 = colormodels.xyz_from_lab (lab0)
@@ -618,6 +618,188 @@ class TestColormodels(unittest.TestCase):
             z0 = 10.0 * random.random()
             xyz0 = colormodels.xyz_color (x0, y0, z0)
             self.check_xyz_lab(xyz0, verbose)
+
+    # Luminance function [of Y value of an XYZ color] used in Luv and Lab.
+    # See [Kasson p.399] for details.
+    # The linear range coefficient L_LUM_C has more digits than in the paper,
+    # this makes the function more continuous over the boundary.
+
+    def check_L_luminance_inverse_1(self, y0, verbose):
+        ''' Check that L_luminance_inverse() is the inverse of L_luminance() for the given y0. '''
+        L0 = colormodels.L_luminance (y0)
+        y1 = colormodels.L_luminance_inverse (L0)
+        # Check error.
+        error = math.fabs (y1 - y0)
+        tolerance = 1.0e-13
+        self.assertLessEqual(error, tolerance)
+        msg = 'y0: %g    L(y0): %g    y(L(y0)): %g    Error: %g' % (
+            y0, L0, y1, error)
+        if verbose:
+            print (msg)
+
+    def check_L_luminance_inverse_2(self, L0, verbose):
+        ''' Check that L_luminance() is the inverse of L_luminance_inverse() for the given L0. '''
+        y0 = colormodels.L_luminance_inverse (L0)
+        L1 = colormodels.L_luminance (y0)
+        # Check error.
+        error = math.fabs (L1 - L0)
+        tolerance = 1.0e-10
+        self.assertLessEqual(error, tolerance)
+        msg = 'L0: %g    y(L0): %g    L(y(L0)): %g    Error: %g' % (
+            L0, y0, L1, error)
+        if verbose:
+            print (msg)
+
+    def test_L_luminance_inverse_1(self, verbose=False):
+        ''' Test that L_luminance_inverse(L_luminance(y)) = y. '''
+        # Test with specific values on both sides of cutoff value.
+        vals = [0.1, 0.5, 0.9, 1.1, 2.0, 10.0]
+        for val in vals:
+            y0 = val * colormodels.L_LUM_CUTOFF
+            self.check_L_luminance_inverse_1(y0, verbose)
+        # Test with random fairly small y values.
+        for i in range (20):
+            y0 = 0.1 * random.random()
+            self.check_L_luminance_inverse_1(y0, verbose)
+        # Test with random fairly large y values.
+        for i in range (20):
+            y0 = 10.0 * random.random()
+            self.check_L_luminance_inverse_1(y0, verbose)
+
+    def test_L_luminance_inverse_2(self, verbose=False):
+        ''' Test that L_luminance(L_luminance_inverse(L)) = L. '''
+        # Test with specific values on both sides of cutoff value.
+        vals = [0.1, 0.5, 0.9, 1.1, 2.0, 10.0]
+        for val in vals:
+            L0 = val * colormodels.L_LUM_C * colormodels.L_LUM_CUTOFF
+            self.check_L_luminance_inverse_2(L0, verbose)
+        # Test with random fairly small L values.
+        for i in range (20):
+            L0 = 25.0 * random.random()
+            self.check_L_luminance_inverse_2(L0, verbose)
+        # Test with random fairly large L values.
+        for i in range (20):
+            L0 = 1000.0 * random.random()
+            self.check_L_luminance_inverse_2(L0, verbose)
+
+    # Utility function for Lab
+    # See [Kasson p.399] for details.
+    # The linear range coefficient has more digits than in the paper,
+    # this makes the function more continuous over the boundary.
+
+    def check_Lab_f_inverse_1(self, t0, verbose):
+        ''' Check that Lab_f_inverse() is the inverse of Lab_f() for the given t0. '''
+        f0 = colormodels.Lab_f (t0)
+        t1 = colormodels.Lab_f_inverse (f0)
+        # Check error.
+        error = math.fabs (t1 - t0)
+        tolerance = 1.0e-13
+        self.assertLessEqual(error, tolerance)
+        msg = 't0: %g    f(t0): %g    t(f(t0)): %g    Error: %g' % (
+            t0, f0, t1, error)
+        if verbose:
+            print (msg)
+
+    def check_Lab_f_inverse_2(self, f0, verbose):
+        ''' Check that Lab_f() is the inverse of Lab_f_inverse() for the given f0. '''
+        t0 = colormodels.Lab_f_inverse (f0)
+        f1 = colormodels.Lab_f (t0)
+        # Check error.
+        error = math.fabs (f1 - f0)
+        tolerance = 1.0e-10
+        self.assertLessEqual(error, tolerance)
+        msg = 'f0: %g    t(f0): %g    f(t(f0)): %g    Error: %g' % (
+            f0, t0, f1, error)
+        if verbose:
+            print (msg)
+
+    def test_Lab_f_inverse_1(self, verbose=False):
+        ''' Test that Lab_f_inverse(Lab_f(t)) = t. '''
+        # Test with specific values on both sides of cutoff value.
+        vals = [0.1, 0.5, 0.9, 1.1, 2.0, 10.0]
+        for val in vals:
+            y0 = val * colormodels.L_LUM_CUTOFF
+            self.check_Lab_f_inverse_1(y0, verbose)
+        # Test with fairly small random values.
+        for i in range (20):
+            y0 = 0.02 * random.random()
+            self.check_Lab_f_inverse_1(y0, verbose)
+        # Test with fairly large random values.
+        for i in range (20):
+            y0 = 10.0 * random.random()
+            self.check_Lab_f_inverse_1(y0, verbose)
+
+    def test_Lab_f_inverse_2(self, verbose=False):
+        ''' Test that Lab_f(Lab_f_inverse(L)) = L. '''
+        # Test with specific values on both sides of cutoff value.
+        vals = [0.1, 0.5, 0.9, 1.1, 2.0, 10.0]
+        for val in vals:
+            L0 = val * (colormodels.LAB_F_A * colormodels.L_LUM_CUTOFF + colormodels.LAB_F_B)
+            self.check_Lab_f_inverse_2(L0, verbose)
+        # Test with fairly small random values.
+        for i in range (20):
+            L0 = 0.25 * random.random()
+            self.check_Lab_f_inverse_2(L0, verbose)
+        # Test with fairly large random values.
+        for i in range (20):
+            L0 = 1000.0 * random.random()
+            self.check_Lab_f_inverse_2(L0, verbose)
+
+    # Utility function for Luv.
+    # Test that uv_primes() and uv_primes_inverse() are inverses.
+
+    def check_uv_primes_inverse_1(self, xyz0, verbose):
+        ''' Check that uv_primes() and uv_primes_inverse() are inverses. '''
+        up0, vp0 = colormodels.uv_primes (xyz0)
+        xyz1 = colormodels.uv_primes_inverse (up0, vp0, xyz0[1])
+        # Check error.
+        dxyz = (xyz1 - xyz0)
+        error = math.sqrt (numpy.dot (dxyz, dxyz))
+        tolerance = 1.0e-13
+        self.assertLessEqual(error, tolerance)
+        msg = 'xyz0: %s    up: %g    vp: %g    xyz(up,vp): %s    Error: %g' % (
+            str (xyz0), up0, vp0, str(xyz1), error)
+        if verbose:
+            print (msg)
+
+    def check_uv_primes_inverse_2(self, up0, vp0, y0, verbose):
+        ''' Check that uv_primes() and uv_primes_inverse() are inverses. '''
+        xyz0 = colormodels.uv_primes_inverse (up0, vp0, y0)
+        up1, vp1 = colormodels.uv_primes (xyz0)
+        # Check error.
+        error_up = up1 - up0
+        error_vp = vp1 - vp0
+        error = numpy.hypot (error_up, error_vp)
+        tolerance = 1.0e-13
+        self.assertLessEqual(error, tolerance)
+        msg = 'up0, vp0, y0: %g, %g, %g    xyz(up0,vp0,y0): %s    (up,vp)(xyz): %g, %g    Error: %g' % (
+            up0, vp0, y0, str (xyz0), up1, vp1, error)
+        if verbose:
+            print (msg)
+
+    def test_uv_primes_inverse_1(self, verbose=False):
+        ''' Test that uv_primes() and uv_primes_inverse() are inverses. '''
+        # Test some random values.
+        for i in range (20):
+            x0 = 10.0 * random.random()
+            y0 = 10.0 * random.random()
+            z0 = 10.0 * random.random()
+            xyz0 = colormodels.xyz_color (x0, y0, z0)
+            self.check_uv_primes_inverse_1(xyz0, verbose)
+        # Test black explicitly.
+        xyz0 = colormodels.xyz_color (0.0, 0.0, 0.0)
+        self.check_uv_primes_inverse_1(xyz0, verbose)
+
+    def test_uv_primes_inverse_2(self, verbose=False):
+        ''' Test that uv_primes() and uv_primes_inverse() are inverses. '''
+        # Test some random values.
+        for i in range (20):
+            up0 = 4.0 * (2.0 * random.random() - 1.0)
+            vp0 = 9.0 * (2.0 * random.random() - 1.0)
+            y0  = 10.0 * random.random()
+            self.check_uv_primes_inverse_2(up0, vp0, y0, verbose)
+        # Test black explicitly.
+        self.check_uv_primes_inverse_2(0.0, 0.0, 0.0, verbose)
 
 
 if __name__ == '__main__':
