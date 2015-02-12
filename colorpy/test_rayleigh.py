@@ -25,21 +25,28 @@ along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 
 import random
+import unittest
 
 import rayleigh
 import illuminants
 
-def test ():
-    '''Mainly call some functions.'''
-    for i in range (0, 100):
-        wl_nm = 1000.0 * random.random()
-        rayleigh.rayleigh_scattering (wl_nm)
-    rayleigh.rayleigh_scattering_spectrum()
-    illum = illuminants.get_illuminant_D65()
-    rayleigh.rayleigh_illuminated_spectrum (illum)
-    rayleigh.rayleigh_illuminated_color (illum)
-    print ('test_rayleigh.test() passed.')  # didnt exception
+
+class TestRayleigh(unittest.TestCase):
+    ''' Test cases for Rayleigh scattering. '''
+
+    def test_coverage_1(self):
+        ''' A coverage test of rayleigh scattering. '''
+        for i in range (100):
+            wl_nm = 1000.0 * random.random()
+            rayleigh.rayleigh_scattering (wl_nm)
+
+    def test_coverage_2(self):
+        ''' Another coverage test of rayleigh scattering. '''
+        rayleigh.rayleigh_scattering_spectrum()
+        illum = illuminants.get_illuminant_D65()
+        rayleigh.rayleigh_illuminated_spectrum (illum)
+        rayleigh.rayleigh_illuminated_color (illum)
 
 
 if __name__ == '__main__':
-    test()
+    unittest.main()

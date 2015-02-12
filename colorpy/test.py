@@ -43,24 +43,26 @@ def test ():
     test_colormodels.test()
     test_ciexyz.test()
     test_illuminants.test()
-    test_rayleigh.test()
     test_thinfilm.test()
     # Explicitly run the unittest cases in the modules.
     # This is perhaps a bit clumsy.
-    result = unittest.TestResult()
-    loader = unittest.TestLoader()
-    suite = loader.loadTestsFromModule(test_blackbody)
-    suite.run(result)
-    result_txt = str(result)
-    print (result_txt)
-    # Raise an exception if there were problems.
-    ok = (len(result.errors) == 0) and (len(result.failures) == 0)
-    if not ok:
-        msg = 'Test Suite Errors: %s    Failures: %s' % (
-            result.errors, result.failures)
-        # Perhaps not the right exception type...
+    modules = [test_blackbody, test_rayleigh]
+    for module in modules:
+        result = unittest.TestResult()
+        loader = unittest.TestLoader()
+        suite  = loader.loadTestsFromModule(module)
+        suite.run(result)
+        # Print results.
+        msg = 'Module: %s    Errors: %s    Failures: %s' % (
+            module.__name__, result.errors, result.failures)
         print (msg)
-        raise ValueError(msg)
+        print (str(result))
+        # Raise an exception if there were problems.
+        ok = (len(result.errors) == 0) and (len(result.failures) == 0)
+        if not ok:
+            # Perhaps not the right exception type...
+            raise ValueError(msg)
+
 
 if __name__ == '__main__':
     test()
