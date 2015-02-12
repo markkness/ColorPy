@@ -25,9 +25,14 @@ along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 
 import math, random, numpy
+import unittest
 
 import colormodels
 import blackbody
+
+# FIXME: The following calculation is not working currently.
+# It is an attempt to get the scale of the intensity correct.
+# It needs more investigation.
 
 STEFAN_BOLTZMAN = 5.670e-8        # W/(m^2 K^4)
 
@@ -49,17 +54,7 @@ def blackbody_total_intensity_stefan_boltzman (T_K):
     total *= scaling
     return total
 
-# Tests
-
-def test_Wyszecki_p29 ():
-    '''Calculations re Wyszecki p29 table.'''
-    T = 1336.0     # 'Gold' point
-    xyz = blackbody.blackbody_color (T)
-    print ('blackbody color at gold point', str (xyz))
-    # this source is supposed to be 0.11 cd/cm^2 = 1100 cd/m^2
-    # whereas monitors are c. 80 cd/m^2 to 300 cd/m^2
-
-def test_stefan_boltzman (verbose=1):
+def test_stefan_boltzman():
     '''Test that the total intensity over many wavelengths matches the Stefan-Boltman formula.
     NOTE - This currently does not match.  I am not sure what the situation is.'''
     T = 100.0
@@ -88,47 +83,19 @@ def test_stefan_boltzman (verbose=1):
         total3 = blackbody_total_intensity (T, 1, 10000)
         total4 = blackbody_total_intensity (T, 1, 100000)
         ratio = total4 / total_sb
-        #if verbose >= 1:
-        if True:
-            print ('T', T)
-            print ('total_sb', total_sb)
-            print ('total1', total1)
-            print ('total2', total2)
-            print ('total3', total3)
-            print ('total4', total4)
-            print ('ratio', ratio)
+        print ('T', T)
+        print ('total_sb', total_sb)
+        print ('total1', total1)
+        print ('total2', total2)
+        print ('total3', total3)
+        print ('total4', total4)
+        print ('ratio', ratio)
 
-def test_blackbody (verbose=0):
-    '''Test the blackbody functions.'''
-    num_passed = 0
-    num_failed = 0
 
-    # a few calls with specific arguments
-    blackbody_total_intensity (100.0, 0, 100)
-    blackbody_total_intensity (0.0, 0, 100)
-    blackbody_total_intensity (100000.0, 0, 100)
-    blackbody_total_intensity (0.0, 0, 100000)
-    blackbody_total_intensity (100000.0, 0, 100000)
-    num_passed += 5
+# Table of xy chromaticities for blackbodies. From (I think):
+#     Judd and Wyszecki, Color in Business, Science and Industry, 1975, p. 164.
 
-    # determine the color for several temperatures - 10000.0 is a particularly good range
-    temp_ranges = [100.0, 1000.0, 10000.0, 100000.0, 1000000.0 ]
-    for T0 in temp_ranges:
-        for i in range (0, 20):
-            T_K = T0 * random.random()
-            xyz = blackbody.blackbody_color (T_K)
-            if verbose >= 1:
-                print ('T = %g K, xyz = %s' % (T_K, str (xyz)))
-            num_passed += 1   # didn't exception
-
-    msg = 'test_blackbody() : %d tests passed, %d tests failed' % (
-        num_passed, num_failed)
-    print (msg)
-
-# Table of xy chromaticities for blackbodies
-# From (I think): Judd and Wyszecki, Color in Business, Science and Industry, 1975, p. 164
-
-book_chrom_table = numpy.array ([
+Judd_Wyszeki_blackbody_chromaticity_table = numpy.array ([
     [ 1000.0, 0.6528, 0.3444],
     [ 1400.0, 0.5985, 0.3858],
     [ 1600.0, 0.5732, 0.3993],
@@ -154,47 +121,86 @@ book_chrom_table = numpy.array ([
     [10000.0, 0.2807, 0.2884],
     [30000.0, 0.2501, 0.2489]])
 
-def test_book (verbose=1):
-    '''Test that the computed chromaticities match an existing table, from Judd and Wyszecki.'''
-    num_passed = 0
-    num_failed = 0
 
-    (num_rows, num_cols) = book_chrom_table.shape
-    for i in range (0, num_rows):
-        T = book_chrom_table [i][0]
-        book_x = book_chrom_table [i][1]
-        book_y = book_chrom_table [i][2]
-        # calculate color for T
+class TestBlackbody(unittest.TestCase):
+    ''' Test cases for blackbody spectrum. '''
+
+    def test_coverage_color(self, verbose=False):
+        ''' Coverage test of blackbody color. '''
+        # Calculate the color for a variety of temperatures.
+        temp_ranges = [100.0, 1000.0, 10000.0, 100000.0, 1000000.0]
+        for T0 in temp_ranges:
+            for i in range (10):
+                T_K = T0 * random.random()
+                xyz = blackbody.blackbody_color (T_K)
+                msg = 'T = %g K, xyz = %s' % (T_K, str (xyz))
+                if verbose >= 1:
+                    print (msg)
+
+    def test_coverage_total_intensity(self):
+        ''' Coverage test of blackbody total intensity. '''
+        # FIXME: This function is only used in a test that is not working now.
+        blackbody_total_intensity (100.0, 0, 100)
+        blackbody_total_intensity (0.0, 0, 100)
+        blackbody_total_intensity (100000.0, 0, 100)
+        blackbody_total_intensity (0.0, 0, 100000)
+        blackbody_total_intensity (100000.0, 0, 100000)
+
+    def test_gold_point(self, verbose=False):
+        ''' Test the chromaticity at the 'gold point'. '''
+        # From Wyszecki & Stiles, p. 28.
+        T        = 1336.0     # 'Gold' point
+        x_expect = 0.607
+        y_expect = 0.381
         xyz = blackbody.blackbody_color (T)
         colormodels.xyz_normalize (xyz)
-        dx = xyz [0] - book_x
-        dy = xyz [1] - book_y
-        # did we match the tablulated result?
-        tolerance = 2.0e-4
-        passed = (math.fabs (dx) <= tolerance) and (math.fabs (dy) <= tolerance)
-        msg = 'test_book() : T = %g : calculated x,y = %g,%g : book values x,y = %g,%g : errors = %g,%g' % (
-            T, xyz [0], xyz [1], book_x, book_y, dx, dy)
-        if verbose >= 1:
+        x_actual = xyz[0]
+        y_actual = xyz[1]
+        # Check result. The tolerance is high, there is a discrepancy
+        # in the last printed digit in the table in the book.
+        # A tolerance of 5.0e-4 would match the precision in the book.
+        tolerance = 6.0e-4
+        self.assertAlmostEqual(x_actual, x_expect, delta=tolerance)
+        self.assertAlmostEqual(y_actual, y_expect, delta=tolerance)
+        # This source is supposed to be 0.11 cd/cm^2 = 1100 cd/m^2,
+        # whereas monitors are c. 80 cd/m^2 to 300 cd/m^2.
+        msg = 'Blackbody color at gold point: %s' % (str (xyz))
+        if verbose:
             print (msg)
-        if not passed:
-            raise ValueError(msg)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
 
-    msg = 'test_book() : %d tests passed, %d tests failed' % (
-        num_passed, num_failed)
-    print (msg)
-
-# Tests
-
-def test (verbose=0):
-    '''Test the blackbody module.'''
-    test_blackbody (verbose=verbose)
-    test_book (verbose=verbose)
-    #test_stefan_boltzman (verbose=verbose)
+    def test_judd_wyszecki(self, verbose=False):
+        ''' Test computed chromaticities vs table in Judd and Wyszecki. '''
+        if verbose:
+            print ('Test vs. Judd and Wyszecki:')
+        table = Judd_Wyszeki_blackbody_chromaticity_table
+        num_rows = table.shape[0]
+        for i in range (0, num_rows):
+            # Read temperature and expected chromaticity.
+            T        = table [i][0]
+            x_expect = table [i][1]
+            y_expect = table [i][2]
+            # Calculate chromaticity for the temperature.
+            xyz = blackbody.blackbody_color (T)
+            colormodels.xyz_normalize (xyz)
+            x_actual = xyz[0]
+            y_actual = xyz[1]
+            # Check against the tabulated result.
+            x_error = math.fabs(x_actual - x_expect)
+            y_error = math.fabs(y_actual - y_expect)
+            # The tolerance used is larger than desired.
+            # A tolerance of 5.0e-5 would match the precision in the book.
+            tolerance = 15.0e-5
+            self.assertAlmostEqual(x_actual, x_expect, delta=tolerance)
+            self.assertAlmostEqual(y_actual, y_expect, delta=tolerance)
+            # Print results.
+            msg = 'T: %8.1f K    Calculated x,y: %.5f, %.5f    Expected x,y: %.5f, %.5f    Error: %.5e, %.5e' % (
+                T, x_actual, y_actual, x_expect, y_expect, x_error, y_error)
+            if verbose:
+                print (msg)
 
 
 if __name__ == '__main__':
-    test()
+    if False:
+        # This calculation is not working yet...
+        test_stefan_boltzman()
+    unittest.main()
