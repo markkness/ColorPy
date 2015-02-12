@@ -40,7 +40,6 @@ import test_thinfilm
 
 def test ():
     # no test cases for plots/misc - but figures.py will exercise those.
-    test_colormodels.test()
     # Explicitly run the unittest cases in the modules.
     # This is perhaps a bit clumsy.
     modules = [

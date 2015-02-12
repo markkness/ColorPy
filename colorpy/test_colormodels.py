@@ -30,11 +30,11 @@ import unittest
 import colormodels
 import ciexyz
 
-#
-# Color model conversions to (nearly) perceptually uniform spaces Luv and Lab.
-#
+# Functions to calculate the cutoff point between various algorithms.
+# These do not really belong here...
 
-# Luminance function [of Y value of an XYZ color] used in Luv and Lab. See [Kasson p.399] for details.
+# Luminance function [of Y value of an XYZ color] used in Luv and Lab.
+# See [Kasson p.399] for details.
 # The linear range coefficient L_LUM_C has more digits than in the paper,
 # this makes the function more continuous over the boundary.
 
@@ -44,305 +44,16 @@ def calc_L_LUM_C ():
     wanted = (colormodels.L_LUM_A * math.pow (colormodels.L_LUM_CUTOFF, 1.0/3.0) - colormodels.L_LUM_B) / colormodels.L_LUM_CUTOFF
     print ('optimal L_LUM_C = %.16e' % (wanted))
 
-def XXXtest_L_luminance (verbose=1):
-    '''Test that L_luminance() and L_luminance_inverse() are really inverses.'''
-    # Test A - Check that L_luminance_inverse() is the inverse of L_luminance()
-    def test_A (y0, tolerance=1.0e-13, verbose=1):
-        '''Check that L_luminance_inverse() is the inverse of L_luminance() for the given y0.'''
-        # we should cover both ranges in the tests
-        if (y0 > colormodels.L_LUM_CUTOFF):
-            range_info = 'in normal range'
-        else:
-            range_info = 'in linear range'
-        L0 = colormodels.L_luminance (y0)
-        y1 = colormodels.L_luminance_inverse (L0)
-        # check error
-        error = math.fabs (y1 - y0)
-        passed = (error <= tolerance)
-        if passed:
-            status = 'pass'
-        else:
-            status = 'FAILED'
-        msg = 'test_L_luminance.test_A() : y0 = %g (%s), L(y0) = %g, y(L(y0)) = %g, error = %g, %s' % (
-            y0, range_info, L0, y1, error, status)
-        if verbose >= 1:
-            print (msg)
-        if not passed:
-            raise ValueError(msg)
-        return passed
-
-    # Test B - Check that L_luminance() is the inverse of L_luminance_inverse()
-    def test_B (L0, tolerance=1.0e-10, verbose=1):
-        '''Check that L_luminance() is the inverse of L_luminance_inverse() for the given y0.'''
-        # we should cover both ranges in the tests
-        if (L0 > colormodels.L_LUM_C * colormodels.L_LUM_CUTOFF):
-            range_info = 'in normal range'
-        else:
-            range_info = 'in linear range'
-        y0 = colormodels.L_luminance_inverse (L0)
-        L1 = colormodels.L_luminance (y0)
-        # check error
-        error = math.fabs (L1 - L0)
-        passed = (error <= tolerance)
-        if passed:
-            status = 'pass'
-        else:
-            status = 'FAILED'
-        msg = 'test_L_luminance.test_B() : L0 = %g (%s), y(L0) = %g, L(y(L0)) = %g, error = %g, %s' % (
-            L0, range_info, y0, L1, error, status)
-        if verbose >= 1:
-            print (msg)
-        if not passed:
-            raise ValueError(msg)
-        return passed
-
-    num_passed = 0
-    num_failed = 0
-
-    # Test A for fairly small y values (to ensure coverage of linear range)
-    for i in range (0, 100):
-        y0 = 0.1 * random.random()
-        passed = test_A (y0, tolerance=1.0e-13, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    # Test A for fairly large y values
-    for i in range (0, 100):
-        y0 = 10.0 * random.random()
-        passed = test_A (y0, tolerance=1.0e-13, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    # Test B for fairly small L values (to ensure coverage of linear range)
-    for i in range (0, 100):
-        L0 = 50.0 * random.random()
-        passed = test_B (L0, tolerance=1.0e-10, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    # Test B for fairly large L values
-    for i in range (0, 100):
-        L0 = 1000.0 * random.random()
-        passed = test_B (L0, tolerance=1.0e-10, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    msg = 'test_L_luminance() : %d tests passed, %d tests failed' % (
-        num_passed, num_failed)
-    print (msg)
-
-# Utility function for Luv
-
-def XXXtest_uv_primes (verbose=1):
-    '''Test that uv_primes() and uv_primes_inverse() are inverses.'''
-
-    def test_A (xyz0, tolerance=0.0, verbose=1):
-        (up0, vp0) = colormodels.uv_primes (xyz0)
-        xyz1 = colormodels.uv_primes_inverse (up0, vp0, xyz0[1])
-        # check error
-        dxyz = (xyz1 - xyz0)
-        error = math.sqrt (numpy.dot (dxyz, dxyz))
-        passed = (error <= tolerance)
-        if passed:
-            status = 'pass'
-        else:
-            status = 'FAILED'
-        msg = 'test_uv_primes.test_A() : xyz0 = %s, (up,vp) = (%g,%g), xyz(up,vp) = %s, error = %g, %s' % (
-            str (xyz0), up0, vp0, str(xyz1), error, status)
-        if verbose >= 1:
-            print (msg)
-        if not passed:
-            raise ValueError(msg)
-        return passed
-
-    def test_B (up0, vp0, y0, tolerance=0.0, verbose=1):
-        xyz0 = colormodels.uv_primes_inverse (up0, vp0, y0)
-        (up1, vp1) = colormodels.uv_primes (xyz0)
-        # check error
-        error_up = up1 - up0
-        error_vp = vp1 - vp0
-        error = numpy.hypot (error_up, error_vp)
-        passed = (error <= tolerance)
-        if passed:
-            status = 'pass'
-        else:
-            status = 'FAILED'
-        msg = 'test_uv_primes.test_B() : (up0,vp0,y0) = (%g,%g,%g), xyz (up0,vp0,y0) = %s, (up,vp)(xyz) = (%g,%g), error = %g, %s' % (
-            up0, vp0, y0, str (xyz0), up1, vp1, error, status)
-        if verbose >= 1:
-            print (msg)
-        if not passed:
-            raise ValueError(msg)
-        return passed
-
-    num_passed = 0
-    num_failed = 0
-
-    # Test A
-    for i in range (0, 100):
-        x0 = 10.0 * random.random()
-        y0 = 10.0 * random.random()
-        z0 = 10.0 * random.random()
-        xyz0 = colormodels.xyz_color (x0,y0,z0)
-        passed = test_A (xyz0, tolerance=1.0e-13, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    # Test black case explicitly
-    xyz0 = colormodels.xyz_color (0.0, 0.0, 0.0)
-    passed = test_A (xyz0, tolerance=0.0, verbose=verbose)
-    if passed:
-        num_passed += 1
-    else:
-        num_failed += 1
-
-    # Test B
-    for i in range (0, 100):
-        up0 = 4.0 * (2.0 * random.random() - 1.0)
-        vp0 = 9.0 * (2.0 * random.random() - 1.0)
-        y0 = 10.0 * random.random()
-        passed = test_B (up0, vp0, y0, tolerance=1.0e-13, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    # Test black case explicitly
-    passed = test_B (0.0, 0.0, 0.0, tolerance=0.0, verbose=verbose)
-    if passed:
-        num_passed += 1
-    else:
-        num_failed += 1
-
-    msg = 'test_uv_primes() : %d tests passed, %d tests failed' % (
-        num_passed, num_failed)
-    print (msg)
-
-# Utility function for Lab
-#     See [Kasson p.399] for details.
-#     The linear range coefficient has more digits than in the paper,
-#     this makes the function more continuous over the boundary.
+# Utility function for Lab.
+# See [Kasson p.399] for details.
+# The linear range coefficient has more digits than in the paper,
+# this makes the function more continuous over the boundary.
 
 def calc_LAB_F_A ():
     '''LAB_F_A should be ideally chosen so that the two models in Lab_f() agree exactly at the cutoff point.
     This is where the extra digits in LAB_F_A, over Kasson, come from.'''
     wanted = (math.pow (colormodels.L_LUM_CUTOFF, 1.0/3.0) - colormodels.LAB_F_B) / colormodels.L_LUM_CUTOFF
     print ('optimal LAB_F_A = %.16e' % (wanted))
-
-def XXXtest_Lab_f (verbose=1):
-    '''Test that Lab_f() and Lab_f_inverse() are really inverses.'''
-    # Test A - Check that Lab_f_inverse() is the inverse of Lab_f()
-    def test_A (t0, tolerance=1.0e-13, verbose=1):
-        '''Check that Lab_f_inverse() is the inverse of Lab_f() for the given t0.'''
-        # we should cover both ranges in the tests
-        if (t0 > colormodels.L_LUM_CUTOFF):
-            range_info = 'in normal range'
-        else:
-            range_info = 'in linear range'
-        f0 = colormodels.Lab_f (t0)
-        t1 = colormodels.Lab_f_inverse (f0)
-        # check error
-        error = math.fabs (t1 - t0)
-        passed = (error <= tolerance)
-        if passed:
-            status = 'pass'
-        else:
-            status = 'FAILED'
-        msg = 'test_Lab_f.test_A() : t0 = %g (%s), f(t0) = %g, t(f(t0)) = %g, error = %g, %s' % (
-            t0, range_info, f0, t1, error, status)
-        if verbose >= 1:
-            print (msg)
-        if not passed:
-            raise ValueError(msg)
-        return passed
-
-    # Test B - Check that Lab_f() is the inverse of Lab_f_inverse()
-    def test_B (f0, tolerance=1.0e-10, verbose=1):
-        '''Check that Lab_f() is the inverse of Lab_f_inverse() for the given f0.'''
-        # we should cover both ranges in the tests
-        if f0 > colormodels.LAB_F_A * colormodels.L_LUM_CUTOFF + colormodels.LAB_F_B:
-            range_info = 'in normal range'
-        else:
-            range_info = 'in linear range'
-        t0 = colormodels.Lab_f_inverse (f0)
-        f1 = colormodels.Lab_f (t0)
-        # check error
-        error = math.fabs (f1 - f0)
-        passed = (error <= tolerance)
-        if passed:
-            status = 'pass'
-        else:
-            status = 'FAILED'
-        msg = 'test_Lab_f.test_B() : f0 = %g (%s), t(f0) = %g, f(t(f0)) = %g, error = %g, %s' % (
-            f0, range_info, t0, f1, error, status)
-        if verbose >= 1:
-            print (msg)
-        if not passed:
-            raise ValueError(msg)
-        return passed
-
-    num_passed = 0
-    num_failed = 0
-
-    # Test A for fairly small y values (to ensure coverage of linear range)
-    for i in range (0, 100):
-        y0 = 0.025 * random.random()
-        passed = test_A (y0, tolerance=1.0e-13, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    # Test A for fairly large y values
-    for i in range (0, 100):
-        y0 = 10.0 * random.random()
-        passed = test_A (y0, tolerance=1.0e-13, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    # Test B for fairly small L values (to ensure coverage of linear range)
-    for i in range (0, 100):
-        L0 = 0.25 * random.random()
-        passed = test_B (L0, tolerance=1.0e-10, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    # Test B for fairly large L values
-    for i in range (0, 100):
-        L0 = 1000.0 * random.random()
-        passed = test_B (L0, tolerance=1.0e-10, verbose=verbose)
-        if passed:
-            num_passed += 1
-        else:
-            num_failed += 1
-
-    msg = 'test_Lab_f() : %d tests passed, %d tests failed' % (
-        num_passed, num_failed)
-    print (msg)
-
-#
-# Main test routine for the conversions
-#
-
-def test (verbose=0):
-    '''Test suite for color model conversions.'''
-    XXXtest_L_luminance (verbose=verbose)
-    XXXtest_Lab_f (verbose=verbose)
-    XXXtest_uv_primes (verbose=verbose)
 
 
 class TestColormodels(unittest.TestCase):
@@ -620,9 +331,6 @@ class TestColormodels(unittest.TestCase):
             self.check_xyz_lab(xyz0, verbose)
 
     # Luminance function [of Y value of an XYZ color] used in Luv and Lab.
-    # See [Kasson p.399] for details.
-    # The linear range coefficient L_LUM_C has more digits than in the paper,
-    # this makes the function more continuous over the boundary.
 
     def check_L_luminance_inverse_1(self, y0, verbose):
         ''' Check that L_luminance_inverse() is the inverse of L_luminance() for the given y0. '''
@@ -682,10 +390,7 @@ class TestColormodels(unittest.TestCase):
             L0 = 1000.0 * random.random()
             self.check_L_luminance_inverse_2(L0, verbose)
 
-    # Utility function for Lab
-    # See [Kasson p.399] for details.
-    # The linear range coefficient has more digits than in the paper,
-    # this makes the function more continuous over the boundary.
+    # Utility function for Lab.
 
     def check_Lab_f_inverse_1(self, t0, verbose):
         ''' Check that Lab_f_inverse() is the inverse of Lab_f() for the given t0. '''
@@ -746,7 +451,6 @@ class TestColormodels(unittest.TestCase):
             self.check_Lab_f_inverse_2(L0, verbose)
 
     # Utility function for Luv.
-    # Test that uv_primes() and uv_primes_inverse() are inverses.
 
     def check_uv_primes_inverse_1(self, xyz0, verbose):
         ''' Check that uv_primes() and uv_primes_inverse() are inverses. '''
@@ -803,5 +507,4 @@ class TestColormodels(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    test()
     unittest.main()
