@@ -83,7 +83,6 @@ You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
 import math, cmath, numpy
-import pylab
 
 import colormodels
 import ciexyz
