@@ -826,7 +826,7 @@ def clip_rgb_color (rgb_color):
             rgb [2] = scaling * (rgb [2] - rgb_min);
             clipped_chromaticity = True
     else:
-        raise ValueError, 'Invalid color clipping method %s' % (str(_clip_method))
+        raise ValueError('Invalid color clipping method %s' % (str(_clip_method)))
 
     # clip intensity if needed (rgb values > 1.0) by scaling
     rgb_max = max (rgb)
@@ -873,9 +873,9 @@ def irgb_from_irgb_string (irgb_string):
     '''Convert a color hex string (like '#AB13D2') into a displayable irgb color.'''
     strlen = len (irgb_string)
     if strlen != 7:
-        raise ValueError, 'irgb_string_from_irgb(): Expecting 7 character string like #AB13D2'
+        raise ValueError('irgb_string_from_irgb(): Expecting 7 character string like #AB13D2')
     if irgb_string [0] != '#':
-        raise ValueError, 'irgb_string_from_irgb(): Expecting 7 character string like #AB13D2'
+        raise ValueError('irgb_string_from_irgb(): Expecting 7 character string like #AB13D2')
     irs = irgb_string [1:3]
     igs = irgb_string [3:5]
     ibs = irgb_string [5:7]

@@ -48,8 +48,7 @@ def test_xyz_rgb (verbose=1):
         if verbose >= 1:
             print msg
         if not passed:
-            pass
-            raise ValueError, msg
+            raise ValueError(msg)
         return passed
 
     num_passed = 0
@@ -90,12 +89,12 @@ def test_xyz_irgb (verbose=1):
             colormodels.rgb_from_xyz (xyz0))
         irgb1 = colormodels.irgb_from_xyz (xyz0)
         if (irgb0[0] != irgb1[0]) or (irgb0[1] != irgb1[1]) or (irgb0[2] != irgb1[2]):
-            raise ValueError
+            raise ValueError('Error in conversion.')
         irgbs0 = colormodels.irgb_string_from_rgb (
             colormodels.rgb_from_xyz (xyz0))
         irgbs1 = colormodels.irgb_string_from_xyz (xyz0)
         if irgbs0 != irgbs1:
-            raise ValueError
+            raise ValueError('Error in conversion.')
     print 'Passed test_xyz_irgb()'
 
 #
@@ -136,8 +135,7 @@ def test_L_luminance (verbose=1):
         if verbose >= 1:
             print msg
         if not passed:
-            pass
-            raise ValueError, msg
+            raise ValueError(msg)
         return passed
 
     # Test B - Check that L_luminance() is the inverse of L_luminance_inverse()
@@ -162,8 +160,7 @@ def test_L_luminance (verbose=1):
         if verbose >= 1:
             print msg
         if not passed:
-            pass
-            raise ValueError, msg
+            raise ValueError(msg)
         return passed
 
     num_passed = 0
@@ -230,8 +227,7 @@ def test_uv_primes (verbose=1):
         if verbose >= 1:
             print msg
         if not passed:
-            pass
-            raise ValueError, msg
+            raise ValueError(msg)
         return passed
 
     def test_B (up0, vp0, y0, tolerance=0.0, verbose=1):
@@ -251,8 +247,7 @@ def test_uv_primes (verbose=1):
         if verbose >= 1:
             print msg
         if not passed:
-            pass
-            raise ValueError, msg
+            raise ValueError(msg)
         return passed
 
     num_passed = 0
@@ -335,8 +330,7 @@ def test_Lab_f (verbose=1):
         if verbose >= 1:
             print msg
         if not passed:
-            pass
-            raise ValueError, msg
+            raise ValueError(msg)
         return passed
 
     # Test B - Check that Lab_f() is the inverse of Lab_f_inverse()
@@ -361,8 +355,7 @@ def test_Lab_f (verbose=1):
         if verbose >= 1:
             print msg
         if not passed:
-            pass
-            raise ValueError, msg
+            raise ValueError(msg)
         return passed
 
     num_passed = 0
@@ -434,8 +427,7 @@ def test_xyz_luv (verbose=1):
         if verbose >= 1:
             print msg
         if not passed:
-            pass
-            raise ValueError, msg
+            raise ValueError(msg)
         return passed
 
     num_passed = 0
@@ -490,8 +482,7 @@ def test_xyz_lab (verbose=1):
         if verbose >= 1:
             print msg
         if not passed:
-            pass
-            raise ValueError, msg
+            raise ValueError(msg)
         return passed
 
     num_passed = 0
@@ -542,9 +533,9 @@ def test_gamma (verbose=1):
             #print 'a = %g, c = %g, err = %g, rel = %g' % (a, c, err2, rel2)
             tolerance = 1.0e-14
             if rel1 > tolerance:
-                raise ValueError
+                raise ValueError('Error exceeds tolerance.')
             if rel2 > tolerance:
-                raise ValueError
+                raise ValueError('Error exceeds tolerance.')
 
     # test default sRGB component (cannot supply exponent)
     if verbose >= 1:
@@ -581,10 +572,10 @@ def test_irgb_string (verbose=1):
         irgb_string2 = colormodels.irgb_string_from_irgb (irgb2)
         if (irgb[0] != irgb2[0]) or (irgb[1] != irgb2[1]) or (irgb[2] != irgb2[2]):
             msg = 'irgb %s and irgb2 %s do not match' % (str (irgb), str (irgb2))
-            raise ValueError, msg
+            raise ValueError(msg)
         if (irgb_string != irgb_string2):
             msg = 'irgb_string %s and irgb_string2 %s do not match' % (irgb_string, irgb_string2)
-            raise ValueError, msg
+            raise ValueError(msg)
     if verbose >= 1:
         print 'Passed test_irgb_string()'
 
@@ -600,7 +591,7 @@ def test_rgb_irgb (verbose=1):
         rgb1 = colormodels.rgb_from_irgb (irgb1)
         if (irgb0[0] != irgb1[0]) or (irgb0[1] != irgb1[1]) or (irgb0[2] != irgb1[2]):
             msg = 'irgb0 %s and irgb1 %s do not match' % (str (irgb0), str (irgb1))
-            raise ValueError, msg
+            raise ValueError(msg)
         tolerance = 1.0e-14
         err_rgb = rgb1 - rgb0
         err_r = math.fabs (err_rgb [0])
@@ -608,7 +599,7 @@ def test_rgb_irgb (verbose=1):
         err_b = math.fabs (err_rgb [2])
         if (err_r > tolerance) or (err_g > tolerance) or (err_b > tolerance):
             msg = 'rgb0 %s and rgb1 %s differ by %g' % (str (rgb0), str (rgb1), max (err_r,err_g,err_b))
-            raise ValueError, msg
+            raise ValueError(msg)
     if verbose >= 1:
         print 'Passed test_rgb_irgb()'
 
@@ -657,3 +648,7 @@ def test (verbose=0):
     test_irgb_string (verbose=1)
     test_rgb_irgb (verbose=1)
     test_clipping (verbose=0)
+
+
+if __name__ == '__main__':
+    test()
