@@ -593,9 +593,7 @@ def Lab_f_inverse (F):
 
 def luv_from_xyz (xyz):
     '''Convert CIE XYZ to Luv.'''
-    x = xyz [0]
     y = xyz [1]
-    z = xyz [2]
     y_p = y / _reference_white [1];       # actually reference_white [1] is probably always 1.0
     (u_prime, v_prime) = uv_primes (xyz)
     L = L_luminance (y_p)

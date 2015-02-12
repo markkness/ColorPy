@@ -88,9 +88,6 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
-import math, numpy
-
-import colormodels
 import ciexyz
 import blackbody
 import plots
@@ -636,9 +633,7 @@ _Illuminant_D65 = None
 
 def init ():
     '''Initialize CIE Illuminant D65.  This runs on module startup.'''
-    table_size = len (_Illuminant_D65_table)
     first_wl = _Illuminant_D65_table [0][0]
-    last_wl  = _Illuminant_D65_table [-1][0]
     # for now, only consider the part in the normal visible range (360-830 nm)
     first_index = ciexyz.start_wl_nm - first_wl
     table_first = _Illuminant_D65_table [first_index][0]

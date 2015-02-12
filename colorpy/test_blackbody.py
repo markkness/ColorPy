@@ -104,11 +104,11 @@ def test_blackbody (verbose=0):
     num_failed = 0
 
     # a few calls with specific arguments
-    test_zero1 = blackbody_total_intensity (100.0, 0, 100)
-    test_zero2 = blackbody_total_intensity (0.0, 0, 100)
-    test_zero3 = blackbody_total_intensity (100000.0, 0, 100)
-    test_zero4 = blackbody_total_intensity (0.0, 0, 100000)
-    test_zero5 = blackbody_total_intensity (100000.0, 0, 100000)
+    blackbody_total_intensity (100.0, 0, 100)
+    blackbody_total_intensity (0.0, 0, 100)
+    blackbody_total_intensity (100000.0, 0, 100)
+    blackbody_total_intensity (0.0, 0, 100000)
+    blackbody_total_intensity (100000.0, 0, 100000)
     num_passed += 5
 
     # determine the color for several temperatures - 10000.0 is a particularly good range
@@ -172,10 +172,6 @@ def test_book (verbose=1):
         # did we match the tablulated result?
         tolerance = 2.0e-4
         passed = (math.fabs (dx) <= tolerance) and (math.fabs (dy) <= tolerance)
-        if passed:
-            status = 'pass'
-        else:
-            status = 'FAILED'
         msg = 'test_book() : T = %g : calculated x,y = %g,%g : book values x,y = %g,%g : errors = %g,%g' % (
             T, xyz [0], xyz [1], book_x, book_y, dx, dy)
         if verbose >= 1:
