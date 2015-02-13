@@ -24,11 +24,12 @@ along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
 from __future__ import print_function
 
-import math, random, numpy
+import math
+import numpy
 import unittest
 
-import colormodels
 import blackbody
+import colormodels
 
 # FIXME: The following calculation is not working currently.
 # It is an attempt to get the scale of the intensity correct.
@@ -128,14 +129,12 @@ class TestBlackbody(unittest.TestCase):
     def test_coverage_color(self, verbose=False):
         ''' Coverage test of blackbody color. '''
         # Calculate the color for a variety of temperatures.
-        temp_ranges = [100.0, 1000.0, 10000.0, 100000.0, 1000000.0]
-        for T0 in temp_ranges:
-            for i in range (10):
-                T_K = T0 * random.random()
-                xyz = blackbody.blackbody_color (T_K)
-                msg = 'T = %g K, xyz = %s' % (T_K, str (xyz))
-                if verbose >= 1:
-                    print (msg)
+        T_list = numpy.logspace(1.0, 6.0, 21, base=10).tolist()
+        for T in T_list:
+            xyz = blackbody.blackbody_color (T)
+            msg = 'T: %g K    xyz: %s' % (T, str(xyz))
+            if verbose:
+                print (msg)
 
     def test_coverage_total_intensity(self):
         ''' Coverage test of blackbody total intensity. '''
