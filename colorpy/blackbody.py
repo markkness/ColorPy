@@ -91,7 +91,7 @@ def blackbody_specific_intensity (wl_nm, T_K):
     wl_m = wl_nm * 1.0e-9
     inv_exponent = (wl_m * T_K) / a
     # Very large exponents (small inv_exponent) result in nearly zero intensity.
-    # Avoid the numeric troubles in this case and return zero intensity/
+    # Avoid the numeric troubles in this case and return zero intensity.
     if inv_exponent < 1.0 / 500.0:
         return 0.0
     exponent = 1.0 / inv_exponent

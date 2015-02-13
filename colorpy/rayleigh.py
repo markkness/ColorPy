@@ -76,22 +76,22 @@ def rayleigh_scattering (wl_nm):
     Scattering is proportional to 1/wavelength^4.
     The scattering is scaled so that the factor for wl_nm = 555.0 is 1.0.'''
     wl_0_nm = 555.0
-    wl_rel = wl_nm / wl_0_nm
+    wl_rel  = wl_nm / wl_0_nm
     rayleigh_factor = math.pow (wl_rel, -4)
     return rayleigh_factor
 
 def rayleigh_scattering_spectrum ():
     '''Get the Rayleigh scattering spectrum (independent of illuminant), as a numpy array.'''
     spectrum = ciexyz.empty_spectrum()
-    (num_rows, num_cols) = spectrum.shape
-    for i in range (0, num_rows):
+    num_wl = spectrum.shape[0]
+    for i in range (0, num_wl):
         spectrum [i][1] = rayleigh_scattering (spectrum [i][0])
     return spectrum
 
 def rayleigh_illuminated_spectrum (illuminant):
     '''Get the spectrum when illuminated by the specified illuminant.'''
     spectrum = rayleigh_scattering_spectrum()
-    (num_wl, num_col) = spectrum.shape
+    num_wl = spectrum.shape[0]
     for i in range (0, num_wl):
         spectrum [i][1] *= illuminant [i][1]
     return spectrum
@@ -147,7 +147,7 @@ def rayleigh_spectrum_plot (illuminant, title, filename):
 
 def figures ():
     '''Draw some plots of Rayleigh scattering.'''
-    # patch plots for some illuminants
+    # Patch plots for some illuminants.
     rayleigh_patch_plot (
         [(illuminants.get_blackbody_illuminant (blackbody.SUN_TEMPERATURE), 'Sun')],
         'Rayleigh Scattering by the Sun', 'Rayleigh-PatchSun')
@@ -161,14 +161,20 @@ def figures ():
         (illuminants.get_blackbody_illuminant (15000.0), '15000 K')],
         'Rayleigh Scattering by Various Illuminants', 'Rayleigh-PatchVarious')
 
-    # color vs illuminant temperature
-    T_list = range (1200, 16000, 50)    # must be integers for range()
-    rayleigh_color_vs_illuminant_temperature_plot (T_list, 'Rayleigh Scattering Sky Colors', 'Rayleigh-SkyColors')
+    # Scattered color vs blackbody illuminant temperature.
+    T_list = numpy.linspace(1200.0, 16000.0, 300).tolist()
+    rayleigh_color_vs_illuminant_temperature_plot (
+        T_list, 'Rayleigh Scattering Sky Colors', 'Rayleigh-SkyColors')
 
-    # spectra for several illuminants
+    # Spectra for several illuminants.
     T_list = [2000.0, 3000.0, blackbody.SUN_TEMPERATURE, 6500.0, 11000.0, 15000.0]
     for T in T_list:
+        T_label = '%dK' % (round(T))
         rayleigh_spectrum_plot (
             illuminants.get_blackbody_illuminant (T),
             'Rayleigh Scattering\nIlluminant %g K' % (T),
-            'Rayleigh-Spectrum-%gK' % (T))
+            'Rayleigh-Spectrum-%s' % (T_label))
+
+
+if __name__ == '__main__':
+    figures()
