@@ -47,12 +47,11 @@ class TestRayleigh(unittest.TestCase):
             sc_1 = rayleigh.rayleigh_scattering(wl_1)
             sc_2 = rayleigh.rayleigh_scattering(wl_2)
             # Ratios, avoiding pow() for more independence from implementation.
-            r_wl  = wl_1 / wl_2
-            r_wl  = wl_2 / wl_1
             r_sc  = sc_1 / sc_2
+            r_wl  = wl_2 / wl_1
             r4_wl = r_wl * r_wl * r_wl * r_wl
             # Check.
-            actual = r4_wl / r_sc
+            actual = r_sc / r4_wl
             expect = 1.0
             error = math.fabs(actual - expect)
             tolerance = 1.0e-12

@@ -162,7 +162,7 @@ def figures ():
         'Rayleigh Scattering by Various Illuminants', 'Rayleigh-PatchVarious')
 
     # Scattered color vs blackbody illuminant temperature.
-    T_list = numpy.linspace(1200.0, 16000.0, 300).tolist()
+    T_list = numpy.linspace(1200.0, 16000.0, 300)
     rayleigh_color_vs_illuminant_temperature_plot (
         T_list, 'Rayleigh Scattering Sky Colors', 'Rayleigh-SkyColors')
 
