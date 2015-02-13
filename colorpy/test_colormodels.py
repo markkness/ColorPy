@@ -259,7 +259,6 @@ class TestColormodels(unittest.TestCase):
                 gamma = gamma)
             self.check_gamma_correction(verbose)
 
-
     # Conversions between standard device independent color space (CIE XYZ)
     # and the almost perceptually uniform space Luv.
 

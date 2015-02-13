@@ -67,7 +67,9 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
-import math, numpy, pylab
+import math
+import numpy
+import pylab
 
 import colormodels
 import ciexyz
@@ -91,7 +93,7 @@ def blackbody_specific_intensity (wl_nm, T_K):
     wl_m = wl_nm * 1.0e-9
     inv_exponent = (wl_m * T_K) / a
     # Very large exponents (small inv_exponent) result in nearly zero intensity.
-    # Avoid the numeric troubles in this case and return zero intensity/
+    # Avoid the numeric troubles in this case and return zero intensity.
     if inv_exponent < 1.0 / 500.0:
         return 0.0
     exponent = 1.0 / inv_exponent
@@ -101,10 +103,11 @@ def blackbody_specific_intensity (wl_nm, T_K):
 def blackbody_spectrum (T_K):
     '''Get the spectrum of a blackbody, as a numpy array.'''
     spectrum = ciexyz.empty_spectrum()
-    (num_rows, num_cols) = spectrum.shape
-    for i in range (0, num_rows):
+    num_wl = spectrum.shape[0]
+    for i in range (0, num_wl):
+        # Intensity per unit wavelength.
         specific_intensity = blackbody_specific_intensity (spectrum [i][0], T_K)
-        # scale by size of wavelength interval
+        # Scale by size of wavelength interval.
         spectrum [i][1] = specific_intensity * ciexyz.delta_wl_nm * 1.0e-9
     return spectrum
 
@@ -137,7 +140,8 @@ def blackbody_color_vs_temperature_plot (T_list, title, filename):
         T_i = T_list [i]
         xyz = blackbody_color (T_i)
         rgb_list [i] = colormodels.rgb_from_xyz (xyz)
-    # note that b and g become negative for low T - MatPlotLib skips those on the semilog plot.
+    # Note that b and g become negative for low T.
+    # MatPlotLib skips those on the semilog plot.
     plots.color_vs_param_plot (
         T_list,
         rgb_list,
@@ -151,8 +155,8 @@ def blackbody_color_vs_temperature_plot (T_list, title, filename):
 def blackbody_spectrum_plot (T_K):
     '''Draw the spectrum of a blackbody at the given temperature.'''
     spectrum = blackbody_spectrum (T_K)
-    title = 'Blackbody Spectrum - T %d K' % (int (T_K))
-    filename = 'BlackbodySpectrum-%dK' % (int (T_K))
+    title    = 'Blackbody Spectrum - T %d K' % (round (T_K))
+    filename = 'BlackbodySpectrum-%dK' % (round (T_K))
     plots.spectrum_plot (
         spectrum,
         title,
@@ -165,23 +169,29 @@ def blackbody_spectrum_plot (T_K):
 
 def figures ():
     '''Create some blackbody plots.'''
-    # patch plots
-    T_list_0    = plots.log_interpolate ( 1200.0, 20000.0, 48)
-    T_list_hot  = plots.log_interpolate (10000.0, 40000.0, 24)
-    T_list_cool = plots.log_interpolate (  950.0,  1200.0, 24)
-    blackbody_patch_plot (T_list_0,    'Blackbody Colors', 'Blackbody-Patch')
-    blackbody_patch_plot (T_list_hot,  'Hot Blackbody Colors', 'Blackbody-HotPatch')
-    blackbody_patch_plot (T_list_cool, 'Cool Blackbody Colors', 'Blackbody-CoolPatch')
+    # Some patch plots.
+    T_norm = plots.log_interpolate ( 1200.0, 20000.0, 48)
+    T_hot  = plots.log_interpolate (10000.0, 40000.0, 24)
+    T_cool = plots.log_interpolate (  950.0,  1200.0, 24)
+    blackbody_patch_plot (T_norm, 'Blackbody Colors',      'Blackbody-Patch')
+    blackbody_patch_plot (T_hot,  'Hot Blackbody Colors',  'Blackbody-HotPatch')
+    blackbody_patch_plot (T_cool, 'Cool Blackbody Colors', 'Blackbody-CoolPatch')
 
-    # color vs temperature
-    blackbody_color_vs_temperature_plot (range (1200, 16000, 50),   'Blackbody Colors',      'Blackbody-Colors')
-    blackbody_color_vs_temperature_plot (range (10000, 40000, 100), 'Hot Blackbody Colors',  'Blackbody-HotColors')
-    blackbody_color_vs_temperature_plot (range (950, 1200, 1),      'Cool Blackbody Colors', 'Blackbody-CoolColors')
+    # Color vs temperature.
+    T_norm = numpy.linspace( 1200.0, 16000.0, 300)
+    T_hot  = numpy.linspace(10000.0, 40000.0, 300)
+    T_cool = numpy.linspace(  950.0,  1200.0, 300)
+    blackbody_color_vs_temperature_plot (T_norm, 'Blackbody Colors',      'Blackbody-Colors')
+    blackbody_color_vs_temperature_plot (T_hot,  'Hot Blackbody Colors',  'Blackbody-HotColors')
+    blackbody_color_vs_temperature_plot (T_cool, 'Cool Blackbody Colors', 'Blackbody-CoolColors')
 
-    # spectrum of specific temperatures
+    # Spectrum for some specific temperatures.
     blackbody_spectrum_plot (2000.0)
-    blackbody_spectrum_plot (3000.0)  # Proxima Centauri
-    blackbody_spectrum_plot (SUN_TEMPERATURE)  # Sun
-    blackbody_spectrum_plot (11000.0) # Rigel
+    blackbody_spectrum_plot (3000.0)           # Proxima Centauri.
+    blackbody_spectrum_plot (SUN_TEMPERATURE)  # Sun.
+    blackbody_spectrum_plot (11000.0)          # Rigel.
     blackbody_spectrum_plot (15000.0)
 
+
+if __name__ == '__main__':
+    figures()
