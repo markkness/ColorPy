@@ -46,9 +46,9 @@ class TestThinFilm(unittest.TestCase):
             for k in range (20):
                 wl_nm = 1000.0 * random.random()
                 film.get_interference_reflection_coefficient (wl_nm)
-            film.reflection_spectrum ()
-            film.illuminated_spectrum (illuminant)
-            film.illuminated_color (illuminant)
+            film.get_reflection_spectrum ()
+            film.get_illuminated_spectrum (illuminant)
+            film.get_illuminated_color (illuminant)
 
 
 if __name__ == '__main__':

@@ -88,6 +88,8 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+import time
+
 import ciexyz
 import blackbody
 import plots
@@ -653,7 +655,7 @@ def init ():
 # ColorPy does not currently provide D55 or D75.
 #
 
-def get_illuminant_D65 ():
+def get_illuminant_D65_old ():
     '''Get CIE Illuminant D65, as a spectrum, normalized to Y = 1.0.
 
     CIE standard illuminant D65 represents a phase of natural daylight
@@ -666,22 +668,53 @@ def get_illuminant_D65 ():
     illuminant = _Illuminant_D65.copy()
     return illuminant
 
+def get_illuminant_D65 ():
+    '''Get CIE Illuminant D65, as a spectrum, normalized to Y = 1.0.
+
+    CIE standard illuminant D65 represents a phase of natural daylight
+    with a correlated color temperature of approximately 6504 K.  (Wyszecki, p. 144)
+
+    In the interest of standardization the CIE recommends that D65 be used
+    whenever possible.  Otherwise, D55 or D75 are recommended.  (Wyszecki, p. 145)
+
+    (ColorPy does not currently provide D55 or D75, however.)'''
+    # FIXME: This should work independent of old.
+    old = get_illuminant_D65_old()
+    illuminant = ciexyz.Spectrum()
+    illuminant.from_array(old)
+    return illuminant
+
+def get_illuminant_A_old ():
+    '''Get CIE Illuminant A, as a spectrum, normalized to Y = 1.0.
+    This is actually a blackbody illuminant for T = 2856 K.  (Wyszecki, p. 143)'''
+    illuminant = get_blackbody_illuminant_old (2856.0)
+    return illuminant
+
 def get_illuminant_A ():
     '''Get CIE Illuminant A, as a spectrum, normalized to Y = 1.0.
     This is actually a blackbody illuminant for T = 2856 K.  (Wyszecki, p. 143)'''
     illuminant = get_blackbody_illuminant (2856.0)
     return illuminant
 
-def get_blackbody_illuminant (T_K):
+def get_blackbody_illuminant_old (T_K):
     '''Get the spectrum of a blackbody at the given temperature, normalized to Y = 1.0.'''
-    illuminant = blackbody.blackbody_spectrum (T_K)
+    illuminant = blackbody.blackbody_spectrum_old (T_K)
     xyz = ciexyz.xyz_from_spectrum (illuminant)
     if xyz [1] != 0.0:
         scaling = 1.0 / xyz [1]
         illuminant [:,1] *= scaling
     return illuminant
 
-def get_constant_illuminant ():
+def get_blackbody_illuminant (T_K):
+    '''Get the spectrum of a blackbody at the given temperature, normalized to Y = 1.0.'''
+    illuminant = blackbody.get_blackbody_spectrum (T_K)
+    xyz = illuminant.get_xyz()
+    if xyz [1] != 0.0:
+        scaling = 1.0 / xyz [1]
+        illuminant.intensity *= scaling
+    return illuminant
+
+def get_constant_illuminant_old ():
     '''Get an illuminant, with spectrum constant over wavelength, normalized to Y = 1.0.'''
     illuminant = ciexyz.empty_spectrum()
     (num_wl, num_cols) = illuminant.shape
@@ -693,9 +726,17 @@ def get_constant_illuminant ():
         illuminant [:,1] *= scaling
     return illuminant
 
+def get_constant_illuminant ():
+    '''Get an illuminant, with spectrum constant over wavelength, normalized to Y = 1.0.'''
+    # FIXME: This should work independent of old.
+    old = get_constant_illuminant_old()
+    illuminant = ciexyz.Spectrum()
+    illuminant.from_array(old)
+    return illuminant
+
 # Scale an illuminant by an arbitrary factor
 
-def scale_illuminant (illuminant, scaling):
+def scale_illuminant_old (illuminant, scaling):
     '''Scale the illuminant intensity by the specfied factor.'''
     illuminant [:,1] *= scaling
     return illuminant
@@ -708,14 +749,22 @@ init()
 def figures ():
     '''Plot spectra for several illuminants.'''
     # D65
-    plots.spectrum_plot (
+    plots.spectrum_plot_new (
         get_illuminant_D65(), 'CIE Illuminant D65', 'Illuminant-D65')
     # A
-    plots.spectrum_plot (
+    plots.spectrum_plot_new (
         get_illuminant_A(), 'CIE Illuminant A', 'Illuminant-A')
     # Constant
-    plots.spectrum_plot (
+    plots.spectrum_plot_new (
         get_constant_illuminant(), 'Constant Illuminant', 'Illuminant-Const')
     # Blackbody (5778)
-    plots.spectrum_plot (
+    plots.spectrum_plot_new (
         get_blackbody_illuminant (5778.0), '5778 K Illuminant', 'Illuminant-5778')
+
+
+if __name__ == '__main__':
+    t0 = time.clock()
+    figures()
+    t1 = time.clock()
+    dt = t1 - t0
+    print ('Elapsed time: %.3f sec' % (dt))

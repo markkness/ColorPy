@@ -70,6 +70,7 @@ along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 import math
 import numpy
 import pylab
+import time
 
 import colormodels
 import ciexyz
@@ -81,27 +82,35 @@ SPEED_OF_LIGHT    = 2.997925e+08    # m/sec
 BOLTZMAN_CONSTANT = 1.3802e-23      # J/K
 SUN_TEMPERATURE   = 5778.0          # K
 
+# Precalculated constants, for performance.
+# The improvement seems minor, but these calculations can be hit hard.
+BLACKBODY_CONST_A = (PLANCK_CONSTANT * SPEED_OF_LIGHT) / (BOLTZMAN_CONSTANT)
+BLACKBODY_CONST_B = (2.0 * PLANCK_CONSTANT * SPEED_OF_LIGHT * SPEED_OF_LIGHT)
+BLACKBODY_INV_EXP = (1.0 / 500.0)
+
 def blackbody_specific_intensity (wl_nm, T_K):
     '''Get the monochromatic specific intensity for a blackbody -
         wl_nm = wavelength [nm]
         T_K   = temperature [K]
     This is the energy radiated per second per unit wavelength per unit solid angle.
     Reference - Shu, eq. 4.6, p. 78.'''
-    # precalculations that could be made global
-    a = (PLANCK_CONSTANT * SPEED_OF_LIGHT) / (BOLTZMAN_CONSTANT)
-    b = (2.0 * PLANCK_CONSTANT * SPEED_OF_LIGHT * SPEED_OF_LIGHT)
+    # Wavelength scaling could be precalculated also.
     wl_m = wl_nm * 1.0e-9
-    inv_exponent = (wl_m * T_K) / a
+    inv_exponent = (wl_m * T_K) / BLACKBODY_CONST_A
     # Very large exponents (small inv_exponent) result in nearly zero intensity.
     # Avoid the numeric troubles in this case and return zero intensity.
-    if inv_exponent < 1.0 / 500.0:
+    if inv_exponent < BLACKBODY_INV_EXP:
         return 0.0
     exponent = 1.0 / inv_exponent
-    specific_intensity = b / (math.pow (wl_m, 5) * (math.exp (exponent) - 1.0))
-    return specific_intensity
+    # pow() vs math.pow() drops performance by c. 5%.
+    wl_5 = math.pow (wl_m, 5)
+    intensity = BLACKBODY_CONST_B / (wl_5 * (math.exp (exponent) - 1.0))
+    return intensity
 
-def blackbody_spectrum (T_K):
-    '''Get the spectrum of a blackbody, as a numpy array.'''
+# Deprecated - use get_blackbody_spectrum() instead.
+# FIXME: Need test that this matches get_blackbody_spectrum().
+def blackbody_spectrum_old (T_K):
+    ''' Get the spectrum of a blackbody, as a numpy array. '''
     spectrum = ciexyz.empty_spectrum()
     num_wl = spectrum.shape[0]
     for i in range (0, num_wl):
@@ -111,34 +120,64 @@ def blackbody_spectrum (T_K):
         spectrum [i][1] = specific_intensity * ciexyz.delta_wl_nm * 1.0e-9
     return spectrum
 
-def blackbody_color (T_K):
+def get_blackbody_spectrum (T_K):
+    ''' Get the Spectrum of a blackbody at the given temperature [K]. '''
+    spectrum = ciexyz.Spectrum()
+    dwl_m = ciexyz.delta_wl_nm * 1.0e-9
+    for i in range (spectrum.num_wl):
+        intensity = blackbody_specific_intensity (spectrum.wavelength[i], T_K)
+        # Scale by wavelength interval.
+        spectrum.intensity[i] = intensity * dwl_m
+    return spectrum
+
+# FIXME: Following exists only to check blackbody_spectrum_old().
+# Move to tests?
+def blackbody_color_old (T_K):
     '''Given a temperature (K), return the xyz color of a thermal blackbody.'''
-    spectrum = blackbody_spectrum (T_K)
-    xyz = ciexyz.xyz_from_spectrum (spectrum)
+    spectrum_old = blackbody_spectrum_old (T_K)
+    xyz = ciexyz.xyz_from_spectrum (spectrum_old)
+    return xyz
+
+def blackbody_color (T_K):
+    ''' Get the xyz color of a blackbody at the given temperature [K]. '''
+    spectrum = get_blackbody_spectrum (T_K)
+    xyz = spectrum.get_xyz()
     return xyz
 
 #
 # Figures
 #
 
-def blackbody_patch_plot (T_list, title, filename):
-    '''Draw a patch plot of blackbody colors for the given temperature range.'''
+# FIXME: Following exists only to check blackbody_spectrum_old().
+def blackbody_patch_plot_old (T_list, title, filename):
+    ''' Draw a patch plot of blackbody colors for the given temperatures. '''
     xyz_colors = []
     color_names = []
-    for Ti in T_list:
-        xyz = blackbody_color (Ti)
+    for T in T_list:
+        xyz = blackbody_color_old (T)
         xyz_colors.append (xyz)
-        name = '%g K' % (Ti)
+        name = '%g K' % (T)
+        color_names.append (name)
+    plots.xyz_patch_plot (xyz_colors, color_names, title, filename)
+
+def blackbody_patch_plot (T_list, title, filename):
+    ''' Draw a patch plot of blackbody colors for the given temperatures. '''
+    xyz_colors = []
+    color_names = []
+    for T in T_list:
+        xyz = blackbody_color (T)
+        xyz_colors.append (xyz)
+        name = '%g K' % (T)
         color_names.append (name)
     plots.xyz_patch_plot (xyz_colors, color_names, title, filename)
 
 def blackbody_color_vs_temperature_plot (T_list, title, filename):
-    '''Draw a color vs temperature plot for the given temperature range.'''
+    ''' Draw a color vs temperature plot for the given temperature range. '''
     num_T = len (T_list)
     rgb_list = numpy.empty ((num_T, 3))
     for i in range (0, num_T):
-        T_i = T_list [i]
-        xyz = blackbody_color (T_i)
+        T = T_list [i]
+        xyz = blackbody_color (T)
         rgb_list [i] = colormodels.rgb_from_xyz (xyz)
     # Note that b and g become negative for low T.
     # MatPlotLib skips those on the semilog plot.
@@ -154,10 +193,10 @@ def blackbody_color_vs_temperature_plot (T_list, title, filename):
 
 def blackbody_spectrum_plot (T_K):
     '''Draw the spectrum of a blackbody at the given temperature.'''
-    spectrum = blackbody_spectrum (T_K)
+    spectrum = get_blackbody_spectrum (T_K)
     title    = 'Blackbody Spectrum - T %d K' % (round (T_K))
     filename = 'BlackbodySpectrum-%dK' % (round (T_K))
-    plots.spectrum_plot (
+    plots.spectrum_plot_new (
         spectrum,
         title,
         filename,
@@ -176,14 +215,19 @@ def figures ():
     blackbody_patch_plot (T_norm, 'Blackbody Colors',      'Blackbody-Patch')
     blackbody_patch_plot (T_hot,  'Hot Blackbody Colors',  'Blackbody-HotPatch')
     blackbody_patch_plot (T_cool, 'Cool Blackbody Colors', 'Blackbody-CoolPatch')
+    # Old-style as tests.
+    blackbody_patch_plot_old (T_norm, 'Blackbody Colors',      'Blackbody-Patch-Old')
 
     # Color vs temperature.
     T_norm = numpy.linspace( 1200.0, 16000.0, 300)
     T_hot  = numpy.linspace(10000.0, 40000.0, 300)
     T_cool = numpy.linspace(  950.0,  1200.0, 300)
-    blackbody_color_vs_temperature_plot (T_norm, 'Blackbody Colors',      'Blackbody-Colors')
-    blackbody_color_vs_temperature_plot (T_hot,  'Hot Blackbody Colors',  'Blackbody-HotColors')
-    blackbody_color_vs_temperature_plot (T_cool, 'Cool Blackbody Colors', 'Blackbody-CoolColors')
+    blackbody_color_vs_temperature_plot (
+        T_norm, 'Blackbody Colors',      'Blackbody-Colors')
+    blackbody_color_vs_temperature_plot (
+        T_hot,  'Hot Blackbody Colors',  'Blackbody-HotColors')
+    blackbody_color_vs_temperature_plot (
+        T_cool, 'Cool Blackbody Colors', 'Blackbody-CoolColors')
 
     # Spectrum for some specific temperatures.
     blackbody_spectrum_plot (2000.0)
@@ -194,4 +238,8 @@ def figures ():
 
 
 if __name__ == '__main__':
+    t0 = time.clock()
     figures()
+    t1 = time.clock()
+    dt = t1 - t0
+    print ('Elapsed time: %.3f sec' % (dt))

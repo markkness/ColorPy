@@ -63,19 +63,19 @@ class TestRayleigh(unittest.TestCase):
 
     def test_scattering(self, verbose=False):
         ''' Test of scattering calculations. '''
-        # Coverage test of rayleigh_scattering_spectrum().
-        rayleigh.rayleigh_scattering_spectrum()
+        # Coverage test of get_rayleigh_scattering_spectrum().
+        rayleigh.get_rayleigh_scattering_spectrum()
         illum = illuminants.get_illuminant_D65()
-        spect = rayleigh.rayleigh_illuminated_spectrum (illum)
+        spect = rayleigh.get_rayleigh_illuminated_spectrum (illum)
         # Both color calculations should give the same result.
-        xyz1 = ciexyz.xyz_from_spectrum (spect)
-        xyz2 = rayleigh.rayleigh_illuminated_color (illum)
-        atol = 1.0e-16
-        ok = numpy.allclose(xyz1, xyz2, atol=atol)
-        self.assertTrue(ok)
+        xyz1 = spect.get_xyz()
+        xyz2 = rayleigh.get_rayleigh_illuminated_color (illum)
         msg = 'D65 Rayleigh scattered xyz: %s, %s' % (str(xyz1), str(xyz2))
         if verbose:
             print (msg)
+        atol = 1.0e-16
+        ok = numpy.allclose(xyz1, xyz2, atol=atol)
+        self.assertTrue(ok)
 
 
 if __name__ == '__main__':

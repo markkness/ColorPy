@@ -695,6 +695,78 @@ def empty_spectrum ():
         spectrum [i][0] = float (wl_nm_range [i])
     return spectrum
 
+
+class Spectrum(object):
+    ''' A representation of a light spectrum.
+
+    This is preferred over the previous N by 2 array, as the separate wavelength
+    and intensity values make it easier to use numpy efficiently.
+    '''
+
+    def __init__(self):
+        self.num_wl     = end_wl_nm - start_wl_nm + 1
+        self.wavelength = numpy.linspace(float(start_wl_nm), float(end_wl_nm), self.num_wl)
+        self.intensity  = numpy.zeros(self.num_wl)
+
+    # Conversions between old-style N by 2 arrays.
+    # These were used in ColorPy 0.2 and before.
+
+    def from_array(self, spectrum_array):
+        ''' Convert the previous N by 2 array into the spectrum object. '''
+        shape = spectrum_array.shape
+        if shape != (self.num_wl, 2):
+            msg = 'Invalid spectrum array shape %s' % (str(shape))
+            raise ValueError (msg)
+        self.wavelength[:] = spectrum_array[:, 0]   # Should be redundant.
+        self.intensity [:] = spectrum_array[:, 1]
+
+    def to_array(self):
+        ''' Convert to the previous N by 2 array structure. '''
+        array = numpy.empty((self.num_wl, 2))
+        for i in range (self.num_wl):
+            array[i][0] = self.wavelength[i]
+            array[i][1] = self.intensity [i]
+        # Should be able to use:
+        # array[:, 0] = self.wavelength
+        # array[:, 1] = self.intensity
+        return array
+
+    # Simple operations.
+
+    def scale(self, sc):
+        ''' Scale the intensity. '''
+        self.intensity *= sc
+
+    # Get xyz colors for the spectrum.
+    # A faster algorithm is available if the wavelengths are standard.
+
+    def get_xyz_color_any(self):
+        ''' Get the xyz color of the spectrum. '''
+        # Integrate color, for any list of wavelengths.
+        rtn = colormodels.xyz_color (0.0, 0.0, 0.0)
+        for i in range (self.num_wl):
+            wavelength = self.wavelength [i]
+            intensity  = self.intensity  [i]
+            xyz = xyz_from_wavelength (wavelength)
+            rtn += intensity * xyz
+        return rtn
+
+    def get_xyz_color_standard(self):
+        ''' Get the xyz color of the spectrum. '''
+        # Integrate color, assuming the wavelengths are the standard list.
+        X = (self.intensity * _xyz_colors[1:-1, 0]).sum()
+        Y = (self.intensity * _xyz_colors[1:-1, 1]).sum()
+        Z = (self.intensity * _xyz_colors[1:-1, 2]).sum()
+        rtn = colormodels.xyz_color(X, Y, Z)
+        return rtn
+
+    def get_xyz(self):
+        ''' Get the xyz color of the spectrum. '''
+        # Assuming standard wavelengths for now.
+        #return self.get_xyz_color_any()
+        return self.get_xyz_color_standard()
+
+
 def xyz_from_wavelength (wl_nm):
     '''Given a wavelength (nm), return the corresponding xyz color, for unit intensity.'''
     # separate wl_nm into integer and fraction

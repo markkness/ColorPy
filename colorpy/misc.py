@@ -355,7 +355,7 @@ def spectral_line_555nm_plot ():
         [557.0, 0.0],
         [830.0, 0.0]]
     spectrum = numpy.array (spectrum_list)
-    plots.spectrum_plot (spectrum, '555 nm Spectral Line', 'line555nm')
+    plots.spectrum_plot_old (spectrum, '555 nm Spectral Line', 'line555nm')
 
 #
 
@@ -375,3 +375,7 @@ def figures ():
     spectral_colors_plus_purples_patch_plot ()
     perceptually_uniform_spectral_color_plots ()
     spectral_line_555nm_plot ()
+
+
+if __name__ == '__main__':
+    figures()

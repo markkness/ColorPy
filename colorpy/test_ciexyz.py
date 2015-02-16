@@ -52,6 +52,18 @@ class TestCiexyz(unittest.TestCase):
         if verbose:
             print ('555 nm = %s' % (str (xyz_555)))
 
+    def test_spectrum(self, verbose=True):
+        ''' Test the spectrum class. '''
+        spectrum = ciexyz.Spectrum()
+        color = spectrum.get_xyz()
+        # Color should be black for an empty spectrum.
+        tolerance = 1.0e-12
+        self.assertAlmostEqual(color[0], 0.0, delta=tolerance)
+        self.assertAlmostEqual(color[1], 0.0, delta=tolerance)
+        self.assertAlmostEqual(color[2], 0.0, delta=tolerance)
+        # Convert to old-style array.
+        array = spectrum.to_array()
+
 
 if __name__ == '__main__':
     unittest.main()
