@@ -655,19 +655,6 @@ def init ():
 # ColorPy does not currently provide D55 or D75.
 #
 
-def get_illuminant_D65_old ():
-    '''Get CIE Illuminant D65, as a spectrum, normalized to Y = 1.0.
-
-    CIE standard illuminant D65 represents a phase of natural daylight
-    with a correlated color temperature of approximately 6504 K.  (Wyszecki, p. 144)
-
-    In the interest of standardization the CIE recommends that D65 be used
-    whenever possible.  Otherwise, D55 or D75 are recommended.  (Wyszecki, p. 145)
-
-    (ColorPy does not currently provide D55 or D75, however.)'''
-    illuminant = _Illuminant_D65.copy()
-    return illuminant
-
 def get_illuminant_D65 ():
     '''Get CIE Illuminant D65, as a spectrum, normalized to Y = 1.0.
 
@@ -678,31 +665,14 @@ def get_illuminant_D65 ():
     whenever possible.  Otherwise, D55 or D75 are recommended.  (Wyszecki, p. 145)
 
     (ColorPy does not currently provide D55 or D75, however.)'''
-    # FIXME: This should work independent of old.
-    old = get_illuminant_D65_old()
     illuminant = ciexyz.Spectrum()
-    illuminant.from_array(old)
-    return illuminant
-
-def get_illuminant_A_old ():
-    '''Get CIE Illuminant A, as a spectrum, normalized to Y = 1.0.
-    This is actually a blackbody illuminant for T = 2856 K.  (Wyszecki, p. 143)'''
-    illuminant = get_blackbody_illuminant_old (2856.0)
+    illuminant.from_array (_Illuminant_D65)
     return illuminant
 
 def get_illuminant_A ():
     '''Get CIE Illuminant A, as a spectrum, normalized to Y = 1.0.
     This is actually a blackbody illuminant for T = 2856 K.  (Wyszecki, p. 143)'''
     illuminant = get_blackbody_illuminant (2856.0)
-    return illuminant
-
-def get_blackbody_illuminant_old (T_K):
-    '''Get the spectrum of a blackbody at the given temperature, normalized to Y = 1.0.'''
-    illuminant = blackbody.blackbody_spectrum_old (T_K)
-    xyz = ciexyz.xyz_from_spectrum (illuminant)
-    if xyz [1] != 0.0:
-        scaling = 1.0 / xyz [1]
-        illuminant [:,1] *= scaling
     return illuminant
 
 def get_blackbody_illuminant (T_K):
@@ -714,27 +684,39 @@ def get_blackbody_illuminant (T_K):
         illuminant.intensity *= scaling
     return illuminant
 
-def get_constant_illuminant_old ():
-    '''Get an illuminant, with spectrum constant over wavelength, normalized to Y = 1.0.'''
-    illuminant = ciexyz.empty_spectrum()
-    (num_wl, num_cols) = illuminant.shape
-    for i in range (0, num_wl):
-        illuminant [i][1] = 1.0
-    xyz = ciexyz.xyz_from_spectrum (illuminant)
-    if xyz [1] != 0.0:
-        scaling = 1.0 / xyz [1]
-        illuminant [:,1] *= scaling
-    return illuminant
-
 def get_constant_illuminant ():
     '''Get an illuminant, with spectrum constant over wavelength, normalized to Y = 1.0.'''
-    # FIXME: This should work independent of old.
-    old = get_constant_illuminant_old()
     illuminant = ciexyz.Spectrum()
-    illuminant.from_array(old)
+    illuminant.intensity.fill (1.0)
+    xyz = illuminant.get_xyz()
+    if xyz [1] != 0.0:
+        scaling = 1.0 / xyz [1]
+        illuminant.intensity *= scaling
     return illuminant
 
-# Scale an illuminant by an arbitrary factor
+#
+# Deprecated usage, returning simple arrays instead of Spectrum class.
+#
+
+def get_illuminant_D65_old ():
+    illuminant = get_illuminant_D65()
+    array = illuminant.to_array()
+    return array
+
+def get_illuminant_A_old ():
+    illuminant = get_illuminant_A()
+    array = illuminant.to_array()
+    return array
+
+def get_blackbody_illuminant_old (T_K):
+    illuminant = get_blackbody_illuminant (T_K)
+    array = illuminant.to_array()
+    return array
+
+def get_constant_illuminant_old ():
+    illuminant = get_constant_illuminant()
+    array = illuminant.to_array()
+    return array
 
 def scale_illuminant_old (illuminant, scaling):
     '''Scale the illuminant intensity by the specfied factor.'''
@@ -760,6 +742,11 @@ def figures ():
     # Blackbody (5778)
     plots.spectrum_plot_new (
         get_blackbody_illuminant (5778.0), '5778 K Illuminant', 'Illuminant-5778')
+    # Old-style.
+    plots.spectrum_plot_old (get_illuminant_D65_old(), 'CIE Illuminant D65', 'Illuminant-D65-Old')
+    plots.spectrum_plot_old (get_illuminant_A_old(), 'CIE Illuminant A', 'Illuminant-A-Old')
+    plots.spectrum_plot_old (get_constant_illuminant_old(), 'Constant Illuminant', 'Illuminant-Const-Old')
+    plots.spectrum_plot_old (get_blackbody_illuminant_old (5778.0), '5778 K Illuminant', 'Illuminant-5778-Old')
 
 
 if __name__ == '__main__':
