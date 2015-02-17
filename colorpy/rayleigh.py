@@ -78,54 +78,59 @@ import plots
 def rayleigh_scattering (wl_nm):
     '''Get the Rayleigh scattering factor for the wavelength.
     Scattering is proportional to 1/wavelength^4.
-    The scattering is scaled so that the factor for wl_nm = 555.0 is 1.0.'''
+    The scattering is arbitrarily scaled so for wl_nm = 555.0 it is 1.0.'''
     wl_0_nm = 555.0
     wl_rel  = wl_nm / wl_0_nm
     rayleigh_factor = math.pow (wl_rel, -4)
     return rayleigh_factor
 
-def rayleigh_scattering_spectrum_old ():
-    '''Get the Rayleigh scattering spectrum (independent of illuminant), as a numpy array.'''
-    spectrum = ciexyz.empty_spectrum()
-    num_wl = spectrum.shape[0]
-    for i in range (0, num_wl):
-        spectrum [i][1] = rayleigh_scattering (spectrum [i][0])
-    return spectrum
-
 def get_rayleigh_scattering_spectrum ():
     ''' Get the Rayleigh scattering Spectrum. '''
+    # FIXME? Take wavelengths as optional argument.
     spectrum = ciexyz.Spectrum()
     for i in range (spectrum.num_wl):
         spectrum.intensity[i] = rayleigh_scattering (spectrum.wavelength[i])
     return spectrum
 
-def rayleigh_illuminated_spectrum_old (illuminant):
-    '''Get the spectrum when illuminated by the specified illuminant.'''
-    spectrum = rayleigh_scattering_spectrum_old()
-    num_wl = spectrum.shape[0]
-    for i in range (0, num_wl):
-        spectrum [i][1] *= illuminant [i][1]
-    return spectrum
-
 def get_rayleigh_illuminated_spectrum (illuminant):
     '''Get the spectrum when illuminated by the specified illuminant.'''
-    # FIXME: This one should not assume standard wls???
+    # FIXME: This should use the wls in illuminant.
     rayleigh = get_rayleigh_scattering_spectrum()
     spectrum = ciexyz.Spectrum()
     spectrum.intensity[:] = illuminant.intensity
     spectrum.intensity[:] *= rayleigh.intensity
     return spectrum
 
-def rayleigh_illuminated_color_old (illuminant):
-    '''Get the xyz color when illuminated by the specified illuminant.'''
-    spectrum = rayleigh_illuminated_spectrum_old (illuminant)
-    xyz = ciexyz.xyz_from_spectrum (spectrum)
-    return xyz
-
 def get_rayleigh_illuminated_color (illuminant):
     '''Get the xyz color when illuminated by the specified illuminant.'''
     spectrum = get_rayleigh_illuminated_spectrum (illuminant)
     xyz = spectrum.get_xyz()
+    return xyz
+
+#
+# Deprecated usage, with simple arrays instead of Spectrum class.
+#
+
+def rayleigh_scattering_spectrum_old ():
+    '''Get the Rayleigh scattering spectrum (independent of illuminant), as a numpy array.'''
+    spect = get_rayleigh_scattering_spectrum()
+    array = spect.to_array()
+    return array
+
+def rayleigh_illuminated_spectrum_old (illuminant_array):
+    '''Get the spectrum when illuminated by the specified illuminant.'''
+    spect = get_rayleigh_scattering_spectrum()
+    illum = illuminant_array[:, 1]
+    spect.intensity *= illum
+    array = spect.to_array()
+    return array
+
+def rayleigh_illuminated_color_old (illuminant_array):
+    '''Get the xyz color when illuminated by the specified illuminant.'''
+    spect = get_rayleigh_scattering_spectrum()
+    illum = illuminant_array[:, 1]
+    spect.intensity *= illum
+    xyz = spect.get_xyz()
     return xyz
 
 #
@@ -205,10 +210,6 @@ def figures ():
         (illuminants.get_blackbody_illuminant (6500.0), '6500 K'),
         (illuminants.get_blackbody_illuminant (15000.0), '15000 K')],
         'Rayleigh Scattering by Various Illuminants', 'Rayleigh-PatchVarious')
-    # Old-style.
-    rayleigh_patch_plot_old (
-        [(illuminants.get_blackbody_illuminant_old (blackbody.SUN_TEMPERATURE), 'Sun')],
-        'Rayleigh Scattering by the Sun', 'Rayleigh-PatchSun-Old')
 
     # Scattered color vs blackbody illuminant temperature.
     T_list = numpy.linspace(1200.0, 16000.0, 300)
@@ -223,7 +224,11 @@ def figures ():
             illuminants.get_blackbody_illuminant (T),
             'Rayleigh Scattering\nIlluminant %g K' % (T),
             'Rayleigh-Spectrum-%s' % (T_label))
+
     # Old-style.
+    rayleigh_patch_plot_old (
+        [(illuminants.get_blackbody_illuminant_old (blackbody.SUN_TEMPERATURE), 'Sun')],
+        'Rayleigh Scattering by the Sun', 'Rayleigh-PatchSun-Old')
     T = 6500.0
     T_label = '%dK' % (round(T))
     rayleigh_spectrum_plot_old (

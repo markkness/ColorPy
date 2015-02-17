@@ -29,13 +29,24 @@ import numpy
 import random
 import unittest
 
-import ciexyz
 import rayleigh
 import illuminants
 
 
 class TestRayleigh(unittest.TestCase):
     ''' Test cases for Rayleigh scattering. '''
+
+    def test_red_blue(self, verbose=False):
+        ''' Test that blue light scatters more than red. '''
+        wl_blue = 400.0
+        wl_red  = 700.0
+        sc_blue = rayleigh.rayleigh_scattering(wl_blue)
+        sc_red  = rayleigh.rayleigh_scattering(wl_red)
+        msg = 'Blue %.1f nm scatters: %g    Red %.1f scatters: %g' % (
+            wl_blue, sc_blue, wl_red, sc_red)
+        if verbose:
+            print (msg)
+        self.assertGreater(sc_blue, sc_red)
 
     def test_wavelength_4(self, verbose=False):
         ''' Test that scattering scales as 1/wl^4. '''
@@ -63,19 +74,46 @@ class TestRayleigh(unittest.TestCase):
 
     def test_scattering(self, verbose=False):
         ''' Test of scattering calculations. '''
-        # Coverage test of get_rayleigh_scattering_spectrum().
-        rayleigh.get_rayleigh_scattering_spectrum()
         illum = illuminants.get_illuminant_D65()
         spect = rayleigh.get_rayleigh_illuminated_spectrum (illum)
         # Both color calculations should give the same result.
         xyz1 = spect.get_xyz()
         xyz2 = rayleigh.get_rayleigh_illuminated_color (illum)
-        msg = 'D65 Rayleigh scattered xyz: %s, %s' % (str(xyz1), str(xyz2))
+        atol = 1.0e-16
+        self.check_color(xyz1, xyz2, atol, verbose)
+
+    def check_color(self, xyz1, xyz2, tolerance, verbose):
+        ''' Check if the colors match. '''
+        msg = 'xyz1: %s    xyz2: %s' % (str(xyz1), str(xyz2))
         if verbose:
             print (msg)
-        atol = 1.0e-16
-        ok = numpy.allclose(xyz1, xyz2, atol=atol)
+        ok = numpy.allclose(xyz1, xyz2, atol=tolerance)
         self.assertTrue(ok)
+
+    def check_old_spectrum(self, old_spect, new_spect, tolerance):
+        ''' Old-style and new-style spectra should return the same values. '''
+        ok = numpy.allclose(old_spect[:,0], new_spect.wavelength, atol=tolerance)
+        self.assertTrue(ok)
+        ok = numpy.allclose(old_spect[:,1], new_spect.intensity, atol=tolerance)
+        self.assertTrue(ok)
+
+    def test_old(self, verbose=False):
+        ''' Test the old-style functions. '''
+        tolerance = 0.0
+        # Scattering spectrum should match.
+        ray_old = rayleigh.rayleigh_scattering_spectrum_old()
+        ray_new = rayleigh.get_rayleigh_scattering_spectrum()
+        self.check_old_spectrum(ray_old, ray_new, tolerance)
+        # Spectrum under illumination should match.
+        illum_old = illuminants.get_illuminant_D65_old()
+        illum_new = illuminants.get_illuminant_D65()
+        spec_old = rayleigh.rayleigh_illuminated_spectrum_old (illum_old)
+        spec_new = rayleigh.get_rayleigh_illuminated_spectrum (illum_new)
+        self.check_old_spectrum(spec_old, spec_new, tolerance)
+        # Color under illumination should match.
+        color_old = rayleigh.rayleigh_illuminated_color_old (illum_old)
+        color_new = rayleigh.get_rayleigh_illuminated_color (illum_new)
+        self.check_color(color_old, color_new, tolerance, verbose)
 
 
 if __name__ == '__main__':

@@ -33,28 +33,6 @@ import illuminants
 class TestIlluminants(unittest.TestCase):
     ''' Test cases for illuminants. '''
 
-    def test_illuminant_coverage(self, verbose=False):
-        ''' Coverage test of illuminants. '''
-        D65 = illuminants.get_illuminant_D65()
-        if verbose:
-            print ('Illuminant D65')
-            print (str (D65))
-        A = illuminants.get_illuminant_A()
-        if verbose:
-            print ('Illuminant A')
-            print (str (A))
-        const = illuminants.get_constant_illuminant()
-        if verbose:
-            print ('Constant Illuminant')
-            print (str (const))
-        # Various blackbody temperatures.
-        T_list = [0.0, 1.0, 100.0, 1000.0, 5778.0, 10000.0, 100000.0]
-        for T in T_list:
-            bb = illuminants.get_blackbody_illuminant (T)
-            if verbose:
-                print ('Blackbody Illuminant : %g K' % (T))
-                print (str (bb))
-
     def test_illuminant_A(self, verbose=False):
         ''' Test that Illuminant A matches the correct blackbody. '''
         T_A = 2856.0
@@ -69,33 +47,37 @@ class TestIlluminants(unittest.TestCase):
         ok = numpy.allclose (i1.intensity, i2.intensity, atol=tol)
         self.assertTrue(ok)
 
-    def check_Y(self, illum, tolerance, verbose):
+    def check_Y(self, illum, expect, tolerance, verbose):
         ''' Check that Y=1.0 for the illuminant. '''
         xyz = illum.get_xyz()
         Y = xyz[1]
-        expected = 1.0
-        msg = 'Y: %g    expected: %g' % (Y, expected)
+        msg = 'Y: %g    expected: %g' % (Y, expect)
         if verbose:
             print (msg)
-        self.assertAlmostEqual(Y, expected, delta=tolerance)
+        self.assertAlmostEqual(Y, expect, delta=tolerance)
 
-    def test_Y(self, verbose=True):
+    def test_Y(self, verbose=False):
         ''' Test that standard illuminants have Y=1.0. '''
         tolerance = 1.0e-14
+        expect = 1.0
         # D65
         D65 = illuminants.get_illuminant_D65()
-        self.check_Y(D65, tolerance, verbose)
+        self.check_Y(D65, expect, tolerance, verbose)
         # A
         A = illuminants.get_illuminant_A()
-        self.check_Y(A, tolerance, verbose)
+        self.check_Y(A, expect, tolerance, verbose)
         # Constant
         c = illuminants.get_constant_illuminant()
-        self.check_Y(c, tolerance, verbose)
+        self.check_Y(c, expect, tolerance, verbose)
         # Blackbodies of a few temperatures.
         T_list = [100.0, 1000.0, 5000.0, 9000.0, 1.0e6]
         for T in T_list:
             black = illuminants.get_blackbody_illuminant (T)
-            self.check_Y(black, tolerance, verbose)
+            self.check_Y(black, expect, tolerance, verbose)
+        # But T=0 should return pure black without trouble.
+        black = illuminants.get_blackbody_illuminant (0.0)
+        expect = 0.0
+        self.check_Y(black, expect, tolerance, verbose)
 
     def check_old_illuminant(self, old_illum, new_illum, tolerance):
         ''' Old-style and new-style illuminants should return exactly the same values. '''
