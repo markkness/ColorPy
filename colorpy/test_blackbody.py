@@ -197,6 +197,23 @@ class TestBlackbody(unittest.TestCase):
             if verbose:
                 print (msg)
 
+    def check_old_spectrum(self, old_spect, new_spect, tolerance, verbose):
+        ''' Old-style and new-style spectra should return the same values. '''
+        ok = numpy.allclose(old_spect[:,0], new_spect.wavelength, atol=tolerance)
+        self.assertTrue(ok)
+        ok = numpy.allclose(old_spect[:,1], new_spect.intensity, atol=tolerance)
+        self.assertTrue(ok)
+
+    def test_old(self, verbose=False):
+        ''' Test the old-style functions. '''
+        tolerance = 0.0
+        T_list = [100.0, 1000.0, 3500.0, 5000.0, 9000.0, 15000.0, 1.0e6]
+        for T in T_list:
+            # Spectrum should match.
+            spect_old = blackbody.blackbody_spectrum_old (T)
+            spect_new = blackbody.get_blackbody_spectrum (T)
+            self.check_old_spectrum(spect_old, spect_new, tolerance, verbose)
+
 
 if __name__ == '__main__':
     if False:

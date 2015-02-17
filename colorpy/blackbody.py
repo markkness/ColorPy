@@ -107,8 +107,27 @@ def blackbody_specific_intensity (wl_nm, T_K):
     intensity = BLACKBODY_CONST_B / (wl_5 * (math.exp (exponent) - 1.0))
     return intensity
 
-# Deprecated - use get_blackbody_spectrum() instead.
-# FIXME: Need test that this matches get_blackbody_spectrum().
+def get_blackbody_spectrum (T_K):
+    ''' Get the Spectrum of a blackbody at the given temperature [K]. '''
+    spectrum = ciexyz.Spectrum()
+    # FIXME? Move to optional argument.
+    dwl_m = ciexyz.delta_wl_nm * 1.0e-9
+    for i in range (spectrum.num_wl):
+        intensity = blackbody_specific_intensity (spectrum.wavelength[i], T_K)
+        # Scale by wavelength interval.
+        spectrum.intensity[i] = intensity * dwl_m
+    return spectrum
+
+def blackbody_color (T_K):
+    ''' Get the xyz color of a blackbody at the given temperature [K]. '''
+    spectrum = get_blackbody_spectrum (T_K)
+    xyz = spectrum.get_xyz()
+    return xyz
+
+#
+# Deprecated usage, with simple arrays instead of Spectrum class.
+#
+
 def blackbody_spectrum_old (T_K):
     ''' Get the spectrum of a blackbody, as a numpy array. '''
     spectrum = ciexyz.empty_spectrum()
@@ -120,45 +139,9 @@ def blackbody_spectrum_old (T_K):
         spectrum [i][1] = specific_intensity * ciexyz.delta_wl_nm * 1.0e-9
     return spectrum
 
-def get_blackbody_spectrum (T_K):
-    ''' Get the Spectrum of a blackbody at the given temperature [K]. '''
-    spectrum = ciexyz.Spectrum()
-    dwl_m = ciexyz.delta_wl_nm * 1.0e-9
-    for i in range (spectrum.num_wl):
-        intensity = blackbody_specific_intensity (spectrum.wavelength[i], T_K)
-        # Scale by wavelength interval.
-        spectrum.intensity[i] = intensity * dwl_m
-    return spectrum
-
-# FIXME: Following exists only to check blackbody_spectrum_old().
-# Move to tests?
-def blackbody_color_old (T_K):
-    '''Given a temperature (K), return the xyz color of a thermal blackbody.'''
-    spectrum_old = blackbody_spectrum_old (T_K)
-    xyz = ciexyz.xyz_from_spectrum (spectrum_old)
-    return xyz
-
-def blackbody_color (T_K):
-    ''' Get the xyz color of a blackbody at the given temperature [K]. '''
-    spectrum = get_blackbody_spectrum (T_K)
-    xyz = spectrum.get_xyz()
-    return xyz
-
 #
 # Figures
 #
-
-# FIXME: Following exists only to check blackbody_spectrum_old().
-def blackbody_patch_plot_old (T_list, title, filename):
-    ''' Draw a patch plot of blackbody colors for the given temperatures. '''
-    xyz_colors = []
-    color_names = []
-    for T in T_list:
-        xyz = blackbody_color_old (T)
-        xyz_colors.append (xyz)
-        name = '%g K' % (T)
-        color_names.append (name)
-    plots.xyz_patch_plot (xyz_colors, color_names, title, filename)
 
 def blackbody_patch_plot (T_list, title, filename):
     ''' Draw a patch plot of blackbody colors for the given temperatures. '''
@@ -215,8 +198,6 @@ def figures ():
     blackbody_patch_plot (T_norm, 'Blackbody Colors',      'Blackbody-Patch')
     blackbody_patch_plot (T_hot,  'Hot Blackbody Colors',  'Blackbody-HotPatch')
     blackbody_patch_plot (T_cool, 'Cool Blackbody Colors', 'Blackbody-CoolPatch')
-    # Old-style as tests.
-    blackbody_patch_plot_old (T_norm, 'Blackbody Colors',      'Blackbody-Patch-Old')
 
     # Color vs temperature.
     T_norm = numpy.linspace( 1200.0, 16000.0, 300)
