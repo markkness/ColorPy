@@ -61,7 +61,10 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
-import math, numpy
+from __future__ import print_function
+
+import math
+import numpy
 
 import colormodels
 import ciexyz
@@ -143,59 +146,37 @@ def colorstring_patch_plot (colorstrings, color_names, title, filename, num_acro
 # Patch plots from xyz color values
 
 def MacBeth_ColorChecker_patch_plot ():
-    '''MacBeth ColorChecker Chart.
-    The xyz values are from Hall p. 119.  I do not know for what lighting conditions this applies.'''
-    xyz_colors = []
-    xyz_colors.append (colormodels.xyz_color (0.092, 0.081, 0.058))
-    xyz_colors.append (colormodels.xyz_color (0.411, 0.376, 0.303))
-    xyz_colors.append (colormodels.xyz_color (0.183, 0.186, 0.373))
-    xyz_colors.append (colormodels.xyz_color (0.094, 0.117, 0.067))
-    xyz_colors.append (colormodels.xyz_color (0.269, 0.244, 0.503))
-    xyz_colors.append (colormodels.xyz_color (0.350, 0.460, 0.531))
-    xyz_colors.append (colormodels.xyz_color (0.386, 0.311, 0.066))
-    xyz_colors.append (colormodels.xyz_color (0.123, 0.102, 0.359))
-    xyz_colors.append (colormodels.xyz_color (0.284, 0.192, 0.151))
-    xyz_colors.append (colormodels.xyz_color (0.059, 0.040, 0.102))
-    xyz_colors.append (colormodels.xyz_color (0.368, 0.474, 0.127))
-    xyz_colors.append (colormodels.xyz_color (0.497, 0.460, 0.094))
-    xyz_colors.append (colormodels.xyz_color (0.050, 0.035, 0.183))
-    xyz_colors.append (colormodels.xyz_color (0.149, 0.234, 0.106))
-    xyz_colors.append (colormodels.xyz_color (0.176, 0.102, 0.048))
-    xyz_colors.append (colormodels.xyz_color (0.614, 0.644, 0.112))
-    xyz_colors.append (colormodels.xyz_color (0.300, 0.192, 0.332))
-    xyz_colors.append (colormodels.xyz_color (0.149, 0.192, 0.421))
-    xyz_colors.append (colormodels.xyz_color (0.981, 1.000, 1.184))
-    xyz_colors.append (colormodels.xyz_color (0.632, 0.644, 0.763))
-    xyz_colors.append (colormodels.xyz_color (0.374, 0.381, 0.451))
-    xyz_colors.append (colormodels.xyz_color (0.189, 0.192, 0.227))
-    xyz_colors.append (colormodels.xyz_color (0.067, 0.068, 0.080))
-    xyz_colors.append (colormodels.xyz_color (0.000, 0.000, 0.000))
-
-    color_names = []
-    color_names.append ('dark skin')
-    color_names.append ('light skin')
-    color_names.append ('blue sky')
-    color_names.append ('foliage')
-    color_names.append ('blue flower')
-    color_names.append ('bluish green')
-    color_names.append ('orange')
-    color_names.append ('purplish blue')
-    color_names.append ('moderate red')
-    color_names.append ('purple')
-    color_names.append ('yellow green')
-    color_names.append ('orange yellow')
-    color_names.append ('blue')
-    color_names.append ('green')
-    color_names.append ('red')
-    color_names.append ('yellow')
-    color_names.append ('magenta')
-    color_names.append ('cyan')
-    color_names.append ('white')
-    color_names.append ('neutral 8')
-    color_names.append ('neutral 6.5')
-    color_names.append ('neutral 5')
-    color_names.append ('neutral 3.5')
-    color_names.append ('black')
+    ''' MacBeth ColorChecker Chart. '''
+    # The xyz values are from Hall p. 119.
+    # I do not know for what lighting conditions this applies.
+    patches = [
+        (0.092, 0.081, 0.058, 'dark skin'),
+        (0.411, 0.376, 0.303, 'light skin'),
+        (0.183, 0.186, 0.373, 'blue sky'),
+        (0.094, 0.117, 0.067, 'foliage'),
+        (0.269, 0.244, 0.503, 'blue flower'),
+        (0.350, 0.460, 0.531, 'bluish green'),
+        (0.386, 0.311, 0.066, 'orange'),
+        (0.123, 0.102, 0.359, 'purplish blue'),
+        (0.284, 0.192, 0.151, 'moderate red'),
+        (0.059, 0.040, 0.102, 'purple'),
+        (0.368, 0.474, 0.127, 'yellow green'),
+        (0.497, 0.460, 0.094, 'orange yellow'),
+        (0.050, 0.035, 0.183, 'blue'),
+        (0.149, 0.234, 0.106, 'green'),
+        (0.176, 0.102, 0.048, 'red'),
+        (0.614, 0.644, 0.112, 'yellow'),
+        (0.300, 0.192, 0.332, 'magenta'),
+        (0.149, 0.192, 0.421, 'cyan'),
+        (0.981, 1.000, 1.184, 'white'),
+        (0.632, 0.644, 0.763, 'neutral 8'),
+        (0.374, 0.381, 0.451, 'neutral 6.5'),
+        (0.189, 0.192, 0.227, 'neutral 5'),
+        (0.067, 0.068, 0.080, 'neutral 3.5'),
+        (0.000, 0.000, 0.000, 'black'),
+    ]
+    xyz_colors  = [colormodels.xyz_color (x,y,z) for x,y,z,name in patches]
+    color_names = [name for x,y,z,name in patches]
 
     plots.xyz_patch_plot (
         xyz_colors,
@@ -204,23 +185,22 @@ def MacBeth_ColorChecker_patch_plot ():
         'MacBeth')
 
 def chemical_solutions_patch_plot ():
-    '''Colors of some chemical solutions.
-    Darren L. Williams et. al., 'Beyond lambda-max: Transforming Visible Spectra into 24-bit Color Values'.
-        Journal of Chemical Education, Vol 84, No 11, Nov 2007, p1873-1877.
-    A student laboratory experiment to measure the transmission spectra of some common chemical solutions,
-    and determine the rgb values.'''
-    xyz_colors = []
-    xyz_colors.append (colormodels.xyz_color (0.360, 0.218, 0.105))
-    xyz_colors.append (colormodels.xyz_color (0.458, 0.691, 0.587))
-    xyz_colors.append (colormodels.xyz_color (0.445, 0.621, 1.052))
-    xyz_colors.append (colormodels.xyz_color (0.742, 0.579, 0.905))
-    xyz_colors.append (colormodels.xyz_color (0.949, 1.000, 1.087))
-    color_names = []
-    color_names.append ('1 M CoCl2')
-    color_names.append ('1 M NiCl2')
-    color_names.append ('1 M CuSO4')
-    color_names.append ('0.005 M KMnO4')
-    color_names.append ('H2O')
+    ''' Colors of some chemical solutions. '''
+    # Darren L. Williams et. al.,
+    #   'Beyond lambda-max: Transforming Visible Spectra into 24-bit Color Values'.
+    #    Journal of Chemical Education, Vol 84, No 11, Nov 2007, p1873-1877.
+    # A student laboratory experiment to measure the transmission spectra of
+    # some common chemical solutions, and determine the rgb values.
+    patches = [
+        (0.360, 0.218, 0.105, '1 M CoCl2'),
+        (0.458, 0.691, 0.587, '1 M NiCl2'),
+        (0.445, 0.621, 1.052, '1 M CuSO4'),
+        (0.742, 0.579, 0.905, '0.005 M KMnO4'),
+        (0.949, 1.000, 1.087, 'H2O'),
+    ]
+    xyz_colors  = [colormodels.xyz_color (x,y,z) for x,y,z,name in patches]
+    color_names = [name for x,y,z,name in patches]
+
     plots.xyz_patch_plot (
         xyz_colors,
         color_names,
@@ -228,13 +208,16 @@ def chemical_solutions_patch_plot ():
         'ChemSolutions')
 
 def universe_patch_plot ():
-    '''The average color of the universe.
-    Karl Glazebrook and Ivan Baldry
-        http://www.pha.jhu.edu/~kgb/cosspec/  (accessed 17 Sep 2008)
-    The color of the sum of all light in the universe.
-    This caused some controversy when the (correct) xyz color was incorrectly reported as light green.
-    The authors also consider several other white points, here we just use the default (normally D65).'''
-    # use the published chromaticity but Y=1.0
+    ''' The average color of the universe. '''
+    # Karl Glazebrook and Ivan Baldry
+    #     http://www.pha.jhu.edu/~kgb/cosspec/  (accessed 17 Sep 2008)
+    # The color of the sum of all light in the universe.
+    # This caused some controversy when the (correct) xyz color was
+    # incorrectly reported as light green.
+    # The authors also consider several other white points,
+    # we just use the default (normally D65).
+
+    # Use the published chromaticity but Y=1.0.
     xyz_colors  = [colormodels.xyz_color_from_xyY (0.345, 0.345, 1.0)]
     color_names = ['The Universe']
     plots.xyz_patch_plot (
