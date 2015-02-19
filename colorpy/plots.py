@@ -124,10 +124,12 @@ along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import print_function
 
 import math
-import numpy, pylab
+import numpy
+import pylab
 
 import colormodels
 import ciexyz
+import rayleigh
 
 # Miscellaneous utilities for plots
 
@@ -436,22 +438,22 @@ def color_vs_param_plot (
 #
 
 def visible_spectrum_plot ():
-    '''Plot the visible spectrum, as a plot vs wavelength.'''
-    spectrum = ciexyz.empty_spectrum()
-    (num_wl, num_cols) = spectrum.shape
-    # get rgb colors for each wavelength
-    rgb_colors = numpy.empty ((num_wl, 3))
-    for i in range (0, num_wl):
-        xyz = ciexyz.xyz_from_wavelength (spectrum [i][0])
+    ''' Plot the visible spectrum, as a plot vs wavelength. '''
+    spect = ciexyz.Spectrum()
+    # Get rgb colors for each wavelength.
+    rgb_colors = numpy.empty ((spect.num_wl, 3))
+    for i in range (spect.num_wl):
+        xyz = ciexyz.xyz_from_wavelength (spect.wavelength [i])
         rgb = colormodels.rgb_from_xyz (xyz)
         rgb_colors [i] = rgb
-    # scale to make brightest rgb value = 1.0
+    # Scale to make brightest rgb value = 1.0.
     rgb_max = numpy.max (rgb_colors)
-    scaling = 1.0 / rgb_max
-    rgb_colors *= scaling
+    if rgb_max != 0.0:
+        scaling = 1.0 / rgb_max
+        rgb_colors *= scaling
     # plot colors and rgb values vs wavelength
     color_vs_param_plot (
-        spectrum [:,0],
+        spect.wavelength,
         rgb_colors,
         'The Visible Spectrum',
         'VisibleSpectrum',
@@ -460,60 +462,65 @@ def visible_spectrum_plot ():
         ylabel = r'RGB Color')
 
 def cie_matching_functions_plot ():
-    '''Plot the CIE XYZ matching functions, as three spectral subplots.'''
-    # get 'spectra' for x,y,z matching functions
-    spectrum_x = ciexyz.empty_spectrum()
-    spectrum_y = ciexyz.empty_spectrum()
-    spectrum_z = ciexyz.empty_spectrum()
-    (num_wl, num_cols) = spectrum_x.shape
-    for i in range (0, num_wl):
-        wl_nm = spectrum_x [i][0]
+    ''' Plot the CIE XYZ matching functions, as three spectral subplots. '''
+    # Get 'spectra' for x,y,z matching functions.
+    spect_x = ciexyz.Spectrum()
+    spect_y = ciexyz.Spectrum()
+    spect_z = ciexyz.Spectrum()
+    for i in range (spect_x.num_wl):
+        wl_nm = spect_x.wavelength [i]
         xyz = ciexyz.xyz_from_wavelength (wl_nm)
-        spectrum_x [i][1] = xyz [0]
-        spectrum_y [i][1] = xyz [1]
-        spectrum_z [i][1] = xyz [2]
-    # Plot three separate subplots, with CIE X in the first, CIE Y in the second, and CIE Z in the third.
+        spect_x.intensity [i] = xyz [0]
+        spect_y.intensity [i] = xyz [1]
+        spect_z.intensity [i] = xyz [2]
+    # Plot three separate subplots, with CIE X in the first,
+    # CIE Y in the second, and CIE Z in the third.
     # Label appropriately for the whole plot.
     pylab.clf ()
     # X
     pylab.subplot (3,1,1)
     pylab.title ('1931 CIE XYZ Matching Functions')
     pylab.ylabel ('CIE $X$')
-    spectrum_subplot_old (spectrum_x)
-    tighten_x_axis (spectrum_x [:,0])
+    spectrum_subplot_new (spect_x)
+    tighten_x_axis (spect_x.wavelength)
     # Y
     pylab.subplot (3,1,2)
     pylab.ylabel ('CIE $Y$')
-    spectrum_subplot_old (spectrum_y)
-    tighten_x_axis (spectrum_x [:,0])
+    spectrum_subplot_new (spect_y)
+    tighten_x_axis (spect_y.wavelength)
     # Z
     pylab.subplot (3,1,3)
     pylab.xlabel ('Wavelength (nm)')
     pylab.ylabel ('CIE $Z$')
-    spectrum_subplot_old (spectrum_z)
-    tighten_x_axis (spectrum_x [:,0])
-    # done
+    spectrum_subplot_new (spect_z)
+    tighten_x_axis (spect_z.wavelength)
+    # Save.
     filename = 'CIEXYZ_Matching'
     print ('Saving plot %s' % str (filename))
     pylab.savefig (filename)
 
 def scattered_visual_brightness ():
-    '''Plot the perceptual brightness of Rayleigh scattered light.'''
-    # get 'spectra' for y matching functions and multiply by 1/wl^4
-    spectrum_y = ciexyz.empty_spectrum()
-    (num_wl, num_cols) = spectrum_y.shape
-    for i in range (0, num_wl):
-        wl_nm = spectrum_y [i][0]
-        rayleigh = math.pow (550.0 / wl_nm, 4)
+    ''' Plot the perceptual brightness of Rayleigh scattered light. '''
+    # This shows why a green laser shows a distinct trail in the air,
+    # while a red laser does not.
+    # Get 'spectra' as CIE Y matching function and multiply by scattering.
+    # Rayleigh scattering is proportional to 1 / wl^4.
+    spect = ciexyz.Spectrum()
+    # Previous version used an arbitrary scale factor.
+    # This can probably be removed.
+    scale = math.pow (550.0 / 555.0, 4)
+    for i in range (spect.num_wl):
+        wl_nm = spect.wavelength [i]
         xyz = ciexyz.xyz_from_wavelength (wl_nm)
-        spectrum_y [i][1] = xyz [1] * rayleigh
+        scatter = rayleigh.rayleigh_scattering (wl_nm)
+        spect.intensity [i] = xyz[1] * scatter * scale
     pylab.clf ()
     pylab.title ('Perceptual Brightness of Rayleigh Scattered Light')
     pylab.xlabel ('Wavelength (nm)')
     pylab.ylabel ('CIE $Y$ / $\lambda^4$')
-    spectrum_subplot_old (spectrum_y)
-    tighten_x_axis (spectrum_y [:,0])
-    # done
+    spectrum_subplot_new (spect)
+    tighten_x_axis (spect.wavelength)
+    # Save.
     filename = 'Visual_scattering'
     print ('Saving plot %s' % str (filename))
     pylab.savefig (filename)

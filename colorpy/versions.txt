@@ -1,0 +1,43 @@
+Changes in versions of ColorPy.
+
+Desired future improvements:
+    * Addition of BSD license.
+	* Publishing on PyPi.
+	* Travis-CI?
+	* Atomic spectra.
+
+New in 0.2.0:
+    This release introduces some minor compatibility changes,
+	which allow significant performance improvements.
+	This version should be compatible with both Python 2 and Python 3.
+	
+	* New Spectrum() class type.
+	The main change is the Spectrum() class type.
+	This replaces the simple N by 2 array spectrum format.
+	This gives the wavelength and intensity arrays more meaningful names,
+	and allows some metadata to be added to the array data.
+	This allows some faster calculations when the wavelength list is standard.
+	The new and old structures are closely related, and there are calls
+	to make it easy to convert between them.
+
+	* Unit test improvements.
+    The tests are substantially improved in general. They are now designed
+	to be run via standard test runners, e.g. 'python -m unittest discover'.
+	However you can still run tests.py to exercise them.
+
+    * Minor rearrangements.
+	Since some compatibility breaking changes were required, this seemed
+	a good time to make some minor rearrangements that also are breaking,
+	but should be very easy to adjust to.
+	[Nothing so far, expect renaming and moving functions around.]
+
+	* Various internal improvements.
+	General refactoring that improves the code, but should not require any
+	adjustments in your code.
+		
+	Compatibility:
+	This version has some changes that could break code using the older versions.
+	* Spectrum() class.
+
+New in 0.1.2:
+    This is effectively what is on GitHub now in master.
