@@ -254,6 +254,11 @@ def spectrum_subplot_old (spectrum):
     pylab.plot (
         spectrum [:,0], spectrum [:,1],
         color='k', linewidth=2.0, antialiased=True)
+    return
+    # FIXME: Following only handles standard wavelengths.
+    spect = ciexyz.Spectrum()
+    spect.from_array (spectrum)
+    spectrum_subplot_new (spect)
 
 def spectrum_plot_old (
     spectrum,
@@ -298,6 +303,16 @@ def spectrum_plot_old (
     # done
     print ('Saving plot %s' % str (filename))
     pylab.savefig (filename)
+    return
+    # FIXME: Following only handles standard wavelengths.
+    spect = ciexyz.Spectrum()
+    spect.from_array (spectrum)
+    spectrum_plot_new (
+        spect,
+        title,
+        filename,
+        xlabel=xlabel,
+        ylabel=ylabel)
 
 def spectrum_subplot_new (spectrum):
     '''Plot a spectrum, with x-axis the wavelength, and y-axis the intensity.
@@ -308,18 +323,20 @@ def spectrum_subplot_new (spectrum):
     This is not a complete plotting function, e.g. no file is saved, etc.
     It is assumed that this function is being called by one that handles those things.'''
     num_wl = spectrum.num_wl
-    # get rgb colors for each wavelength
+    # Get rgb colors for each wavelength.
     rgb_colors = numpy.empty ((num_wl, 3))
-    for i in range (0, num_wl):
+    for i in range (num_wl):
         wl_nm = spectrum.wavelength [i]
         xyz = ciexyz.xyz_from_wavelength (wl_nm)
         rgb_colors [i] = colormodels.rgb_from_xyz (xyz)
-    # scale to make brightest rgb value = 1.0
+    # Scale to make brightest rgb value = 1.0.
     rgb_max = numpy.max (rgb_colors)
-    scaling = 1.0 / rgb_max
-    rgb_colors *= scaling
-    # draw color patches (thin vertical lines matching the spectrum curve) in color
-    for i in range (0, num_wl-1):    # skipping the last one here to stay in range
+    if rgb_max != 0.0:
+        scaling = 1.0 / rgb_max
+        rgb_colors *= scaling
+    # Draw color patches (thin vertical lines matching the spectrum curve).
+    # Skip the last for range limitations, it should be zero intensity anyways.
+    for i in range (num_wl-1):
         x0 = spectrum.wavelength [i]
         x1 = spectrum.wavelength [i+1]
         y0 = spectrum.intensity [i]
@@ -328,7 +345,7 @@ def spectrum_subplot_new (spectrum):
         poly_y = [0.0, 0.0, y1, y0]
         color_string = colormodels.irgb_string_from_rgb (rgb_colors [i])
         pylab.fill (poly_x, poly_y, color_string, edgecolor=color_string)
-    # plot intensity as a curve
+    # Plot intensity as curve.
     pylab.plot (
         spectrum.wavelength, spectrum.intensity,
         color='k', linewidth=2.0, antialiased=True)

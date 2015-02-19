@@ -344,6 +344,8 @@ def spectral_line_555nm_plot ():
 
 def figures ():
     '''Draw the various miscellaneous figures.'''
+    # Non-equally spaced wavelengths is a good test. Do it first.
+    spectral_line_555nm_plot ()
     # patch plots of lists of color hex strings
     colorstring_patch_plot (matplotlib_colors, matplotlib_names, 'Default MatPlotLib Colormap', 'matplotlib', num_across=7)
     colorstring_patch_plot (hsv_colors, None, 'HSV Colormap', 'hsv')
@@ -357,7 +359,6 @@ def figures ():
     spectral_colors_patch_plot ()
     spectral_colors_plus_purples_patch_plot ()
     perceptually_uniform_spectral_color_plots ()
-    spectral_line_555nm_plot ()
 
 
 if __name__ == '__main__':
