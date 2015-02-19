@@ -688,16 +688,21 @@ def empty_spectrum ():
 
     The result can be passed to xyz_from_spectrum() to convert to an xyz color.
     '''
-    wl_nm_range = range (start_wl_nm, end_wl_nm + 1)
-    num_wl = len (wl_nm_range)
-    spectrum = numpy.zeros ((num_wl, 2))
-    for i in range (0, num_wl):
-        spectrum [i][0] = float (wl_nm_range [i])
-    return spectrum
+    spectrum = Spectrum()
+    spect = spectrum.to_array()
+    return spect
 
 
 class Spectrum(object):
     ''' A representation of a light spectrum.
+
+    The wavelength array ranges from 360 nm to 830 nm, with a spacing of 1 nm.
+    This covers the complete visible range. The wavelength units are nm.
+
+    The intensity array, initially zero, contains the specific intensity,
+    in units W/unit solid angle, at that wavelength.
+
+    The xyz color for the spectrum is obtained with get_xyz().
 
     This is preferred over the previous N by 2 array, as the separate wavelength
     and intensity values make it easier to use numpy efficiently.
@@ -715,20 +720,18 @@ class Spectrum(object):
         ''' Convert the previous N by 2 array into the spectrum object. '''
         shape = spectrum_array.shape
         if shape != (self.num_wl, 2):
+            # FIXME: This is preventing non-standard wavelengths.
             msg = 'Invalid spectrum array shape %s' % (str(shape))
             raise ValueError (msg)
-        self.wavelength[:] = spectrum_array[:, 0]   # Should be redundant.
+        self.wavelength[:] = spectrum_array[:, 0]
         self.intensity [:] = spectrum_array[:, 1]
+        self.num_wl = spectrum_array.shape[0]
 
     def to_array(self):
         ''' Convert to the previous N by 2 array structure. '''
         array = numpy.empty((self.num_wl, 2))
-        for i in range (self.num_wl):
-            array[i][0] = self.wavelength[i]
-            array[i][1] = self.intensity [i]
-        # Should be able to use:
-        # array[:, 0] = self.wavelength
-        # array[:, 1] = self.intensity
+        array[:, 0] = self.wavelength
+        array[:, 1] = self.intensity
         return array
 
     # Simple operations.
