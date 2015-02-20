@@ -151,12 +151,20 @@ def log_interpolate (y0, y1, num_values):
             rtn.append (yi)
     return rtn
 
+
 def tighten_x_axis (x_list):
     '''Tighten the x axis (only) of the current plot to match the given range of x values.
     The y axis limits are not affected.'''
     x_min = min (x_list)
     x_max = max (x_list)
     pylab.xlim ((x_min, x_max))
+
+
+def plot_save (filename):
+    ''' Save the current plot to the filename. '''
+    if filename is not None:
+        print ('Saving plot %s' % str (filename))
+        pylab.savefig (filename)
 
 #
 # Patch plots - Plots with each color value as a solid patch, with optional labels.
@@ -200,8 +208,9 @@ def rgb_patch_plot (
         draw_patch (float (ix), float (-iy), colorstring, name, patch_gap)
     pylab.axis ('off')
     pylab.title (title)
-    print ('Saving plot %s' % str (filename))
-    pylab.savefig (filename)
+    # Save.
+    plot_save (filename)
+
 
 def xyz_patch_plot (
     xyz_colors,
@@ -314,9 +323,8 @@ def spectrum_plot (
     tighten_x_axis (spectrum.wavelength)
     pylab.xlabel (xlabel)
     pylab.ylabel (ylabel)
-    # done
-    print ('Saving plot %s' % str (filename))
-    pylab.savefig (filename)
+    # Save.
+    plot_save (filename)
 
 #
 # Color vs param plot
@@ -371,8 +379,8 @@ def color_vs_param_plot (
         tighten_x_axis (param_list)
     pylab.xlabel (xlabel)
     pylab.ylabel (ylabel)
-    print ('Saving plot %s' % str (filename))
-    pylab.savefig (filename)
+    # Save.
+    plot_save (filename)
 
 #
 # Some specialized plots
@@ -401,6 +409,7 @@ def visible_spectrum_plot ():
         tight = True,
         xlabel = r'Wavelength (nm)',
         ylabel = r'RGB Color')
+
 
 def cie_matching_functions_plot ():
     ''' Plot the CIE XYZ matching functions, as three spectral subplots. '''
@@ -437,8 +446,26 @@ def cie_matching_functions_plot ():
     tighten_x_axis (spect_z.wavelength)
     # Save.
     filename = 'CIEXYZ_Matching'
-    print ('Saving plot %s' % str (filename))
-    pylab.savefig (filename)
+    plot_save (filename)
+
+
+def cie_matching_functions_spectrum_plot ():
+    ''' Plot each of the CIE XYZ matching functions, as spectrum plots. '''
+    # Get 'spectra' for x,y,z matching functions.
+    spect_x = ciexyz.Spectrum()
+    spect_y = ciexyz.Spectrum()
+    spect_z = ciexyz.Spectrum()
+    for i in range (spect_x.num_wl):
+        wl_nm = spect_x.wavelength [i]
+        xyz = ciexyz.xyz_from_wavelength (wl_nm)
+        spect_x.intensity [i] = xyz [0]
+        spect_y.intensity [i] = xyz [1]
+        spect_z.intensity [i] = xyz [2]
+    # Create three spectrum plots.
+    spectrum_plot (spect_x, 'CIE X', 'CIE-X')
+    spectrum_plot (spect_y, 'CIE Y', 'CIE-Y')
+    spectrum_plot (spect_z, 'CIE Z', 'CIE-Z')
+
 
 def scattered_visual_brightness ():
     ''' Plot the perceptual brightness of Rayleigh scattered light. '''
@@ -463,8 +490,8 @@ def scattered_visual_brightness ():
     tighten_x_axis (spect.wavelength)
     # Save.
     filename = 'Visual_scattering'
-    print ('Saving plot %s' % str (filename))
-    pylab.savefig (filename)
+    plot_save (filename)
+
 
 def shark_fin_plot ():
     '''Draw the 'shark fin' CIE chromaticity diagram of the pure spectral lines (plus purples) in xy space.'''
@@ -571,8 +598,8 @@ def shark_fin_plot ():
     pylab.ylabel (r'CIE $y$')
     pylab.title (r'CIE Chromaticity Diagram')
     filename = 'ChromaticityDiagram'
-    print ('Saving plot %s' % (str (filename)))
-    pylab.savefig (filename)
+    # Save.
+    plot_save (filename)
 
 # Special figures
 
@@ -580,6 +607,7 @@ def figures ():
     '''Draw specific figures not used anywhere else.'''
     visible_spectrum_plot()
     cie_matching_functions_plot()
+    cie_matching_functions_spectrum_plot()
     shark_fin_plot()
     scattered_visual_brightness()
 

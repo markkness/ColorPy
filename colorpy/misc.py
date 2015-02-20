@@ -468,6 +468,9 @@ def emission_plots ():
     # Neon.
     spect = ciexyz.Spectrum_from_array (emission_spectrum_Ne)
     plots.spectrum_plot (spect, 'Ne Emission Spectrum', 'Emission-10-Ne')
+
+#
+# Main.
 #
 
 def figures ():
