@@ -276,7 +276,7 @@ def thinfilm_spectrum_plot_new (n1, n2, n3, thickness_nm, illuminant, title, fil
     '''Plot the spectrum of the reflection from a thin film for the given thickness [nm].'''
     film = thin_film (n1, n2, n3, thickness_nm)
     illuminated_spectrum = film.get_illuminated_spectrum (illuminant)
-    plots.spectrum_plot_new (
+    plots.spectrum_plot (
         illuminated_spectrum,
         title,
         filename,

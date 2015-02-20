@@ -325,9 +325,9 @@ def perceptually_uniform_spectral_color_plots ():
 def spectral_line_555nm_plot ():
     '''Plot a spectrum that has mostly only a line at 555 nm.
     It is widened a bit only so the plot looks nicer, otherwise the black curve covers up the color.'''
-    spectrum_list = [
-        [360.0, 0.0],
-        [549.0, 0.0],
+    spectrum = numpy.array([
+        [360.0,   0.0],
+        [549.0,   0.0],
         [552.0, 100.0],
         [553.0, 100.0],
         [554.0, 100.0],
@@ -335,10 +335,11 @@ def spectral_line_555nm_plot ():
         [556.0, 100.0],
         [557.0, 100.0],
         [558.0, 100.0],
-        [557.0, 0.0],
-        [830.0, 0.0]]
-    spectrum = numpy.array (spectrum_list)
-    plots.spectrum_plot_old (spectrum, '555 nm Spectral Line', 'line555nm')
+        [557.0,   0.0],
+        [830.0,   0.0]])
+    spect = ciexyz.Spectrum()
+    spect.from_array (spectrum)
+    plots.spectrum_plot (spect, '555 nm Spectral Line', 'line555nm')
 
 #
 

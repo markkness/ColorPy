@@ -666,7 +666,7 @@ def get_illuminant_D65 ():
 
     (ColorPy does not currently provide D55 or D75, however.)'''
     illuminant = ciexyz.Spectrum()
-    illuminant.from_array (_Illuminant_D65)
+    illuminant.from_array (_Illuminant_D65, standard_wls=True)
     return illuminant
 
 def get_illuminant_A ():
@@ -731,16 +731,16 @@ init()
 def figures ():
     '''Plot spectra for several illuminants.'''
     # D65
-    plots.spectrum_plot_new (
+    plots.spectrum_plot (
         get_illuminant_D65(), 'CIE Illuminant D65', 'Illuminant-D65')
     # A
-    plots.spectrum_plot_new (
+    plots.spectrum_plot (
         get_illuminant_A(), 'CIE Illuminant A', 'Illuminant-A')
     # Constant
-    plots.spectrum_plot_new (
+    plots.spectrum_plot (
         get_constant_illuminant(), 'Constant Illuminant', 'Illuminant-Const')
     # Blackbody (5778)
-    plots.spectrum_plot_new (
+    plots.spectrum_plot (
         get_blackbody_illuminant (5778.0), '5778 K Illuminant', 'Illuminant-5778')
     # Old-style.
     plots.spectrum_plot_old (get_illuminant_D65_old(), 'CIE Illuminant D65', 'Illuminant-D65-Old')

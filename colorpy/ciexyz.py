@@ -712,20 +712,33 @@ class Spectrum(object):
         self.num_wl     = end_wl_nm - start_wl_nm + 1
         self.wavelength = numpy.linspace(float(start_wl_nm), float(end_wl_nm), self.num_wl)
         self.intensity  = numpy.zeros(self.num_wl)
+        self.standard   = True
 
     # Conversions between old-style N by 2 arrays.
     # These were used in ColorPy 0.2 and before.
 
-    def from_array(self, spectrum_array):
-        ''' Convert the previous N by 2 array into the spectrum object. '''
+    def from_array(self, spectrum_array, standard_wls=False):
+        ''' Convert the previous N by 2 array into the spectrum object.
+
+        If standard_wls is True, then the wavelengths should be the
+        standard set, and the color can be calculated faster.
+        '''
         shape = spectrum_array.shape
-        if shape != (self.num_wl, 2):
-            # FIXME: This is preventing non-standard wavelengths.
+        # Array should be N by 2.
+        if shape[1] != 2:
             msg = 'Invalid spectrum array shape %s' % (str(shape))
             raise ValueError (msg)
-        self.wavelength[:] = spectrum_array[:, 0]
-        self.intensity [:] = spectrum_array[:, 1]
-        self.num_wl = spectrum_array.shape[0]
+        self.num_wl     = shape[0]
+        self.wavelength = spectrum_array[:, 0].copy()
+        self.intensity  = spectrum_array[:, 1].copy()
+        self.standard   = standard_wls
+        # Check that wavelengths are indeed the standard list.
+        # This only checks the count for now.
+        if self.standard:
+            standard_num_wl = end_wl_nm - start_wl_nm + 1
+            if shape[0] != standard_num_wl:
+                msg = 'Invalid standard wavelength count %d.' % (shape[0])
+                raise ValueError (msg)
 
     def to_array(self):
         ''' Convert to the previous N by 2 array structure. '''
@@ -757,6 +770,7 @@ class Spectrum(object):
     def get_xyz_color_standard(self):
         ''' Get the xyz color of the spectrum. '''
         # Integrate color, assuming the wavelengths are the standard list.
+        # This is faster than the more general calculation.
         X = (self.intensity * _xyz_colors[1:-1, 0]).sum()
         Y = (self.intensity * _xyz_colors[1:-1, 1]).sum()
         Z = (self.intensity * _xyz_colors[1:-1, 2]).sum()
@@ -765,9 +779,11 @@ class Spectrum(object):
 
     def get_xyz(self):
         ''' Get the xyz color of the spectrum. '''
-        # Assuming standard wavelengths for now.
-        #return self.get_xyz_color_any()
-        return self.get_xyz_color_standard()
+        if self.standard:
+            xyz = self.get_xyz_color_standard()
+        else:
+            xyz = self.get_xyz_color_any()
+        return xyz
 
 
 def xyz_from_wavelength (wl_nm):

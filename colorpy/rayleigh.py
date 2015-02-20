@@ -189,7 +189,7 @@ def rayleigh_spectrum_plot_old (illuminant, title, filename):
 def rayleigh_spectrum_plot_new (illuminant, title, filename):
     '''Plot the spectrum of Rayleigh scattering of the specified illuminant.'''
     spectrum = get_rayleigh_illuminated_spectrum (illuminant)
-    plots.spectrum_plot_new (
+    plots.spectrum_plot (
         spectrum,
         title,
         filename,

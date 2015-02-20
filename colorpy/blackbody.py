@@ -179,7 +179,7 @@ def blackbody_spectrum_plot (T_K):
     spectrum = get_blackbody_spectrum (T_K)
     title    = 'Blackbody Spectrum - T %d K' % (round (T_K))
     filename = 'BlackbodySpectrum-%dK' % (round (T_K))
-    plots.spectrum_plot_new (
+    plots.spectrum_plot (
         spectrum,
         title,
         filename,

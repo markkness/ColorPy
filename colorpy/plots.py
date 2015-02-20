@@ -221,45 +221,6 @@ def xyz_patch_plot (
 # Spectrum plots
 #
 
-def spectrum_subplot_old (spectrum):
-    '''Plot a spectrum, with x-axis the wavelength, and y-axis the intensity.
-    The curve is colored at that wavelength by the (approximate) color of a
-    pure spectral color at that wavelength, with intensity constant over wavelength.
-    (This means that dark looking colors here mean that wavelength is poorly viewed by the eye.
-
-    This is not a complete plotting function, e.g. no file is saved, etc.
-    It is assumed that this function is being called by one that handles those things.'''
-    (num_wl, num_cols) = spectrum.shape
-    # get rgb colors for each wavelength
-    rgb_colors = numpy.empty ((num_wl, 3))
-    for i in range (0, num_wl):
-        wl_nm = spectrum [i][0]
-        xyz = ciexyz.xyz_from_wavelength (wl_nm)
-        rgb_colors [i] = colormodels.rgb_from_xyz (xyz)
-    # scale to make brightest rgb value = 1.0
-    rgb_max = numpy.max (rgb_colors)
-    scaling = 1.0 / rgb_max
-    rgb_colors *= scaling
-    # draw color patches (thin vertical lines matching the spectrum curve) in color
-    for i in range (0, num_wl-1):    # skipping the last one here to stay in range
-        x0 = spectrum [i][0]
-        x1 = spectrum [i+1][0]
-        y0 = spectrum [i][1]
-        y1 = spectrum [i+1][1]
-        poly_x = [x0,  x1,  x1, x0]
-        poly_y = [0.0, 0.0, y1, y0]
-        color_string = colormodels.irgb_string_from_rgb (rgb_colors [i])
-        pylab.fill (poly_x, poly_y, color_string, edgecolor=color_string)
-    # plot intensity as a curve
-    pylab.plot (
-        spectrum [:,0], spectrum [:,1],
-        color='k', linewidth=2.0, antialiased=True)
-    return
-    # FIXME: Following only handles standard wavelengths.
-    spect = ciexyz.Spectrum()
-    spect.from_array (spectrum)
-    spectrum_subplot_new (spect)
-
 def spectrum_plot_old (
     spectrum,
     title,
@@ -282,39 +243,16 @@ def spectrum_plot_old (
     xlabel   - label for x axis
     ylabel   - label for y axis
     '''
-    pylab.clf ()
-    # upper plot - solid patch of color that matches the spectrum color
-    pylab.subplot (2,1,1)
-    pylab.title (title)
-    color_string = colormodels.irgb_string_from_rgb (
-        colormodels.rgb_from_xyz (ciexyz.xyz_from_spectrum (spectrum)))
-    poly_x = [0.0, 1.0, 1.0, 0.0]
-    poly_y = [0.0, 0.0, 1.0, 1.0]
-    pylab.fill (poly_x, poly_y, color_string)
-    # draw a solid line around the patch to look nicer
-    pylab.plot (poly_x, poly_y, color='k', linewidth=2.0)
-    pylab.axis ('off')
-    # lower plot - spectrum vs wavelength, with colors of the associated spectral lines below
-    pylab.subplot (2,1,2)
-    spectrum_subplot_old (spectrum)
-    tighten_x_axis (spectrum [:,0])
-    pylab.xlabel (xlabel)
-    pylab.ylabel (ylabel)
-    # done
-    print ('Saving plot %s' % str (filename))
-    pylab.savefig (filename)
-    return
-    # FIXME: Following only handles standard wavelengths.
     spect = ciexyz.Spectrum()
     spect.from_array (spectrum)
-    spectrum_plot_new (
+    spectrum_plot (
         spect,
         title,
         filename,
         xlabel=xlabel,
         ylabel=ylabel)
 
-def spectrum_subplot_new (spectrum):
+def spectrum_subplot (spectrum):
     '''Plot a spectrum, with x-axis the wavelength, and y-axis the intensity.
     The curve is colored at that wavelength by the (approximate) color of a
     pure spectral color at that wavelength, with intensity constant over wavelength.
@@ -350,7 +288,7 @@ def spectrum_subplot_new (spectrum):
         spectrum.wavelength, spectrum.intensity,
         color='k', linewidth=2.0, antialiased=True)
 
-def spectrum_plot_new (
+def spectrum_plot (
     spectrum,
     title,
     filename,
@@ -386,7 +324,7 @@ def spectrum_plot_new (
     pylab.axis ('off')
     # lower plot - spectrum vs wavelength, with colors of the associated spectral lines below
     pylab.subplot (2,1,2)
-    spectrum_subplot_new (spectrum)
+    spectrum_subplot (spectrum)
     tighten_x_axis (spectrum.wavelength)
     pylab.xlabel (xlabel)
     pylab.ylabel (ylabel)
@@ -498,18 +436,18 @@ def cie_matching_functions_plot ():
     pylab.subplot (3,1,1)
     pylab.title ('1931 CIE XYZ Matching Functions')
     pylab.ylabel ('CIE $X$')
-    spectrum_subplot_new (spect_x)
+    spectrum_subplot (spect_x)
     tighten_x_axis (spect_x.wavelength)
     # Y
     pylab.subplot (3,1,2)
     pylab.ylabel ('CIE $Y$')
-    spectrum_subplot_new (spect_y)
+    spectrum_subplot (spect_y)
     tighten_x_axis (spect_y.wavelength)
     # Z
     pylab.subplot (3,1,3)
     pylab.xlabel ('Wavelength (nm)')
     pylab.ylabel ('CIE $Z$')
-    spectrum_subplot_new (spect_z)
+    spectrum_subplot (spect_z)
     tighten_x_axis (spect_z.wavelength)
     # Save.
     filename = 'CIEXYZ_Matching'
@@ -535,7 +473,7 @@ def scattered_visual_brightness ():
     pylab.title ('Perceptual Brightness of Rayleigh Scattered Light')
     pylab.xlabel ('Wavelength (nm)')
     pylab.ylabel ('CIE $Y$ / $\lambda^4$')
-    spectrum_subplot_new (spect)
+    spectrum_subplot (spect)
     tighten_x_axis (spect.wavelength)
     # Save.
     filename = 'Visual_scattering'
