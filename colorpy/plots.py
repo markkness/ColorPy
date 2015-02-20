@@ -469,19 +469,23 @@ def cie_matching_functions_spectrum_plot ():
 
 def scattered_visual_brightness ():
     ''' Plot the perceptual brightness of Rayleigh scattered light. '''
-    # This shows why a green laser shows a distinct trail in the air,
+    # This combines the extent of scattering with how bright it appears.
+    # It shows why a green laser shows a distinct trail in the air,
     # while a red laser does not.
     # Get 'spectra' as CIE Y matching function and multiply by scattering.
     # Rayleigh scattering is proportional to 1 / wl^4.
     spect = ciexyz.Spectrum()
-    # Previous version used an arbitrary scale factor.
-    # This can probably be removed.
-    scale = math.pow (550.0 / 555.0, 4)
     for i in range (spect.num_wl):
         wl_nm = spect.wavelength [i]
         xyz = ciexyz.xyz_from_wavelength (wl_nm)
         scatter = rayleigh.rayleigh_scattering (wl_nm)
-        spect.intensity [i] = xyz[1] * scatter * scale
+        spect.intensity [i] = xyz[1] * scatter
+    # Scale is arbitrary so make max intensity = 1.0.
+    max_intensity = max (spect.intensity)
+    if max_intensity != 0.0:
+        scaling = 1.0 / max_intensity
+        spect.intensity *= scaling
+    # Plot.
     pylab.clf ()
     pylab.title ('Perceptual Brightness of Rayleigh Scattered Light')
     pylab.xlabel ('Wavelength (nm)')
@@ -489,7 +493,7 @@ def scattered_visual_brightness ():
     spectrum_subplot (spect)
     tighten_x_axis (spect.wavelength)
     # Save.
-    filename = 'Visual_scattering'
+    filename = 'Laser-Scatter'
     plot_save (filename)
 
 
