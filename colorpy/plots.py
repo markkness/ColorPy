@@ -221,30 +221,16 @@ def xyz_patch_plot (
 # Spectrum plots
 #
 
+# FIXME: Somebody needs to still call spectrum_plot_old...
+# Needs to be a test. test_plots.py.
 def spectrum_plot_old (
-    spectrum,
+    spectrum_array,
     title,
     filename,
     xlabel = 'Wavelength ($nm$)',
     ylabel = 'Intensity ($W/m^2$)'):
-    '''Plot for a single spectrum -
-    In a two part graph, plot:
-    top: color of the spectrum, as a large patch.
-    low: graph of spectrum intensity vs wavelength (x axis).
-    The graph is colored by the (approximated) color of each wavelength.
-    Each wavelength has equal physical intensity, so the variation in
-    apparent intensity (e.g. 400, 800 nm are very dark, 550 nm is bright),
-    is due to perceptual factors in the eye.  This helps show how much
-    each wavelength contributes to the percieved color.
-
-    spectrum - spectrum to plot
-    title    - title for plot
-    filename - filename to save plot to
-    xlabel   - label for x axis
-    ylabel   - label for y axis
-    '''
-    spect = ciexyz.Spectrum()
-    spect.from_array (spectrum)
+    ''' Plot an old-style spectrum array. '''
+    spect = ciexyz.Spectrum_from_array (spectrum_array)
     spectrum_plot (
         spect,
         title,
@@ -598,7 +584,7 @@ def figures ():
     scattered_visual_brightness()
 
 #
-# HTML
+# HTML. Does not really belong here?
 #
 
 def get_color_hex_string (red, green, blue):

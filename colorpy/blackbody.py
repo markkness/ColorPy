@@ -88,6 +88,10 @@ BLACKBODY_CONST_A = (PLANCK_CONSTANT * SPEED_OF_LIGHT) / (BOLTZMAN_CONSTANT)
 BLACKBODY_CONST_B = (2.0 * PLANCK_CONSTANT * SPEED_OF_LIGHT * SPEED_OF_LIGHT)
 BLACKBODY_INV_EXP = (1.0 / 500.0)
 
+#
+# Blackbody specific intensity.
+#
+
 def blackbody_specific_intensity (wl_nm, T_K):
     '''Get the monochromatic specific intensity for a blackbody -
         wl_nm = wavelength [nm]
@@ -107,6 +111,7 @@ def blackbody_specific_intensity (wl_nm, T_K):
     intensity = BLACKBODY_CONST_B / (wl_5 * (math.exp (exponent) - 1.0))
     return intensity
 
+
 def get_blackbody_spectrum (T_K):
     ''' Get the Spectrum of a blackbody at the given temperature [K]. '''
     spectrum = ciexyz.Spectrum()
@@ -117,6 +122,7 @@ def get_blackbody_spectrum (T_K):
         # Scale by wavelength interval.
         spectrum.intensity[i] = intensity * dwl_m
     return spectrum
+
 
 def blackbody_color (T_K):
     ''' Get the xyz color of a blackbody at the given temperature [K]. '''
@@ -130,14 +136,9 @@ def blackbody_color (T_K):
 
 def blackbody_spectrum_old (T_K):
     ''' Get the spectrum of a blackbody, as a numpy array. '''
-    spectrum = ciexyz.empty_spectrum()
-    num_wl = spectrum.shape[0]
-    for i in range (0, num_wl):
-        # Intensity per unit wavelength.
-        specific_intensity = blackbody_specific_intensity (spectrum [i][0], T_K)
-        # Scale by size of wavelength interval.
-        spectrum [i][1] = specific_intensity * ciexyz.delta_wl_nm * 1.0e-9
-    return spectrum
+    spect = get_blackbody_spectrum (T_K)
+    array = spect.to_array()
+    return array
 
 #
 # Figures
@@ -154,11 +155,12 @@ def blackbody_patch_plot (T_list, title, filename):
         color_names.append (name)
     plots.xyz_patch_plot (xyz_colors, color_names, title, filename)
 
+
 def blackbody_color_vs_temperature_plot (T_list, title, filename):
     ''' Draw a color vs temperature plot for the given temperature range. '''
     num_T = len (T_list)
     rgb_list = numpy.empty ((num_T, 3))
-    for i in range (0, num_T):
+    for i in range (num_T):
         T = T_list [i]
         xyz = blackbody_color (T)
         rgb_list [i] = colormodels.rgb_from_xyz (xyz)
@@ -174,6 +176,7 @@ def blackbody_color_vs_temperature_plot (T_list, title, filename):
         xlabel = r'Temperature (K)',
         ylabel = r'RGB Color')
 
+
 def blackbody_spectrum_plot (T_K):
     '''Draw the spectrum of a blackbody at the given temperature.'''
     spectrum = get_blackbody_spectrum (T_K)
@@ -187,7 +190,9 @@ def blackbody_spectrum_plot (T_K):
         ylabel = 'Specific Intensity')
         #ylabel = 'Intensity ($W/m^2$)')   # with LaTex symbols, the axis text gets too big...
 
-# Create sample figures
+#
+# Main.
+#
 
 def figures ():
     '''Create some blackbody plots.'''

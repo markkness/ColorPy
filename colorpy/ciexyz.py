@@ -612,6 +612,11 @@ _CIEXYZ_1931_table = [
     [ 830,  0.000001251141,  0.000000451810,  0.000000000000 ]
 ]
 
+# Labels for X,Y,Z indices.
+CIE_X = 0
+CIE_Y = 1
+CIE_Z = 2
+
 # Public - default range of wavelengths in spectra (nm).
 # start_wl_nm and end_wl_nm are integers, delta_wl_nm is a float.
 start_wl_nm = None
@@ -677,21 +682,25 @@ def init (display_intensity = DEFAULT_DISPLAY_INTENSITY):
     _xyz_deltas [create_table_size-1] = colormodels.xyz_color (0.0, 0.0, 0.0)
 
 #
+# CIE XYZ color for an arbitrary wavelength.
+#
 
-def empty_spectrum ():
-    '''Get a black (no intensity) ColorPy spectrum.
+def xyz_from_wavelength (wl_nm):
+    '''Given a wavelength (nm), return the corresponding xyz color, for unit intensity.'''
+    # separate wl_nm into integer and fraction
+    int_wl_nm = math.floor (wl_nm)
+    frac_wl_nm = wl_nm - float (int_wl_nm)
+    # skip out of range (invisible) wavelengths
+    if (int_wl_nm < start_wl_nm - 1) or (int_wl_nm > end_wl_nm + 1):
+        return colormodels.xyz_color (0.0, 0.0, 0.0)
+    # get index into main table
+    index = int_wl_nm - start_wl_nm + 1
+    # apply linear interpolation to get the color
+    return _xyz_colors [index] + frac_wl_nm * _xyz_deltas [index]
 
-    This is a 2D numpy array, with one row for each wavelength in the visible range,
-    360 nm to 830 nm, with a spacing of delta_wl_nm (1.0 nm), and two columns.
-    The first column is filled with the wavelength [nm].
-    The second column is filled with 0.0.  It should later be filled with the intensity.
-
-    The result can be passed to xyz_from_spectrum() to convert to an xyz color.
-    '''
-    spectrum = Spectrum()
-    spect = spectrum.to_array()
-    return spect
-
+#
+# Spectrum type.
+#
 
 class Spectrum(object):
     ''' A representation of a light spectrum.
@@ -785,38 +794,55 @@ class Spectrum(object):
             xyz = self.get_xyz_color_any()
         return xyz
 
+#
+# Useful factory functions.
+#
 
-def xyz_from_wavelength (wl_nm):
-    '''Given a wavelength (nm), return the corresponding xyz color, for unit intensity.'''
-    # separate wl_nm into integer and fraction
-    int_wl_nm = math.floor (wl_nm)
-    frac_wl_nm = wl_nm - float (int_wl_nm)
-    # skip out of range (invisible) wavelengths
-    if (int_wl_nm < start_wl_nm - 1) or (int_wl_nm > end_wl_nm + 1):
-        return colormodels.xyz_color (0.0, 0.0, 0.0)
-    # get index into main table
-    index = int_wl_nm - start_wl_nm + 1
-    # apply linear interpolation to get the color
-    return _xyz_colors [index] + frac_wl_nm * _xyz_deltas [index]
+def Spectrum_from_array (spectrum_array, standard_wls=False):
+    ''' Create a Spectrum directly from an N by 2 array. '''
+    spectrum = Spectrum()
+    spectrum.from_array (spectrum_array, standard_wls=standard_wls)
+    return spectrum
 
-def xyz_from_spectrum (spectrum):
+
+def Spectrum_for_wavelengths (wavelengths):
+    ''' Create a Spectrum for the list of wavelengths. '''
+    pass
+    # TODO: Make this work!
+
+#
+# Deprecated usage, using simple arrays instead of Spectrum class.
+#
+
+def empty_spectrum ():
+    '''Get a black (no intensity) ColorPy spectrum.
+
+    This is a 2D numpy array, with one row for each wavelength in the visible range,
+    360 nm to 830 nm, with a spacing of delta_wl_nm (1.0 nm), and two columns.
+    The first column is filled with the wavelength [nm].
+    The second column is filled with 0.0.  It should later be filled with the intensity.
+
+    The result can be passed to xyz_from_spectrum() to convert to an xyz color.
+    '''
+    spect = Spectrum()
+    array = spect.to_array()
+    return array
+
+
+def xyz_from_spectrum (spectrum_array):
     '''Determine the xyz color of the spectrum.
 
     The spectrum is assumed to be a 2D numpy array, with a row for each wavelength,
     and two columns.  The first column should hold the wavelength (nm), and the
     second should hold the light intensity.  The set of wavelengths can be arbitrary,
     it does not have to be the set that empty_spectrum() returns.'''
-    shape = numpy.shape (spectrum)
-    (num_wl, num_col) = shape
-    assert num_col == 2, 'Expecting 2D array with each row: wavelength [nm], specific intensity [W/unit solid angle]'
-    # integrate
-    rtn = colormodels.xyz_color (0.0, 0.0, 0.0)
-    for i in range (0, num_wl):
-        wl_nm_i = spectrum [i][0]
-        specific_intensity_i = spectrum [i][1]
-        xyz = xyz_from_wavelength (wl_nm_i)
-        rtn += specific_intensity_i * xyz
-    return rtn
+    spect = Spectrum_from_array (spectrum_array)
+    xyz = spect.get_xyz()
+    return xyz
+
+#
+# Miscellaneous stuff for spectral line colors that does not really belong here.
+#
 
 def get_normalized_spectral_line_colors (
     brightness = 1.0,
@@ -909,6 +935,10 @@ def get_normalized_spectral_line_colors_annotated (
         xyzs [i] = colormodels.xyz_from_rgb (rgb)
     # done
     return (xyzs, names)
+
+#
+# Main.
+#
 
 # Initialize at module startup
 init()

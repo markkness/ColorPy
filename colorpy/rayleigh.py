@@ -75,6 +75,10 @@ import illuminants
 import blackbody
 import plots
 
+#
+# Rayleigh scattering, proportional to 1 / wavelength^4.
+#
+
 def rayleigh_scattering (wl_nm):
     '''Get the Rayleigh scattering factor for the wavelength.
     Scattering is proportional to 1/wavelength^4.
@@ -84,6 +88,7 @@ def rayleigh_scattering (wl_nm):
     rayleigh_factor = math.pow (wl_rel, -4)
     return rayleigh_factor
 
+
 def get_rayleigh_scattering_spectrum ():
     ''' Get the Rayleigh scattering Spectrum. '''
     # FIXME? Take wavelengths as optional argument.
@@ -92,14 +97,16 @@ def get_rayleigh_scattering_spectrum ():
         spectrum.intensity[i] = rayleigh_scattering (spectrum.wavelength[i])
     return spectrum
 
+
 def get_rayleigh_illuminated_spectrum (illuminant):
     '''Get the spectrum when illuminated by the specified illuminant.'''
     # FIXME: This should use the wls in illuminant.
     rayleigh = get_rayleigh_scattering_spectrum()
     spectrum = ciexyz.Spectrum()
-    spectrum.intensity[:] = illuminant.intensity
-    spectrum.intensity[:] *= rayleigh.intensity
+    spectrum.intensity = illuminant.intensity.copy()
+    spectrum.intensity *= rayleigh.intensity
     return spectrum
+
 
 def get_rayleigh_illuminated_color (illuminant):
     '''Get the xyz color when illuminated by the specified illuminant.'''
@@ -108,60 +115,25 @@ def get_rayleigh_illuminated_color (illuminant):
     return xyz
 
 #
-# Deprecated usage, with simple arrays instead of Spectrum class.
-#
-
-def rayleigh_scattering_spectrum_old ():
-    '''Get the Rayleigh scattering spectrum (independent of illuminant), as a numpy array.'''
-    spect = get_rayleigh_scattering_spectrum()
-    array = spect.to_array()
-    return array
-
-def rayleigh_illuminated_spectrum_old (illuminant_array):
-    '''Get the spectrum when illuminated by the specified illuminant.'''
-    spect = get_rayleigh_scattering_spectrum()
-    illum = illuminant_array[:, 1]
-    spect.intensity *= illum
-    array = spect.to_array()
-    return array
-
-def rayleigh_illuminated_color_old (illuminant_array):
-    '''Get the xyz color when illuminated by the specified illuminant.'''
-    spect = get_rayleigh_scattering_spectrum()
-    illum = illuminant_array[:, 1]
-    spect.intensity *= illum
-    xyz = spect.get_xyz()
-    return xyz
-
-#
 # Figures
 #
 
-def rayleigh_patch_plot_old (named_illuminant_list, title, filename):
-    '''Make a patch plot of the Rayleigh scattering color for each illuminant.'''
+def rayleigh_patch_plot (named_illuminants, title, filename):
+    ''' Make a patch plot of the Rayleigh scattering color for each illuminant. '''
     xyz_colors = []
     color_names = []
-    for (illuminant, name) in named_illuminant_list:
-        xyz = rayleigh_illuminated_color_old (illuminant)
+    for illum, name in named_illuminants:
+        xyz = get_rayleigh_illuminated_color (illum)
         xyz_colors.append (xyz)
         color_names.append (name)
     plots.xyz_patch_plot (xyz_colors, color_names, title, filename)
 
-def rayleigh_patch_plot_new (named_illuminant_list, title, filename):
-    ''' Make a patch plot of the Rayleigh scattering color for each illuminant. '''
-    xyz_colors = []
-    color_names = []
-    for (illuminant, name) in named_illuminant_list:
-        xyz = get_rayleigh_illuminated_color (illuminant)
-        xyz_colors.append (xyz)
-        color_names.append (name)
-    plots.xyz_patch_plot (xyz_colors, color_names, title, filename)
 
 def rayleigh_color_vs_illuminant_temperature_plot (T_list, title, filename):
     '''Make a plot of the Rayleigh scattered color vs. temperature of blackbody illuminant.'''
     num_T = len (T_list)
     rgb_list = numpy.empty ((num_T, 3))
-    for i in range (0, num_T):
+    for i in range (num_T):
         T = T_list [i]
         illuminant = illuminants.get_blackbody_illuminant (T)
         xyz = get_rayleigh_illuminated_color (illuminant)
@@ -176,17 +148,8 @@ def rayleigh_color_vs_illuminant_temperature_plot (T_list, title, filename):
         xlabel = r'Illuminant Temperature (K)',
         ylabel = r'RGB Color')
 
-def rayleigh_spectrum_plot_old (illuminant, title, filename):
-    '''Plot the spectrum of Rayleigh scattering of the specified illuminant.'''
-    spectrum = rayleigh_illuminated_spectrum_old (illuminant)
-    plots.spectrum_plot_old (
-        spectrum,
-        title,
-        filename,
-        xlabel = 'Wavelength (nm)',
-        ylabel = 'Intensity ($W/m^2$)')
 
-def rayleigh_spectrum_plot_new (illuminant, title, filename):
+def rayleigh_spectrum_plot (illuminant, title, filename):
     '''Plot the spectrum of Rayleigh scattering of the specified illuminant.'''
     spectrum = get_rayleigh_illuminated_spectrum (illuminant)
     plots.spectrum_plot (
@@ -196,13 +159,58 @@ def rayleigh_spectrum_plot_new (illuminant, title, filename):
         xlabel = 'Wavelength (nm)',
         ylabel = 'Intensity ($W/m^2$)')
 
+#
+# Deprecated usage, using simple arrays instead of Spectrum class.
+#
+
+def rayleigh_scattering_spectrum_old ():
+    '''Get the Rayleigh scattering spectrum (independent of illuminant), as a numpy array.'''
+    spect = get_rayleigh_scattering_spectrum()
+    array = spect.to_array()
+    return array
+
+
+def rayleigh_illuminated_spectrum_old (illuminant_array):
+    '''Get the spectrum when illuminated by the specified illuminant.'''
+    illum = ciexyz.Spectrum_from_array (illuminant_array)
+    spect = get_rayleigh_illuminated_spectrum (illum)
+    array = spect.to_array()
+    return array
+
+
+def rayleigh_illuminated_color_old (illuminant_array):
+    '''Get the xyz color when illuminated by the specified illuminant.'''
+    illum = ciexyz.Spectrum_from_array (illuminant_array)
+    xyz = get_rayleigh_illuminated_color (illum)
+    return xyz
+
+
+def rayleigh_patch_plot_old (named_illuminant_list, title, filename):
+    '''Make a patch plot of the Rayleigh scattering color for each illuminant.'''
+    # Adjust illuminant list then plot.
+    illum_list = []
+    for illuminant_array, name in named_illuminant_list:
+        illum = ciexyz.Spectrum_from_array (illuminant_array)
+        illum_list.append ((illum, name))
+    rayleigh_patch_plot (illum_list, title, filename)
+
+
+def rayleigh_spectrum_plot_old (illuminant, title, filename):
+    '''Plot the spectrum of Rayleigh scattering of the specified illuminant.'''
+    illum = ciexyz.Spectrum_from_array (illuminant)
+    rayleigh_spectrum_plot (illum, title, filename)
+
+#
+# Main.
+#
+
 def figures ():
     '''Draw some plots of Rayleigh scattering.'''
     # Patch plots for some illuminants.
-    rayleigh_patch_plot_new (
+    rayleigh_patch_plot (
         [(illuminants.get_blackbody_illuminant (blackbody.SUN_TEMPERATURE), 'Sun')],
         'Rayleigh Scattering by the Sun', 'Rayleigh-PatchSun')
-    rayleigh_patch_plot_new (
+    rayleigh_patch_plot (
         [(illuminants.get_illuminant_D65 (), 'D65'),
         (illuminants.get_blackbody_illuminant (2000.0), '2000 K'),
         (illuminants.get_blackbody_illuminant (3500.0), '3500 K'),
@@ -220,7 +228,7 @@ def figures ():
     T_list = [2000.0, 3000.0, blackbody.SUN_TEMPERATURE, 6500.0, 11000.0, 15000.0]
     for T in T_list:
         T_label = '%dK' % (round(T))
-        rayleigh_spectrum_plot_new (
+        rayleigh_spectrum_plot (
             illuminants.get_blackbody_illuminant (T),
             'Rayleigh Scattering\nIlluminant %g K' % (T),
             'Rayleigh-Spectrum-%s' % (T_label))

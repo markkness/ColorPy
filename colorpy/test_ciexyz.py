@@ -33,6 +33,8 @@ import ciexyz
 class TestCiexyz(unittest.TestCase):
     ''' Test cases for CIE XYZ conversions. '''
 
+    # FIXME: Need better tests here.
+
     def test_coverage_1(self, verbose=False):
         ''' A coverage test. '''
         for i in range (100):
@@ -52,7 +54,7 @@ class TestCiexyz(unittest.TestCase):
         if verbose:
             print ('555 nm = %s' % (str (xyz_555)))
 
-    def test_spectrum(self, verbose=True):
+    def test_spectrum(self, verbose=False):
         ''' Test the spectrum class. '''
         spectrum = ciexyz.Spectrum()
         color = spectrum.get_xyz()

@@ -337,9 +337,8 @@ def spectral_line_555nm_plot ():
         [558.0, 100.0],
         [557.0,   0.0],
         [830.0,   0.0]])
-    spect = ciexyz.Spectrum()
-    spect.from_array (spectrum)
-    plots.spectrum_plot (spect, '555 nm Spectral Line', 'line555nm')
+    spect = ciexyz.Spectrum_from_array (spectrum)
+    plots.spectrum_plot (spect, '555 nm Spectral Line', 'Line-555')
 
 #
 # Elemental emission spectra. Data from ADC.
@@ -461,16 +460,13 @@ emission_spectrum_Ne = numpy.array([
 def emission_plots ():
     ''' Plot some element emission spectra. '''
     # Hydrogen.
-    spect = ciexyz.Spectrum()
-    spect.from_array (emission_spectrum_H)
+    spect = ciexyz.Spectrum_from_array (emission_spectrum_H)
     plots.spectrum_plot (spect, 'H Emission Spectrum', 'Emission-1-H')
     # Helium.
-    spect = ciexyz.Spectrum()
-    spect.from_array (emission_spectrum_He)
+    spect = ciexyz.Spectrum_from_array (emission_spectrum_He)
     plots.spectrum_plot (spect, 'He Emission Spectrum', 'Emission-2-He')
     # Neon.
-    spect = ciexyz.Spectrum()
-    spect.from_array (emission_spectrum_Ne)
+    spect = ciexyz.Spectrum_from_array (emission_spectrum_Ne)
     plots.spectrum_plot (spect, 'Ne Emission Spectrum', 'Emission-10-Ne')
 #
 

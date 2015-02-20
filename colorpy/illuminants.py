@@ -665,8 +665,7 @@ def get_illuminant_D65 ():
     whenever possible.  Otherwise, D55 or D75 are recommended.  (Wyszecki, p. 145)
 
     (ColorPy does not currently provide D55 or D75, however.)'''
-    illuminant = ciexyz.Spectrum()
-    illuminant.from_array (_Illuminant_D65, standard_wls=True)
+    illuminant = ciexyz.Spectrum_from_array (_Illuminant_D65, standard_wls=True)
     return illuminant
 
 def get_illuminant_A ():
@@ -723,30 +722,31 @@ def scale_illuminant_old (illuminant, scaling):
     illuminant [:,1] *= scaling
     return illuminant
 
-# Initialize at module startup
+#
+# Main.
+#
+
+# Initialize at module startup.
 init()
 
-# Figures - Plot some of the illuminants
 
 def figures ():
     '''Plot spectra for several illuminants.'''
-    # D65
+    # D65.
     plots.spectrum_plot (
         get_illuminant_D65(), 'CIE Illuminant D65', 'Illuminant-D65')
-    # A
+    # A.
     plots.spectrum_plot (
         get_illuminant_A(), 'CIE Illuminant A', 'Illuminant-A')
-    # Constant
+    # Constant.
     plots.spectrum_plot (
         get_constant_illuminant(), 'Constant Illuminant', 'Illuminant-Const')
-    # Blackbody (5778)
+    # Blackbody (5778).
     plots.spectrum_plot (
         get_blackbody_illuminant (5778.0), '5778 K Illuminant', 'Illuminant-5778')
-    # Old-style.
+    # An old-style illuminant.
+    # FIXME: This would be a good test, both of the illuminant and spectrum_plot_old().
     plots.spectrum_plot_old (get_illuminant_D65_old(), 'CIE Illuminant D65', 'Illuminant-D65-Old')
-    plots.spectrum_plot_old (get_illuminant_A_old(), 'CIE Illuminant A', 'Illuminant-A-Old')
-    plots.spectrum_plot_old (get_constant_illuminant_old(), 'Constant Illuminant', 'Illuminant-Const-Old')
-    plots.spectrum_plot_old (get_blackbody_illuminant_old (5778.0), '5778 K Illuminant', 'Illuminant-5778-Old')
 
 
 if __name__ == '__main__':
