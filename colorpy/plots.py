@@ -480,10 +480,12 @@ def scattered_visual_brightness ():
         xyz = ciexyz.xyz_from_wavelength (wl_nm)
         scatter = rayleigh.rayleigh_scattering (wl_nm)
         spect.intensity [i] = xyz[1] * scatter
-    # Scale is arbitrary so make max intensity = 1.0.
+    # Scale is arbitrary so make max intensity nearly 1.0.
+    # It looks a little better if the max is just under 1.
     max_intensity = max (spect.intensity)
+    want_max = 0.99
     if max_intensity != 0.0:
-        scaling = 1.0 / max_intensity
+        scaling = want_max / max_intensity
         spect.intensity *= scaling
     # Plot.
     pylab.clf ()

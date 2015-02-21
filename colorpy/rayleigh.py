@@ -89,10 +89,9 @@ def rayleigh_scattering (wl_nm):
     return rayleigh_factor
 
 
-def get_rayleigh_scattering_spectrum ():
+def get_rayleigh_scattering_spectrum (wavelengths=None):
     ''' Get the Rayleigh scattering Spectrum. '''
-    # FIXME? Take wavelengths as optional argument.
-    spectrum = ciexyz.Spectrum()
+    spectrum = ciexyz.Spectrum(wavelengths=wavelengths)
     for i in range (spectrum.num_wl):
         spectrum.intensity[i] = rayleigh_scattering (spectrum.wavelength[i])
     return spectrum
@@ -100,10 +99,8 @@ def get_rayleigh_scattering_spectrum ():
 
 def get_rayleigh_illuminated_spectrum (illuminant):
     '''Get the spectrum when illuminated by the specified illuminant.'''
-    # FIXME: This should use the wls in illuminant.
-    rayleigh = get_rayleigh_scattering_spectrum()
-    spectrum = ciexyz.Spectrum()
-    spectrum.intensity = illuminant.intensity.copy()
+    spectrum = ciexyz.Spectrum_copy (illuminant)
+    rayleigh = get_rayleigh_scattering_spectrum (spectrum.wavelength)
     spectrum.intensity *= rayleigh.intensity
     return spectrum
 
@@ -207,16 +204,22 @@ def rayleigh_spectrum_plot_old (illuminant, title, filename):
 def figures ():
     '''Draw some plots of Rayleigh scattering.'''
     # Patch plots for some illuminants.
+    # Sol.
     rayleigh_patch_plot (
         [(illuminants.get_blackbody_illuminant (blackbody.SUN_TEMPERATURE), 'Sun')],
         'Rayleigh Scattering by the Sun', 'Rayleigh-PatchSun')
+    # Neon line spectra.
+    rayleigh_patch_plot (
+        [(illuminants.get_neon_illuminant (), 'Neon Lamp')],
+        'Rayleigh Scattering by Neon', 'Rayleigh-Neon')
+    # A set of illuminants.
     rayleigh_patch_plot (
         [(illuminants.get_illuminant_D65 (), 'D65'),
+        (illuminants.get_neon_illuminant (), 'Neon Lamp'),
         (illuminants.get_blackbody_illuminant (2000.0), '2000 K'),
         (illuminants.get_blackbody_illuminant (3500.0), '3500 K'),
         (illuminants.get_blackbody_illuminant (blackbody.SUN_TEMPERATURE), 'Sun'),
-        (illuminants.get_blackbody_illuminant (6500.0), '6500 K'),
-        (illuminants.get_blackbody_illuminant (15000.0), '15000 K')],
+        (illuminants.get_blackbody_illuminant (12000.0), '12000 K')],
         'Rayleigh Scattering by Various Illuminants', 'Rayleigh-PatchVarious')
 
     # Scattered color vs blackbody illuminant temperature.
@@ -232,6 +235,10 @@ def figures ():
             illuminants.get_blackbody_illuminant (T),
             'Rayleigh Scattering\nIlluminant %g K' % (T),
             'Rayleigh-Spectrum-%s' % (T_label))
+    rayleigh_spectrum_plot (
+        illuminants.get_neon_illuminant(),
+        'Rayleigh Scattering Neon',
+        'Rayleigh-Spectrum-10-Ne')
 
     # Old-style.
     rayleigh_patch_plot_old (

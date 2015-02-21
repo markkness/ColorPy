@@ -693,6 +693,18 @@ def get_constant_illuminant ():
         illuminant.intensity *= scaling
     return illuminant
 
+def get_neon_illuminant ():
+    ''' Get a neon lamp illuminant. '''
+    # FIXME: Delayed import to avoid circular imports.
+    # misc.py is not the right place for the atomic spectra.
+    import misc
+    illuminant = ciexyz.Spectrum_from_array (misc.emission_spectrum_Ne)
+    xyz = illuminant.get_xyz()
+    if xyz [1] != 0.0:
+        scaling = 1.0 / xyz [1]
+        illuminant.intensity *= scaling
+    return illuminant
+
 #
 # Deprecated usage, returning simple arrays instead of Spectrum class.
 #

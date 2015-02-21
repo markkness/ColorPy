@@ -717,11 +717,46 @@ class Spectrum(object):
     and intensity values make it easier to use numpy efficiently.
     '''
 
-    def __init__(self):
-        self.num_wl     = end_wl_nm - start_wl_nm + 1
-        self.wavelength = numpy.linspace(float(start_wl_nm), float(end_wl_nm), self.num_wl)
-        self.intensity  = numpy.zeros(self.num_wl)
-        self.standard   = True
+    def __init__(self, wavelengths=None, standard_wls=False):
+        ''' Create a spectrum. '''
+        if wavelengths is None:
+            self.alloc_default()
+        else:
+            self.alloc_for_wavelengths(wavelengths, standard_wls)
+
+    # Allocation by wavelengths.
+
+    def alloc_default(self):
+        ''' Allocate for the default list of wavelengths. '''
+        num_wl      = end_wl_nm - start_wl_nm + 1
+        wavelengths = numpy.linspace (float(start_wl_nm), float(end_wl_nm), num_wl)
+        self.alloc_for_wavelengths (wavelengths, standard_wls=True)
+
+    def alloc_for_wavelengths(self, wavelength_array, standard_wls=False):
+        ''' Allocate for the specified list of wavelengths. '''
+        # Array should be one dimensional.
+        shape = wavelength_array.shape
+        if len(shape) != 1:
+            msg = 'Invalid wavelength array shape %s' % (str(shape))
+            raise ValueError (msg)
+        # Allocate with zero intensity.
+        self.num_wl     = shape[0]
+        self.wavelength = wavelength_array.copy()
+        self.intensity  = numpy.zeros ((self.num_wl))
+        # Note if the wavelengths are the standard list or not.
+        # Make a minimal attempt to verify if this is correct.
+        self.standard = standard_wls
+        if self.standard:
+            self.validate_standard()
+
+    def validate_standard(self):
+        ''' Check that the wavelengths match the standard list if expected. '''
+        # This only checks the count for now.
+        standard_num_wl = end_wl_nm - start_wl_nm + 1
+        shape = self.wavelength.shape
+        if shape[0] != standard_num_wl:
+            msg = 'Invalid standard wavelength count %d.' % (shape[0])
+            raise ValueError (msg)
 
     # Conversions between old-style N by 2 arrays.
     # These were used in ColorPy 0.2 and before.
@@ -732,22 +767,12 @@ class Spectrum(object):
         If standard_wls is True, then the wavelengths should be the
         standard set, and the color can be calculated faster.
         '''
-        shape = spectrum_array.shape
-        # Array should be N by 2.
-        if shape[1] != 2:
-            msg = 'Invalid spectrum array shape %s' % (str(shape))
-            raise ValueError (msg)
-        self.num_wl     = shape[0]
-        self.wavelength = spectrum_array[:, 0].copy()
-        self.intensity  = spectrum_array[:, 1].copy()
-        self.standard   = standard_wls
-        # Check that wavelengths are indeed the standard list.
-        # This only checks the count for now.
-        if self.standard:
-            standard_num_wl = end_wl_nm - start_wl_nm + 1
-            if shape[0] != standard_num_wl:
-                msg = 'Invalid standard wavelength count %d.' % (shape[0])
-                raise ValueError (msg)
+        # Get the wavelengths as a reference, NOT as a copy.
+        wavelengths = spectrum_array[:, 0]
+        # Allocate.
+        self.alloc_for_wavelengths (wavelengths, standard_wls)
+        # Copy intensity.
+        self.intensity[:] = spectrum_array[:, 1].copy()
 
     def to_array(self):
         ''' Convert to the previous N by 2 array structure. '''
@@ -798,17 +823,27 @@ class Spectrum(object):
 # Useful factory functions.
 #
 
+def Spectrum_copy (spectrum0):
+    ''' Copy a spectrum. '''
+    spectrum = Spectrum()
+    spectrum.alloc_for_wavelengths(
+        spectrum0.wavelength, standard_wls=spectrum0.standard)
+    spectrum.intensity[:] = spectrum0.intensity.copy()
+    return spectrum
+
+
+def Spectrum_for_wavelengths (wavelength_array, standard_wls=False):
+    ''' Create a Spectrum for the list of wavelengths. '''
+    spectrum = Spectrum()
+    spectrum.alloc_for_wavelengths(wavelength_array, standard_wls=standard_wls)
+    return spectrum
+
+
 def Spectrum_from_array (spectrum_array, standard_wls=False):
     ''' Create a Spectrum directly from an N by 2 array. '''
     spectrum = Spectrum()
     spectrum.from_array (spectrum_array, standard_wls=standard_wls)
     return spectrum
-
-
-def Spectrum_for_wavelengths (wavelengths):
-    ''' Create a Spectrum for the list of wavelengths. '''
-    pass
-    # TODO: Make this work!
 
 #
 # Deprecated usage, using simple arrays instead of Spectrum class.
