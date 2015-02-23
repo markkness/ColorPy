@@ -145,9 +145,9 @@ class thin_film:
         R     = Re.real*Re.real + Re.imag*Re.imag
         return R
 
-    def get_reflection_spectrum (self):
+    def get_reflection_spectrum (self, model_spectrum=None):
         '''Get the reflection spectrum (independent of illuminant) for the thin film.'''
-        spectrum = ciexyz.Spectrum()
+        spectrum = ciexyz.Spectrum (model_spectrum)
         for i in range (spectrum.num_wl):
             wl_nm = spectrum.wavelength [i]
             spectrum.intensity [i] = self.get_interference_reflection_coefficient (wl_nm)
@@ -155,7 +155,7 @@ class thin_film:
 
     def get_illuminated_spectrum (self, illuminant):
         '''Get the spectrum when illuminated by the specified illuminant.'''
-        spectrum = self.get_reflection_spectrum()
+        spectrum = self.get_reflection_spectrum (model_spectrum=illuminant)
         spectrum.intensity *= illuminant.intensity
         return spectrum
 
@@ -279,6 +279,11 @@ def figures ():
     illuminant.scale (9.50)
     thinfilm_patch_plot (1.500, 1.003, 1.500, thickness_nm_list,
         illuminant, 'ThinFilm Patch Plot', 'ThinFilm-Patch')
+    # Neon illuminant. Still not that interesting.
+    illuminant = illuminants.get_neon_illuminant()
+    illuminant.scale (3.50)
+    thinfilm_patch_plot (1.500, 1.003, 1.500, thickness_nm_list,
+        illuminant, 'ThinFilm Patch Plot Neon Illuminant', 'ThinFilm-Patch-Ne')
 
     # Plot the colors of films vs thickness.
     thickness_nm_list = numpy.linspace(0.0, 1000.0, 800)
@@ -316,6 +321,14 @@ def figures ():
         'Thin Film - Large Index (n = 1.60) Bubble\nIlluminant D65',
         'ThinFilm-LargeBubble')
 
+    # Soap bubble under neon light.
+    illuminant = illuminants.get_neon_illuminant()
+    illuminant.scale (3.75)
+    thinfilm_color_vs_thickness_plot (
+        1.003, 1.33, 1.003, thickness_nm_list, illuminant,
+        'Thin Film - Soap Bubble (n = 1.33)\nNeon Illuminant',
+        'ThinFilm-SoapBubble-Ne')
+
     # A very thick film to test the aliasing limits.
     # You have to go to very large thicknesses to get much aliasing.
     thickness_nm_list = numpy.linspace(0.0, 200000.0, 800)
@@ -337,6 +350,12 @@ def figures ():
     thinfilm_spectrum_plot (1.003, 1.33, 1.003, 500.0, illuminant,
         'Thin Film Interference Spectrum - 500 nm thick\nConstant Illuminant',
         'ThinFilm-Spectrum-500nm')
+    # Under neon illuminant.
+    illuminant = illuminants.get_neon_illuminant()
+    illuminant.scale (10.0)
+    thinfilm_spectrum_plot (1.003, 1.33, 1.003, 500.0, illuminant,
+        'Thin Film Interference Spectrum - 500 nm thick\nNeon Illuminant',
+        'ThinFilm-Spectrum-500nm-Ne')
 
     # Old-style.
     thickness_nm_list = numpy.linspace(0.0, 750.0, 36)

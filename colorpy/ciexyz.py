@@ -717,12 +717,19 @@ class Spectrum(object):
     and intensity values make it easier to use numpy efficiently.
     '''
 
-    def __init__(self, wavelengths=None, standard_wls=False):
-        ''' Create a spectrum. '''
-        if wavelengths is None:
+    def __init__(self, model_spectrum=None):
+        ''' Create a spectrum.
+
+        If no model_spectrum is passed, then the spectrum will have the
+        standard list of wavelengths. If a model_spectrum is passed,
+        then the spectrum will have wavelengths matching the model.
+        '''
+        if model_spectrum is None:
             self.alloc_default()
         else:
-            self.alloc_for_wavelengths(wavelengths, standard_wls)
+            self.alloc_for_wavelengths(
+                model_spectrum.wavelength,
+                model_spectrum.standard)
 
     # Allocation by wavelengths.
 
@@ -825,6 +832,7 @@ class Spectrum(object):
 
 def Spectrum_copy (spectrum0):
     ''' Copy a spectrum. '''
+    # FIXME: Not tested.
     spectrum = Spectrum()
     spectrum.alloc_for_wavelengths(
         spectrum0.wavelength, standard_wls=spectrum0.standard)

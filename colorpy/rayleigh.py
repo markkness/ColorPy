@@ -89,9 +89,9 @@ def rayleigh_scattering (wl_nm):
     return rayleigh_factor
 
 
-def get_rayleigh_scattering_spectrum (wavelengths=None):
+def get_rayleigh_scattering_spectrum (model_spectrum=None):
     ''' Get the Rayleigh scattering Spectrum. '''
-    spectrum = ciexyz.Spectrum(wavelengths=wavelengths)
+    spectrum = ciexyz.Spectrum (model_spectrum)
     for i in range (spectrum.num_wl):
         spectrum.intensity[i] = rayleigh_scattering (spectrum.wavelength[i])
     return spectrum
@@ -99,9 +99,8 @@ def get_rayleigh_scattering_spectrum (wavelengths=None):
 
 def get_rayleigh_illuminated_spectrum (illuminant):
     '''Get the spectrum when illuminated by the specified illuminant.'''
-    spectrum = ciexyz.Spectrum_copy (illuminant)
-    rayleigh = get_rayleigh_scattering_spectrum (spectrum.wavelength)
-    spectrum.intensity *= rayleigh.intensity
+    spectrum = get_rayleigh_scattering_spectrum (model_spectrum=illuminant)
+    spectrum.intensity *= illuminant.intensity
     return spectrum
 
 
