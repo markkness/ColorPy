@@ -82,8 +82,7 @@ SPEED_OF_LIGHT    = 2.997925e+08    # m/sec
 BOLTZMAN_CONSTANT = 1.3802e-23      # J/K
 SUN_TEMPERATURE   = 5778.0          # K
 
-# Precalculated constants, for performance.
-# The improvement seems minor, but these calculations can be hit hard.
+# Precalculated constants, for minor performance improvement.
 BLACKBODY_CONST_A = (PLANCK_CONSTANT * SPEED_OF_LIGHT) / (BOLTZMAN_CONSTANT)
 BLACKBODY_CONST_B = (2.0 * PLANCK_CONSTANT * SPEED_OF_LIGHT * SPEED_OF_LIGHT)
 BLACKBODY_INV_EXP = (1.0 / 500.0)
@@ -112,10 +111,10 @@ def blackbody_specific_intensity (wl_nm, T_K):
     return intensity
 
 
-def get_blackbody_spectrum (T_K):
+def get_blackbody_spectrum (T_K, model_spectrum=None):
     ''' Get the Spectrum of a blackbody at the given temperature [K]. '''
-    spectrum = ciexyz.Spectrum()
-    # FIXME? Move to optional argument.
+    spectrum = ciexyz.Spectrum (model_spectrum)
+    # FIXME: Move to optional argument or class member.
     dwl_m = ciexyz.delta_wl_nm * 1.0e-9
     for i in range (spectrum.num_wl):
         intensity = blackbody_specific_intensity (spectrum.wavelength[i], T_K)
