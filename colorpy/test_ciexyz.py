@@ -91,6 +91,10 @@ class TestCiexyz(unittest.TestCase):
         xyz2   = spect2.get_xyz()
         tolerance = 1.0e-12
         self.check_color(xyz1, xyz2, tolerance, verbose)
+        # Spectrum copy should not change color.
+        spect3 = ciexyz.Spectrum_copy (spect1)
+        xyz3   = spect3.get_xyz()
+        self.check_color(xyz1, xyz3, tolerance, verbose)
 
 
 if __name__ == '__main__':

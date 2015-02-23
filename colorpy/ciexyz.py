@@ -832,10 +832,7 @@ class Spectrum(object):
 
 def Spectrum_copy (spectrum0):
     ''' Copy a spectrum. '''
-    # FIXME: Not tested.
-    spectrum = Spectrum()
-    spectrum.alloc_for_wavelengths(
-        spectrum0.wavelength, standard_wls=spectrum0.standard)
+    spectrum = Spectrum (model_spectrum=spectrum0)
     spectrum.intensity[:] = spectrum0.intensity.copy()
     return spectrum
 
