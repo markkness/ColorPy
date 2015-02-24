@@ -40,7 +40,7 @@ def get_spectral_colors (wl_array):
     return xyzs
 
 
-def get_purples (t_array, violet_xyz, red_xyz):
+def get_purple_colors (t_array, violet_xyz, red_xyz):
     ''' Get the pure purple colors by interpolating between violet and red. '''
     # t_array    = interpolation fractions 0.0 to 1.0
     # violet_xyz = xyz color for pure violet
@@ -71,23 +71,19 @@ def get_normalized_spectral_line_colors (
     num_purples - Number of colors to interpolate in the 'purple' range.  Default 0.  (No purples)
     dwl_angstroms - Wavelength separation, in angstroms (0.1 nm).  Default 10 A. (1 nm spacing)
     '''
-    # get range of wavelengths, in angstroms, so that we can have finer resolution than 1 nm
-    wl_angstrom_range = range (10*ciexyz.start_wl_nm, 10*(ciexyz.end_wl_nm + 1), dwl_angstroms)
-    wl_array = numpy.linspace (ciexyz.start_wl_nm, ciexyz.end_wl_nm + 1, num=dwl_angstroms)
+    # Get wavelengths. Delta is so far only 2 A and 10 A.
+    ratio     = round (10.0 / float(dwl_angstroms))
+    num_spect = ratio * (ciexyz.end_wl_nm - ciexyz.start_wl_nm) + 1
+    wl_array  = numpy.linspace (ciexyz.start_wl_nm, ciexyz.end_wl_nm, num=num_spect)
 
     # Get the spectral line colors.
-    wl_nm = numpy.zeros((len(wl_angstrom_range), 1))
-    for j in range(len(wl_angstrom_range)):
-        wl_nm[j] = wl_angstrom_range[j] * 0.1
-    xyzs_spect = get_spectral_colors (wl_nm)
+    xyzs_spect = get_spectral_colors (wl_array)
 
     # Get the purples.
-    violet_xyz = xyzs_spect [ 0, :]
-    red_xyz    = xyzs_spect [-1, :]
-    t_array = numpy.zeros((num_purples))
-    for j in range (num_purples):
-        t_array[j] = float (j) / float (num_purples - 1)
-    xyzs_purple = get_purples (t_array, violet_xyz, red_xyz)
+    violet_xyz  = xyzs_spect [ 0, :]
+    red_xyz     = xyzs_spect [-1, :]
+    t_array     = numpy.linspace (0.0, 1.0, num=num_purples)
+    xyzs_purple = get_purple_colors (t_array, violet_xyz, red_xyz)
 
     # Join spectral colors and purples.
     xyzs = numpy.vstack ([xyzs_spect, xyzs_purple])
@@ -109,28 +105,27 @@ def get_normalized_spectral_line_colors_annotated (
     num_purples - Number of colors to interpolate in the 'purple' range.  Default 0.  (No purples)
     dwl_angstroms - Wavelength separation, in angstroms (0.1 nm).  Default 10 A. (1 nm spacing)
     '''
-    # get range of wavelengths, in angstroms, so that we can have finer resolution than 1 nm
-    wl_angstrom_range = range (10*ciexyz.start_wl_nm, 10*(ciexyz.end_wl_nm + 1), dwl_angstroms)
+    # Get wavelengths. Delta is so far only 2 A and 10 A.
+    ratio     = round (10.0 / float(dwl_angstroms))
+    num_spect = ratio * (ciexyz.end_wl_nm - ciexyz.start_wl_nm) + 1
+    wl_array  = numpy.linspace (ciexyz.start_wl_nm, ciexyz.end_wl_nm, num=num_spect)
 
-    # Get the spectral line colors.
-    wl_nm = numpy.zeros((len(wl_angstrom_range), 1))
+    # Get the spectral line colors and names.
+    xyzs_spect  = get_spectral_colors (wl_array)
     names_spect = []
-    for j in range(len(wl_angstrom_range)):
-        wl_nm[j] = wl_angstrom_range[j] * 0.1
-        name = '%.1f nm' % wl_nm[j]
+    for j in range(wl_array.shape[0]):
+        name = '%.1f nm' % wl_array[j]
         names_spect.append (name)
-    xyzs_spect = get_spectral_colors (wl_nm)
 
-    # Get the purples.
-    violet_xyz = xyzs_spect [ 0, :]
-    red_xyz    = xyzs_spect [-1, :]
-    t_array = numpy.zeros((num_purples))
+    # Get the purples and names.
+    violet_xyz   = xyzs_spect [ 0, :]
+    red_xyz      = xyzs_spect [-1, :]
+    t_array      = numpy.linspace (0.0, 1.0, num=num_purples)
+    xyzs_purple  = get_purple_colors (t_array, violet_xyz, red_xyz)
     names_purple = []
     for j in range (num_purples):
-        t_array[j] = float (j) / float (num_purples - 1)
-        name = '%03d purple' % math.floor (1000.0 * t_array[j] + 0.5)
+        name = '%03d purp' % round (1000.0 * t_array[j])
         names_purple.append (name)
-    xyzs_purple = get_purples (t_array, violet_xyz, red_xyz)
 
     # Join spectral colors and purples.
     xyzs  = numpy.vstack ([xyzs_spect, xyzs_purple])
