@@ -82,7 +82,10 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
-import math, cmath, numpy
+import cmath
+import math
+import numpy
+import time
 
 import colormodels
 import ciexyz
@@ -142,29 +145,50 @@ class thin_film:
         R     = Re.real*Re.real + Re.imag*Re.imag
         return R
 
-    def reflection_spectrum (self):
+    def get_reflection_spectrum (self, model_spectrum=None):
         '''Get the reflection spectrum (independent of illuminant) for the thin film.'''
-        spectrum = ciexyz.empty_spectrum()
-        num_wl = spectrum.shape[0]
-        for i in range (0, num_wl):
-            wl_nm = spectrum [i][0]
-            spectrum [i][1] = self.get_interference_reflection_coefficient (wl_nm)
+        spectrum = ciexyz.Spectrum (model_spectrum)
+        for i in range (spectrum.num_wl):
+            wl_nm = spectrum.wavelength [i]
+            spectrum.intensity [i] = self.get_interference_reflection_coefficient (wl_nm)
         return spectrum
 
-    def illuminated_spectrum (self, illuminant):
+    def get_illuminated_spectrum (self, illuminant):
         '''Get the spectrum when illuminated by the specified illuminant.'''
-        spectrum = self.reflection_spectrum()
-        num_wl = spectrum.shape[0]
-        for i in range (0, num_wl):
-            spectrum [i][1] *= illuminant [i][1]
+        spectrum = self.get_reflection_spectrum (model_spectrum=illuminant)
+        spectrum.intensity *= illuminant.intensity
         return spectrum
 
-    def illuminated_color (self, illuminant):
+    def get_illuminated_color (self, illuminant):
         '''Get the xyz color when illuminated by the specified illuminant.'''
-        spectrum = self.illuminated_spectrum (illuminant)
-        xyz = ciexyz.xyz_from_spectrum (spectrum)
+        spectrum = self.get_illuminated_spectrum (illuminant)
+        xyz = spectrum.get_xyz()
         return xyz
 
+    # Deprecated - Versions working with arrays not Spectrum classes.
+
+    def reflection_spectrum_old (self):
+        '''Get the reflection spectrum (independent of illuminant) for the thin film.'''
+        spect = self.get_reflection_spectrum()
+        array = spect.to_array()
+        return array
+
+    def illuminated_spectrum_old (self, illuminant_array):
+        '''Get the spectrum when illuminated by the specified illuminant.'''
+        illum = ciexyz.Spectrum_from_array (illuminant_array)
+        spect = self.get_illuminated_spectrum (illum)
+        array = spect.to_array()
+        return array
+
+    def illuminated_color_old (self, illuminant_array):
+        '''Get the xyz color when illuminated by the specified illuminant.'''
+        illum = ciexyz.Spectrum_from_array (illuminant_array)
+        xyz = self.get_illuminated_color (illum)
+        return xyz
+
+#
+# Useful factory functions.
+#
 
 def create_thin_films (n1, n2, n3, thickness_list):
     ''' Create a list of thin films from a list of thicknesses. '''
@@ -175,42 +199,44 @@ def create_thin_films (n1, n2, n3, thickness_list):
     return films
 
 #
-# Figures
+# Figures.
 #
 
-def thinfilm_patch_plot (n1, n2, n3, thickness_nm_list, illuminant, title, filename):
+def thinfilm_patch_plot (n1, n2, n3, thickness_list, illuminant, title, filename):
     '''Make a patch plot of the color of the film for each thickness [nm].'''
-    films = create_thin_films(n1, n2, n3, thickness_nm_list)
+    films = create_thin_films(n1, n2, n3, thickness_list)
     xyz_colors = []
     labels = []
     for film in films:
-        xyz = film.illuminated_color (illuminant)
+        xyz = film.get_illuminated_color (illuminant)
         xyz_colors.append (xyz)
         label = '%.1f nm' % (film.thickness_nm)
         labels.append(label)
     plots.xyz_patch_plot (xyz_colors, labels, title, filename)
 
-def thinfilm_color_vs_thickness_plot (n1, n2, n3, thickness_nm_list, illuminant, title, filename):
+
+def thinfilm_color_vs_thickness_plot (n1, n2, n3, thickness_list, illuminant, title, filename):
     '''Plot the color of the thin film for the specfied thicknesses [nm].'''
-    films = create_thin_films(n1, n2, n3, thickness_nm_list)
+    films = create_thin_films(n1, n2, n3, thickness_list)
     num_films = len (films)
     rgb_list = numpy.empty ((num_films, 3))
-    for i in range (0, num_films):
+    for i in range (num_films):
         film = films[i]
-        xyz = film.illuminated_color (illuminant)
+        xyz = film.get_illuminated_color (illuminant)
         rgb_list [i] = colormodels.rgb_from_xyz (xyz)
     plots.color_vs_param_plot (
-        thickness_nm_list,
+        thickness_list,
         rgb_list,
         title,
         filename,
         xlabel = r'Thickness (nm)',
         ylabel = r'RGB Color')
 
+
 def thinfilm_spectrum_plot (n1, n2, n3, thickness_nm, illuminant, title, filename):
     '''Plot the spectrum of the reflection from a thin film for the given thickness [nm].'''
     film = thin_film (n1, n2, n3, thickness_nm)
-    illuminated_spectrum = film.illuminated_spectrum (illuminant)
+    illuminated_spectrum = film.get_illuminated_spectrum (illuminant)
     plots.spectrum_plot (
         illuminated_spectrum,
         title,
@@ -218,53 +244,96 @@ def thinfilm_spectrum_plot (n1, n2, n3, thickness_nm, illuminant, title, filenam
         xlabel   = 'Wavelength (nm)',
         ylabel   = 'Refection Intensity')
 
+#
+# Deprecated usage, using simple arrays instead of Spectrum class.
+#
+
+def thinfilm_patch_plot_old (n1, n2, n3, thickness_list, illuminant, title, filename):
+    '''Make a patch plot of the color of the film for each thickness [nm].'''
+    illum = ciexyz.Spectrum_from_array (illuminant)
+    thinfilm_patch_plot (n1, n2, n3, thickness_list, illum, title, filename)
+
+
+def thinfilm_color_vs_thickness_plot_old (n1, n2, n3, thickness_list, illuminant, title, filename):
+    '''Plot the color of the thin film for the specfied thicknesses [nm].'''
+    illum = ciexyz.Spectrum_from_array (illuminant)
+    thinfilm_color_vs_thickness_plot (n1, n2, n3, thickness_list, illum, title, filename)
+
+
+def thinfilm_spectrum_plot_old (n1, n2, n3, thickness_nm, illuminant, title, filename):
+    '''Plot the spectrum of the reflection from a thin film for the given thickness [nm].'''
+    illum = ciexyz.Spectrum_from_array (illuminant)
+    thinfilm_spectrum_plot (n1, n2, n3, thickness_nm, illum, title, filename)
+
+#
+# Main.
+#
+
 def figures ():
     '''Draw some thin film plots.'''
+    # Scale the illuminant to get a better range of color.
+
     # Simple patch plot. This is not all that interesting.
     thickness_nm_list = numpy.linspace(0.0, 750.0, 36)
     illuminant = illuminants.get_illuminant_D65()
-    illuminants.scale_illuminant (illuminant, 9.50)
+    illuminant.scale (9.50)
     thinfilm_patch_plot (1.500, 1.003, 1.500, thickness_nm_list,
         illuminant, 'ThinFilm Patch Plot', 'ThinFilm-Patch')
+    # Neon illuminant. Still not that interesting.
+    illuminant = illuminants.get_neon_illuminant()
+    illuminant.scale (3.50)
+    thinfilm_patch_plot (1.500, 1.003, 1.500, thickness_nm_list,
+        illuminant, 'ThinFilm Patch Plot Neon Illuminant', 'ThinFilm-Patch-Ne')
 
     # Plot the colors of films vs thickness.
-    # Scale the illuminant to get a better range of color.
     thickness_nm_list = numpy.linspace(0.0, 1000.0, 800)
+
     # Gap in glass/plastic.
     illuminant = illuminants.get_illuminant_D65()
-    illuminants.scale_illuminant (illuminant, 4.50)
+    illuminant.scale (4.50)
     thinfilm_color_vs_thickness_plot (
         1.500, 1.003, 1.500, thickness_nm_list, illuminant,
         'Thin Film - Gap In Glass/Plastic (n = 1.50)\nIlluminant D65',
         'ThinFilm-GlassGap')
+
     # Soap bubble.
     illuminant = illuminants.get_illuminant_D65()
-    illuminants.scale_illuminant (illuminant, 9.50)
+    illuminant.scale (9.50)
     thinfilm_color_vs_thickness_plot (
         1.003, 1.33, 1.003, thickness_nm_list, illuminant,
         'Thin Film - Soap Bubble (n = 1.33)\nIlluminant D65',
         'ThinFilm-SoapBubble')
+
     # Oil slick on water.
     illuminant = illuminants.get_illuminant_D65()
-    illuminants.scale_illuminant (illuminant, 15.00)
+    illuminant.scale (15.00)
     thinfilm_color_vs_thickness_plot (
         1.003, 1.44, 1.33, thickness_nm_list, illuminant,
         'Thin Film - Oil Slick (n = 1.44) on Water (n = 1.33)\nIlluminant D65',
         'ThinFilm-OilSlick')
+
     # Large index of refraction bubble.
     # This has the brightest colors, but is a bit of an artificial example.
     illuminant = illuminants.get_illuminant_D65()
-    illuminants.scale_illuminant (illuminant, 3.33)
+    illuminant.scale (3.33)
     thinfilm_color_vs_thickness_plot (
         1.003, 1.60, 1.003, thickness_nm_list, illuminant,
         'Thin Film - Large Index (n = 1.60) Bubble\nIlluminant D65',
         'ThinFilm-LargeBubble')
 
+    # Soap bubble under neon light.
+    illuminant = illuminants.get_neon_illuminant()
+    illuminant.scale (3.75)
+    thinfilm_color_vs_thickness_plot (
+        1.003, 1.33, 1.003, thickness_nm_list, illuminant,
+        'Thin Film - Soap Bubble (n = 1.33)\nNeon Illuminant',
+        'ThinFilm-SoapBubble-Ne')
+
     # A very thick film to test the aliasing limits.
     # You have to go to very large thicknesses to get much aliasing.
     thickness_nm_list = numpy.linspace(0.0, 200000.0, 800)
     illuminant = illuminants.get_illuminant_D65()
-    illuminants.scale_illuminant (illuminant, 9.50)
+    illuminant.scale (9.50)
     thinfilm_color_vs_thickness_plot (
         1.003, 1.33, 1.003, thickness_nm_list, illuminant,
         'Not-so-thin Film - Soap Bubble (n = 1.33)\nIlluminant D65',
@@ -272,16 +341,48 @@ def figures ():
 
     # Plot the spectrum of the refection for a couple of thicknesses.
     # Use a constant illuminant for a cleaner plot.
-    # FIXME: Should this really be using an illuminant?
+    # Should this really be using an illuminant??
     illuminant = illuminants.get_constant_illuminant()
-    illuminants.scale_illuminant (illuminant, 9.50)
+    illuminant.scale (9.50)
     thinfilm_spectrum_plot (1.003, 1.33, 1.003, 400.0, illuminant,
         'Thin Film Interference Spectrum - 400 nm thick\nConstant Illuminant',
         'ThinFilm-Spectrum-400nm')
     thinfilm_spectrum_plot (1.003, 1.33, 1.003, 500.0, illuminant,
         'Thin Film Interference Spectrum - 500 nm thick\nConstant Illuminant',
         'ThinFilm-Spectrum-500nm')
+    # Under neon illuminant.
+    illuminant = illuminants.get_neon_illuminant()
+    illuminant.scale (10.0)
+    thinfilm_spectrum_plot (1.003, 1.33, 1.003, 500.0, illuminant,
+        'Thin Film Interference Spectrum - 500 nm thick\nNeon Illuminant',
+        'ThinFilm-Spectrum-500nm-Ne')
+
+    # Old-style.
+    thickness_nm_list = numpy.linspace(0.0, 750.0, 36)
+    illuminant = illuminants.get_illuminant_D65_old()
+    illuminants.scale_illuminant_old (illuminant, 9.50)
+    thinfilm_patch_plot_old (1.500, 1.003, 1.500, thickness_nm_list,
+        illuminant, 'ThinFilm Patch Plot', 'ThinFilm-Patch-Old')
+
+    # Interesting to comment out the fine thickness list.
+    thickness_nm_list = numpy.linspace(0.0, 1000.0, 800)
+    illuminant = illuminants.get_illuminant_D65_old()
+    illuminants.scale_illuminant_old (illuminant, 4.50)
+    thinfilm_color_vs_thickness_plot_old (
+        1.500, 1.003, 1.500, thickness_nm_list, illuminant,
+        'Thin Film - Gap In Glass/Plastic (n = 1.50)\nIlluminant D65',
+        'ThinFilm-GlassGap-Old')
+
+    illuminant = illuminants.get_constant_illuminant_old()
+    illuminants.scale_illuminant_old (illuminant, 9.50)
+    thinfilm_spectrum_plot_old (1.003, 1.33, 1.003, 400.0, illuminant,
+        'Thin Film Interference Spectrum - 400 nm thick\nConstant Illuminant',
+        'ThinFilm-Spectrum-400nm-Old')
 
 
 if __name__ == '__main__':
+    t0 = time.clock()
     figures()
+    t1 = time.clock()
+    dt = t1 - t0
+    print ('Elapsed time: %.3f sec' % (dt))

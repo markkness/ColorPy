@@ -612,6 +612,11 @@ _CIEXYZ_1931_table = [
     [ 830,  0.000001251141,  0.000000451810,  0.000000000000 ]
 ]
 
+# Labels for X,Y,Z indices.
+CIE_X = 0
+CIE_Y = 1
+CIE_Z = 2
+
 # Public - default range of wavelengths in spectra (nm).
 # start_wl_nm and end_wl_nm are integers, delta_wl_nm is a float.
 start_wl_nm = None
@@ -677,23 +682,8 @@ def init (display_intensity = DEFAULT_DISPLAY_INTENSITY):
     _xyz_deltas [create_table_size-1] = colormodels.xyz_color (0.0, 0.0, 0.0)
 
 #
-
-def empty_spectrum ():
-    '''Get a black (no intensity) ColorPy spectrum.
-
-    This is a 2D numpy array, with one row for each wavelength in the visible range,
-    360 nm to 830 nm, with a spacing of delta_wl_nm (1.0 nm), and two columns.
-    The first column is filled with the wavelength [nm].
-    The second column is filled with 0.0.  It should later be filled with the intensity.
-
-    The result can be passed to xyz_from_spectrum() to convert to an xyz color.
-    '''
-    wl_nm_range = range (start_wl_nm, end_wl_nm + 1)
-    num_wl = len (wl_nm_range)
-    spectrum = numpy.zeros ((num_wl, 2))
-    for i in range (0, num_wl):
-        spectrum [i][0] = float (wl_nm_range [i])
-    return spectrum
+# CIE XYZ color for an arbitrary wavelength.
+#
 
 def xyz_from_wavelength (wl_nm):
     '''Given a wavelength (nm), return the corresponding xyz color, for unit intensity.'''
@@ -708,24 +698,191 @@ def xyz_from_wavelength (wl_nm):
     # apply linear interpolation to get the color
     return _xyz_colors [index] + frac_wl_nm * _xyz_deltas [index]
 
-def xyz_from_spectrum (spectrum):
+#
+# Spectrum type.
+#
+
+class Spectrum(object):
+    ''' A representation of a light spectrum.
+
+    The wavelength array ranges from 360 nm to 830 nm, with a spacing of 1 nm.
+    This covers the complete visible range. The wavelength units are nm.
+
+    The intensity array, initially zero, contains the specific intensity,
+    in units W/unit solid angle, at that wavelength.
+
+    The xyz color for the spectrum is obtained with get_xyz().
+
+    This is preferred over the previous N by 2 array, as the separate wavelength
+    and intensity values make it easier to use numpy efficiently.
+    '''
+
+    def __init__(self, model_spectrum=None):
+        ''' Create a spectrum.
+
+        If no model_spectrum is passed, then the spectrum will have the
+        standard list of wavelengths. If a model_spectrum is passed,
+        then the spectrum will have wavelengths matching the model.
+        '''
+        if model_spectrum is None:
+            self.alloc_default()
+        else:
+            self.alloc_for_wavelengths(
+                model_spectrum.wavelength,
+                model_spectrum.standard)
+
+    # Allocation by wavelengths.
+
+    def alloc_default(self):
+        ''' Allocate for the default list of wavelengths. '''
+        num_wl      = end_wl_nm - start_wl_nm + 1
+        wavelengths = numpy.linspace (float(start_wl_nm), float(end_wl_nm), num_wl)
+        self.alloc_for_wavelengths (wavelengths, standard_wls=True)
+
+    def alloc_for_wavelengths(self, wavelength_array, standard_wls=False):
+        ''' Allocate for the specified list of wavelengths. '''
+        # Array should be one dimensional.
+        shape = wavelength_array.shape
+        if len(shape) != 1:
+            msg = 'Invalid wavelength array shape %s' % (str(shape))
+            raise ValueError (msg)
+        # Allocate with zero intensity.
+        self.num_wl     = shape[0]
+        self.wavelength = wavelength_array.copy()
+        self.intensity  = numpy.zeros ((self.num_wl))
+        # Note if the wavelengths are the standard list or not.
+        # Make a minimal attempt to verify if this is correct.
+        self.standard = standard_wls
+        if self.standard:
+            self.validate_standard()
+
+    def validate_standard(self):
+        ''' Check that the wavelengths match the standard list if expected. '''
+        # This only checks the count for now.
+        standard_num_wl = end_wl_nm - start_wl_nm + 1
+        shape = self.wavelength.shape
+        if shape[0] != standard_num_wl:
+            msg = 'Invalid standard wavelength count %d.' % (shape[0])
+            raise ValueError (msg)
+
+    # Conversions between old-style N by 2 arrays.
+    # These were used in ColorPy 0.2 and before.
+
+    def from_array(self, spectrum_array, standard_wls=False):
+        ''' Convert the previous N by 2 array into the spectrum object.
+
+        If standard_wls is True, then the wavelengths should be the
+        standard set, and the color can be calculated faster.
+        '''
+        # Get the wavelengths as a reference, NOT as a copy.
+        wavelengths = spectrum_array[:, 0]
+        # Allocate.
+        self.alloc_for_wavelengths (wavelengths, standard_wls)
+        # Copy intensity.
+        self.intensity[:] = spectrum_array[:, 1].copy()
+
+    def to_array(self):
+        ''' Convert to the previous N by 2 array structure. '''
+        array = numpy.empty((self.num_wl, 2))
+        array[:, 0] = self.wavelength
+        array[:, 1] = self.intensity
+        return array
+
+    # Simple operations.
+
+    def scale(self, sc):
+        ''' Scale the intensity. '''
+        self.intensity *= sc
+
+    # Get xyz colors for the spectrum.
+    # A faster algorithm is available if the wavelengths are standard.
+
+    def get_xyz_color_any(self):
+        ''' Get the xyz color of the spectrum. '''
+        # Integrate color, for any list of wavelengths.
+        rtn = colormodels.xyz_color (0.0, 0.0, 0.0)
+        for i in range (self.num_wl):
+            wavelength = self.wavelength [i]
+            intensity  = self.intensity  [i]
+            xyz = xyz_from_wavelength (wavelength)
+            rtn += intensity * xyz
+        return rtn
+
+    def get_xyz_color_standard(self):
+        ''' Get the xyz color of the spectrum. '''
+        # Integrate color, assuming the wavelengths are the standard list.
+        # This is faster than the more general calculation.
+        X = (self.intensity * _xyz_colors[1:-1, 0]).sum()
+        Y = (self.intensity * _xyz_colors[1:-1, 1]).sum()
+        Z = (self.intensity * _xyz_colors[1:-1, 2]).sum()
+        rtn = colormodels.xyz_color(X, Y, Z)
+        return rtn
+
+    def get_xyz(self):
+        ''' Get the xyz color of the spectrum. '''
+        if self.standard:
+            xyz = self.get_xyz_color_standard()
+        else:
+            xyz = self.get_xyz_color_any()
+        return xyz
+
+#
+# Useful factory functions.
+#
+
+def Spectrum_copy (spectrum0):
+    ''' Copy a spectrum. '''
+    spectrum = Spectrum (model_spectrum=spectrum0)
+    spectrum.intensity[:] = spectrum0.intensity.copy()
+    return spectrum
+
+
+def Spectrum_for_wavelengths (wavelength_array, standard_wls=False):
+    ''' Create a Spectrum for the list of wavelengths. '''
+    spectrum = Spectrum()
+    spectrum.alloc_for_wavelengths(wavelength_array, standard_wls=standard_wls)
+    return spectrum
+
+
+def Spectrum_from_array (spectrum_array, standard_wls=False):
+    ''' Create a Spectrum directly from an N by 2 array. '''
+    spectrum = Spectrum()
+    spectrum.from_array (spectrum_array, standard_wls=standard_wls)
+    return spectrum
+
+#
+# Deprecated usage, using simple arrays instead of Spectrum class.
+#
+
+def empty_spectrum ():
+    '''Get a black (no intensity) ColorPy spectrum.
+
+    This is a 2D numpy array, with one row for each wavelength in the visible range,
+    360 nm to 830 nm, with a spacing of delta_wl_nm (1.0 nm), and two columns.
+    The first column is filled with the wavelength [nm].
+    The second column is filled with 0.0.  It should later be filled with the intensity.
+
+    The result can be passed to xyz_from_spectrum() to convert to an xyz color.
+    '''
+    spect = Spectrum()
+    array = spect.to_array()
+    return array
+
+
+def xyz_from_spectrum (spectrum_array):
     '''Determine the xyz color of the spectrum.
 
     The spectrum is assumed to be a 2D numpy array, with a row for each wavelength,
     and two columns.  The first column should hold the wavelength (nm), and the
     second should hold the light intensity.  The set of wavelengths can be arbitrary,
     it does not have to be the set that empty_spectrum() returns.'''
-    shape = numpy.shape (spectrum)
-    (num_wl, num_col) = shape
-    assert num_col == 2, 'Expecting 2D array with each row: wavelength [nm], specific intensity [W/unit solid angle]'
-    # integrate
-    rtn = colormodels.xyz_color (0.0, 0.0, 0.0)
-    for i in range (0, num_wl):
-        wl_nm_i = spectrum [i][0]
-        specific_intensity_i = spectrum [i][1]
-        xyz = xyz_from_wavelength (wl_nm_i)
-        rtn += specific_intensity_i * xyz
-    return rtn
+    spect = Spectrum_from_array (spectrum_array)
+    xyz = spect.get_xyz()
+    return xyz
+
+#
+# Miscellaneous stuff for spectral line colors that does not really belong here.
+#
 
 def get_normalized_spectral_line_colors (
     brightness = 1.0,
@@ -818,6 +975,10 @@ def get_normalized_spectral_line_colors_annotated (
         xyzs [i] = colormodels.xyz_from_rgb (rgb)
     # done
     return (xyzs, names)
+
+#
+# Main.
+#
 
 # Initialize at module startup
 init()

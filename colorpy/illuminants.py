@@ -88,6 +88,8 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+import time
+
 import ciexyz
 import blackbody
 import plots
@@ -663,7 +665,7 @@ def get_illuminant_D65 ():
     whenever possible.  Otherwise, D55 or D75 are recommended.  (Wyszecki, p. 145)
 
     (ColorPy does not currently provide D55 or D75, however.)'''
-    illuminant = _Illuminant_D65.copy()
+    illuminant = ciexyz.Spectrum_from_array (_Illuminant_D65, standard_wls=True)
     return illuminant
 
 def get_illuminant_A ():
@@ -674,48 +676,94 @@ def get_illuminant_A ():
 
 def get_blackbody_illuminant (T_K):
     '''Get the spectrum of a blackbody at the given temperature, normalized to Y = 1.0.'''
-    illuminant = blackbody.blackbody_spectrum (T_K)
-    xyz = ciexyz.xyz_from_spectrum (illuminant)
+    illuminant = blackbody.get_blackbody_spectrum (T_K)
+    xyz = illuminant.get_xyz()
     if xyz [1] != 0.0:
         scaling = 1.0 / xyz [1]
-        illuminant [:,1] *= scaling
+        illuminant.intensity *= scaling
     return illuminant
 
 def get_constant_illuminant ():
     '''Get an illuminant, with spectrum constant over wavelength, normalized to Y = 1.0.'''
-    illuminant = ciexyz.empty_spectrum()
-    (num_wl, num_cols) = illuminant.shape
-    for i in range (0, num_wl):
-        illuminant [i][1] = 1.0
-    xyz = ciexyz.xyz_from_spectrum (illuminant)
+    illuminant = ciexyz.Spectrum()
+    illuminant.intensity.fill (1.0)
+    xyz = illuminant.get_xyz()
     if xyz [1] != 0.0:
         scaling = 1.0 / xyz [1]
-        illuminant [:,1] *= scaling
+        illuminant.intensity *= scaling
     return illuminant
 
-# Scale an illuminant by an arbitrary factor
+def get_neon_illuminant ():
+    ''' Get a neon lamp illuminant. '''
+    # FIXME: Delayed import to avoid circular imports.
+    # misc.py is not the right place for the atomic spectra.
+    import misc
+    illuminant = ciexyz.Spectrum_from_array (misc.emission_spectrum_Ne)
+    xyz = illuminant.get_xyz()
+    if xyz [1] != 0.0:
+        scaling = 1.0 / xyz [1]
+        illuminant.intensity *= scaling
+    return illuminant
 
-def scale_illuminant (illuminant, scaling):
+#
+# Deprecated usage, returning simple arrays instead of Spectrum class.
+#
+
+def get_illuminant_D65_old ():
+    illuminant = get_illuminant_D65()
+    array = illuminant.to_array()
+    return array
+
+def get_illuminant_A_old ():
+    illuminant = get_illuminant_A()
+    array = illuminant.to_array()
+    return array
+
+def get_blackbody_illuminant_old (T_K):
+    illuminant = get_blackbody_illuminant (T_K)
+    array = illuminant.to_array()
+    return array
+
+def get_constant_illuminant_old ():
+    illuminant = get_constant_illuminant()
+    array = illuminant.to_array()
+    return array
+
+def scale_illuminant_old (illuminant, scaling):
     '''Scale the illuminant intensity by the specfied factor.'''
     illuminant [:,1] *= scaling
     return illuminant
 
-# Initialize at module startup
+#
+# Main.
+#
+
+# Initialize at module startup.
 init()
 
-# Figures - Plot some of the illuminants
 
 def figures ():
     '''Plot spectra for several illuminants.'''
-    # D65
+    # D65.
     plots.spectrum_plot (
         get_illuminant_D65(), 'CIE Illuminant D65', 'Illuminant-D65')
-    # A
+    # A.
     plots.spectrum_plot (
         get_illuminant_A(), 'CIE Illuminant A', 'Illuminant-A')
-    # Constant
+    # Constant.
     plots.spectrum_plot (
         get_constant_illuminant(), 'Constant Illuminant', 'Illuminant-Const')
-    # Blackbody (5778)
+    # Blackbody (5778).
     plots.spectrum_plot (
         get_blackbody_illuminant (5778.0), '5778 K Illuminant', 'Illuminant-5778')
+    # An old-style illuminant.
+    # FIXME: This would be a good test, both of the illuminant and spectrum_plot_old().
+    plots.spectrum_plot_old (get_illuminant_D65_old(), 'CIE Illuminant D65', 'Illuminant-D65-Old')
+
+
+if __name__ == '__main__':
+    t0 = time.clock()
+    figures()
+    t1 = time.clock()
+    dt = t1 - t0
+    print ('Elapsed time: %.3f sec' % (dt))
