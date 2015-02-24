@@ -16,22 +16,26 @@ Added to alpha:
 	This replaces the simple N by 2 array spectrum format.
 	This gives the wavelength and intensity arrays more meaningful names,
 	and allows some metadata to be added to the array data.
-	This allows some faster calculations when the wavelength list is standard.
+	This allows some faster calculations.
 	The new and old structures are closely related, and there are calls
 	to make it easy to convert between them.
 
 	* Atomic line spectra for hydrogen, helium, and neon.
 
 	* Unit test improvements.
-    The tests are substantially improved in general. They are now designed
+    The tests are improved in general. They are now designed
 	to be run via standard test runners, e.g. 'python -m unittest discover'.
 	However you can still run tests.py to exercise them.
+    Also run figures.py to test all of the figures.
 
-    * Minor rearrangements.
-	Since some compatibility breaking changes were required, this seemed
-	a good time to make some minor rearrangements that also are breaking,
-	but should be very easy to adjust to.
-	[Nothing so far, expect renaming and moving functions around.]
+    * Minor renaming.
+    Some functions were slightly renamed and/or moved to new modules.
+    This may break existing code that called these routines, but should
+    be easy to fix.
+    Since compatibility breaking changes were already required in this release,
+    it made sense make these minor changes at the same time.
+    The more some feature/routine was like an example, rather than a core
+    conversion, the more likely it was changed in this way.
 
 	* Various internal improvements.
 	General refactoring that improves the code, but should not

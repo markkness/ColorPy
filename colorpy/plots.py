@@ -129,6 +129,7 @@ import pylab
 
 import colormodels
 import ciexyz
+import pure_colors
 import rayleigh
 
 # Miscellaneous utilities for plots
@@ -502,7 +503,7 @@ def scattered_visual_brightness ():
 def shark_fin_plot ():
     '''Draw the 'shark fin' CIE chromaticity diagram of the pure spectral lines (plus purples) in xy space.'''
     # get array of (approximate) colors for the boundary of the fin
-    xyz_list = ciexyz.get_normalized_spectral_line_colors (brightness=1.0, num_purples=200, dwl_angstroms=2)
+    xyz_list = pure_colors.get_normalized_spectral_line_colors (brightness=1.0, num_purples=200, dwl_angstroms=2)
     # get normalized colors
     xy_list = xyz_list.copy()
     (num_colors, num_cols) = xy_list.shape
