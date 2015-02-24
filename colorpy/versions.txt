@@ -7,6 +7,7 @@ Desired future improvements:
 	* Atomic spectra.
 
 Added to alpha:
+    This is the current alpha branch on GitHub.
     This release introduces some minor compatibility changes,
 	which allow significant performance improvements.
 	This version should be compatible with both Python 2 and Python 3.

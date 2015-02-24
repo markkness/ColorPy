@@ -19,6 +19,46 @@ import plots
 # This is used by the shark fin plot as well as the examples in this file.
 #
 
+def scale_rgb_max (xyz_array, brightness):
+    ''' Scale each color to have the max rgb value be the desired brightness. '''
+    num_points = xyz_array.shape[0]
+    for i in range (num_points):
+        rgb = colormodels.brightest_rgb_from_xyz (xyz_array [i], brightness)
+        xyz_array [i] = colormodels.xyz_from_rgb (rgb)
+
+
+def get_spectral_colors (wl_array):
+    ''' Get the pure spectral line colors. '''
+    # wl_array = wavelengths in nm.
+    num  = wl_array.shape[0]
+    xyzs = numpy.zeros((num, 3))
+    for i in range (num):
+        wl  = wl_array [i]
+        xyz = ciexyz.xyz_from_wavelength (wl)
+        colormodels.xyz_normalize (xyz)
+        xyzs [i] = xyz
+    return xyzs
+
+
+def get_purples (t_array, violet_xyz, red_xyz):
+    ''' Get the pure purple colors by interpolating between violet and red. '''
+    # t_array    = interpolation fractions 0.0 to 1.0
+    # violet_xyz = xyz color for pure violet
+    # red_xyz    = xyz_color for pure red
+    num  = t_array.shape[0]
+    xyzs = numpy.zeros((num, 3))
+    # FIXME: violet and red may be backwards.
+    first_xyz = violet_xyz
+    last_xyz  = red_xyz
+    for i in range (num):
+        t   = t_array [i]
+        omt = 1.0 - t
+        xyz = t * first_xyz + omt * last_xyz
+        colormodels.xyz_normalize (xyz)
+        xyzs [i] = xyz
+    return xyzs
+
+
 def get_normalized_spectral_line_colors (
     brightness = 1.0,
     num_purples = 0,
@@ -33,33 +73,27 @@ def get_normalized_spectral_line_colors (
     '''
     # get range of wavelengths, in angstroms, so that we can have finer resolution than 1 nm
     wl_angstrom_range = range (10*ciexyz.start_wl_nm, 10*(ciexyz.end_wl_nm + 1), dwl_angstroms)
-    # get total point count
-    num_spectral = len (wl_angstrom_range)
-    num_points   = num_spectral + num_purples
-    xyzs = numpy.empty ((num_points, 3))
-    # build list of normalized color x,y values proceeding along each wavelength
-    i = 0
-    for wl_A in wl_angstrom_range:
-        wl_nm = wl_A * 0.1
-        xyz = ciexyz.xyz_from_wavelength (wl_nm)
-        colormodels.xyz_normalize (xyz)
-        xyzs [i] = xyz
-        i += 1
-    # interpolate from end point to start point (filling in the purples)
-    first_xyz = xyzs [0]
-    last_xyz  = xyzs [num_spectral - 1]
-    for ipurple in range (0, num_purples):
-        t = float (ipurple) / float (num_purples - 1)
-        omt = 1.0 - t
-        xyz = t * first_xyz + omt * last_xyz
-        colormodels.xyz_normalize (xyz)
-        xyzs [i] = xyz
-        i += 1
-    # scale each color to have the max rgb component equal to the desired brightness
-    for i in range (0, num_points):
-        rgb = colormodels.brightest_rgb_from_xyz (xyzs [i], brightness)
-        xyzs [i] = colormodels.xyz_from_rgb (rgb)
-    # done
+    wl_array = numpy.linspace (ciexyz.start_wl_nm, ciexyz.end_wl_nm + 1, num=dwl_angstroms)
+
+    # Get the spectral line colors.
+    wl_nm = numpy.zeros((len(wl_angstrom_range), 1))
+    for j in range(len(wl_angstrom_range)):
+        wl_nm[j] = wl_angstrom_range[j] * 0.1
+    xyzs_spect = get_spectral_colors (wl_nm)
+
+    # Get the purples.
+    violet_xyz = xyzs_spect [ 0, :]
+    red_xyz    = xyzs_spect [-1, :]
+    t_array = numpy.zeros((num_purples))
+    for j in range (num_purples):
+        t_array[j] = float (j) / float (num_purples - 1)
+    xyzs_purple = get_purples (t_array, violet_xyz, red_xyz)
+
+    # Join spectral colors and purples.
+    xyzs = numpy.vstack ([xyzs_spect, xyzs_purple])
+
+    # Scale.
+    scale_rgb_max (xyzs, brightness)
     return xyzs
 
 def get_normalized_spectral_line_colors_annotated (
@@ -77,38 +111,33 @@ def get_normalized_spectral_line_colors_annotated (
     '''
     # get range of wavelengths, in angstroms, so that we can have finer resolution than 1 nm
     wl_angstrom_range = range (10*ciexyz.start_wl_nm, 10*(ciexyz.end_wl_nm + 1), dwl_angstroms)
-    # get total point count
-    num_spectral = len (wl_angstrom_range)
-    num_points   = num_spectral + num_purples
-    xyzs = numpy.empty ((num_points, 3))
-    names = []
-    # build list of normalized color x,y values proceeding along each wavelength
-    i = 0
-    for wl_A in wl_angstrom_range:
-        wl_nm = wl_A * 0.1
-        xyz = ciexyz.xyz_from_wavelength (wl_nm)
-        colormodels.xyz_normalize (xyz)
-        xyzs [i] = xyz
-        name = '%.1f nm' % wl_nm
-        names.append (name)
-        i += 1
-    # interpolate from end point to start point (filling in the purples)
-    first_xyz = xyzs [0]
-    last_xyz  = xyzs [num_spectral - 1]
-    for ipurple in range (0, num_purples):
-        t = float (ipurple) / float (num_purples - 1)
-        omt = 1.0 - t
-        xyz = t * first_xyz + omt * last_xyz
-        colormodels.xyz_normalize (xyz)
-        xyzs [i] = xyz
-        name = '%03d purple' % math.floor (1000.0 * t + 0.5)
-        names.append (name)
-        i += 1
-    # scale each color to have the max rgb component equal to the desired brightness
-    for i in range (0, num_points):
-        rgb = colormodels.brightest_rgb_from_xyz (xyzs [i], brightness)
-        xyzs [i] = colormodels.xyz_from_rgb (rgb)
-    # done
+
+    # Get the spectral line colors.
+    wl_nm = numpy.zeros((len(wl_angstrom_range), 1))
+    names_spect = []
+    for j in range(len(wl_angstrom_range)):
+        wl_nm[j] = wl_angstrom_range[j] * 0.1
+        name = '%.1f nm' % wl_nm[j]
+        names_spect.append (name)
+    xyzs_spect = get_spectral_colors (wl_nm)
+
+    # Get the purples.
+    violet_xyz = xyzs_spect [ 0, :]
+    red_xyz    = xyzs_spect [-1, :]
+    t_array = numpy.zeros((num_purples))
+    names_purple = []
+    for j in range (num_purples):
+        t_array[j] = float (j) / float (num_purples - 1)
+        name = '%03d purple' % math.floor (1000.0 * t_array[j] + 0.5)
+        names_purple.append (name)
+    xyzs_purple = get_purples (t_array, violet_xyz, red_xyz)
+
+    # Join spectral colors and purples.
+    xyzs  = numpy.vstack ([xyzs_spect, xyzs_purple])
+    names = names_spect + names_purple
+
+    # Scale.
+    scale_rgb_max (xyzs, brightness)
     return (xyzs, names)
 
 #
@@ -120,6 +149,9 @@ def spectral_colors_patch_plot ():
     xyzs = get_normalized_spectral_line_colors (brightness=1.0, num_purples=0, dwl_angstroms=10)
     plots.xyz_patch_plot (
         xyzs, None, 'Colors of pure spectral lines', 'Spectral', num_across=20)
+    xyzs, names = get_normalized_spectral_line_colors_annotated (brightness=1.0, num_purples=0, dwl_angstroms=10)
+    plots.xyz_patch_plot (
+        xyzs, None, 'Colors of pure spectral lines-2', 'Spectral-2', num_across=20)
 
 
 def spectral_colors_plus_purples_patch_plot ():
@@ -127,6 +159,9 @@ def spectral_colors_plus_purples_patch_plot ():
     xyzs = get_normalized_spectral_line_colors (brightness=1.0, num_purples=200, dwl_angstroms=10)
     plots.xyz_patch_plot (
         xyzs, None, 'Colors of pure spectral lines plus purples', 'SpectralPlusPurples', num_across=20)
+    xyzs, names = get_normalized_spectral_line_colors_annotated (brightness=1.0, num_purples=200, dwl_angstroms=10)
+    plots.xyz_patch_plot (
+        xyzs, None, 'Colors of pure spectral lines plus purples-2', 'SpectralPlusPurples-2', num_across=20)
 
 # An attempt to get a perceptually equally spaced (almost) subset of the pure spectral colors
 
@@ -214,9 +249,12 @@ def perceptually_uniform_spectral_color_plots ():
 def figures ():
     ''' Draw plots of the pure colors and purples. '''
     # These are all pretty much a work-in-progress.
-    spectral_colors_patch_plot ()
-    spectral_colors_plus_purples_patch_plot ()
-    perceptually_uniform_spectral_color_plots ()
+    if True:
+        spectral_colors_patch_plot ()
+    if True:
+        spectral_colors_plus_purples_patch_plot ()
+    if True:
+        perceptually_uniform_spectral_color_plots ()
 
 
 if __name__ == '__main__':
