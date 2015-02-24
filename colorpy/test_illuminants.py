@@ -69,6 +69,9 @@ class TestIlluminants(unittest.TestCase):
         # Constant
         c = illuminants.get_constant_illuminant()
         self.check_Y(c, expect, tolerance, verbose)
+        # Neon lamp.
+        neon = illuminants.get_neon_illuminant()
+        self.check_Y(neon, expect, tolerance, verbose)
         # Blackbodies of a few temperatures.
         T_list = [100.0, 1000.0, 5000.0, 9000.0, 1.0e6]
         for T in T_list:

@@ -42,6 +42,9 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import print_function
+
+import atomic
 import colormodels
 import illuminants
 import plots
@@ -54,6 +57,7 @@ def figures ():
     '''Create all the ColorPy sample figures.'''
     # no figures for colormodels and ciexyz
     colormodels.init()  # default
+    atomic.figures()
     illuminants.figures()
     plots.figures()
     blackbody.figures()

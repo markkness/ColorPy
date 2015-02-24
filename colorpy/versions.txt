@@ -6,11 +6,11 @@ Desired future improvements:
 	* Travis-CI?
 	* Atomic spectra.
 
-New in 0.2.0:
+Added to alpha:
     This release introduces some minor compatibility changes,
 	which allow significant performance improvements.
 	This version should be compatible with both Python 2 and Python 3.
-	
+
 	* New Spectrum() class type.
 	The main change is the Spectrum() class type.
 	This replaces the simple N by 2 array spectrum format.
@@ -19,6 +19,8 @@ New in 0.2.0:
 	This allows some faster calculations when the wavelength list is standard.
 	The new and old structures are closely related, and there are calls
 	to make it easy to convert between them.
+
+	* Atomic line spectra for hydrogen, helium, and neon.
 
 	* Unit test improvements.
     The tests are substantially improved in general. They are now designed
@@ -32,12 +34,38 @@ New in 0.2.0:
 	[Nothing so far, expect renaming and moving functions around.]
 
 	* Various internal improvements.
-	General refactoring that improves the code, but should not require any
-	adjustments in your code.
-		
-	Compatibility:
+	General refactoring that improves the code, but should not
+	require any adjustments in your code.
+
+	Compatibility changes:
 	This version has some changes that could break code using the older versions.
 	* Spectrum() class.
+	  In general, the code is now designed to work with Spectrum() objects,
+	  instead of N by 2 arrays, as in previous versions. It should be fairly
+	  easy to convert between the two representations with the Spectrum
+	  methods from_array() and to_array(). If you want to use the old functions
+	  that directly accepted and/or returned arrays, most all of these still
+	  exist, usually with an '_old' added to their names.
+	* Various renaming.
+	  A number of routines, and output plot names, have been changed slightly.
+	  Functions may have moved into new source files, which could change how
+	  they are imported into other Python code.
 
-New in 0.1.2:
-    This is effectively what is on GitHub now in master.
+
+New in v0.1.2:
+    This is the current master branch on GitHub.
+	It is hopefully Python 3 compatible, at least much closer than before.
+	The tests are significantly improved, and are now designed to run with
+	the standard test runner, i.e. at the command line,
+	    'python -m unittest discover'
+	They can still be run via tests.py however.
+
+
+New in v0.1.1:
+    This includes work that I did locally after creating markkness.net.
+	A better shark fin chromaticity plot is included, along with some
+	other miscellaneous improvements.
+
+
+New in v0.1.0:
+    This is the version that I originally hosted on http://markkness.net
