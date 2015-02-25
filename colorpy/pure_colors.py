@@ -109,6 +109,90 @@ def get_normalized_spectral_line_colors (
     xyzs      = get_num_pure_colors (brightness, num_spect, num_purples)
     return xyzs
 
+
+def get_perceptually_equal_spaced_colors (brightness, num_samples, verbose=False):
+    ''' Get an array of xyz colors, which are perceptually equally spaced.
+
+    The colors are first pure spectral lines from violet to red, and then
+    the purples. They are scaled so that max(rgb) = brightness.
+    num_samples is the total number of colors to return.
+    '''
+    # Get a fine set of pure colors and lots of purples.
+    # Anything finer than 1 nm is probably sufficient.
+    num_spect  = 1000
+    num_purple = 100
+    xyzs = get_num_pure_colors (brightness, num_spect, num_purple)
+    num_colors = xyzs.shape[0]
+    # Choose either Luv or Lab (nearly) perceptually uniform color space.
+    if True:
+        uniform_from_xyz = colormodels.luv_from_xyz
+    else:
+        uniform_from_xyz = colormodels.lab_from_xyz
+    # Convert colors to perceptually uniform space.
+    uniforms = numpy.empty ((num_colors, 3))
+    for i in range (num_colors):
+        uniforms[i] = uniform_from_xyz (xyzs[i])
+    # Get distance along closed curve in uniform space.
+    # For N vertices, there are also N segments.
+    # segment 0 is from vertex 0 to vertex 1, and so on so
+    # segment i is from vertex i to vertex i + 1, except that i + 1 -> 0
+    # for the last segment, which goes back to the first point.
+    # The accumulated distances S[j] are the distances to the end of the
+    # segments j. Thus S[0] is the distance to the end of the first segment,
+    # and is greater than zero. It makes sense to consider S[-1] = 0.0.
+    # Distance between points.
+    ds = numpy.zeros((num_colors))
+    for i in range (num_colors):
+        im = i
+        ip = i + 1
+        # Handle end of closed curve.
+        if i == (num_colors - 1):
+            ip = 0
+        dri = uniforms[ip] - uniforms[im]
+        dsi = math.sqrt (numpy.dot (dri, dri))
+        ds [i] = dsi
+    # Total distance.
+    S = numpy.zeros((num_colors))
+    total = 0.0
+    for i in range (num_colors):
+        total += ds[i]
+        S[i] = total
+    S_total = S[-1]
+    # Get desired total distance for each sample point.
+    xyz_samples = numpy.zeros ((num_samples, 3))
+    for i in range (num_samples):
+        # Choose fraction from 0.0 to near (but not equal) 1.0.
+        fi = float(i) / float(num_samples)
+        si = fi * S_total
+        # Find curve segment that encloses this distance.
+        # This should always be: 0 <= j < N.
+        j = numpy.searchsorted(S, si)
+        # Get total distance to start and end of this segment.
+        if j > 0:
+            s0 = S[j -1]
+        else:
+            # Start of first segment has S[-1] = 0.0.
+            s0 = 0.0
+        s1 = S[j]
+        # Get what fraction we are along this segment.
+        # Should always be: 0 <= t <= 1.
+        t = (si - s0) / (s1 - s0)
+        # Get vertex indices at start and end of the segment.
+        v0 = j
+        v1 = j + 1
+        if v1 >= num_colors:
+            # Last segment ends at first point.
+            v1 = 0
+        if verbose:
+            print ('i: %d    f: %.4f    s: %.4f    j: %d    t: %g    v0: %d    v1: %d' % (
+                i, fi, si, j, t, v0, v1))
+        # Now interpolate between the xyz colors at vertices.
+        xyz0 = xyzs[v0, :]
+        xyz1 = xyzs[v1, :]
+        xyz = (1.0 - t) * xyz0 + t * xyz1
+        xyz_samples[i, :] = xyz
+    return xyz_samples
+
 #
 # Figures.
 #
@@ -116,111 +200,47 @@ def get_normalized_spectral_line_colors (
 def pure_colors_patch_plots ():
     ''' Create patch plots of the pure spectral line colors, and also with purples. '''
     brightness = 1.0
-    # Pure spectral colors with 1.0 nm spacing, and no purples.
-    num_spect = (ciexyz.end_wl_nm - ciexyz.start_wl_nm) + 1
+    # Pure spectral colors, and no purples.
+    num_spect = 400
     xyzs      = get_num_pure_colors (brightness, num_spect, 0)
     plots.xyz_patch_plot (xyzs, None,
         'Colors of pure spectral lines',
         'PureColors-Spectral', num_across=20)
-    # With 200 purples.
-    xyzs      = get_num_pure_colors (brightness, num_spect, 200)
+    # With 100 purples.
+    xyzs      = get_num_pure_colors (brightness, num_spect, 100)
     plots.xyz_patch_plot (xyzs, None,
         'Colors of pure spectral lines plus purples',
         'PureColors-SpectralPurples', num_across=20)
 
-#
-# Work-in-progress to get an (almost) perceptually equally spaced subset of the pure colors.
-#
 
-def perceptually_uniform_spectral_colors (
+def perceptually_equal_spaced_color_plot (
     brightness,
-    plot_name,
-    plot_title,
-    table_name):
-    '''Patch plot of (nearly) perceptually equally spaced colors, covering the pure spectral lines plus purples.'''
-    # TODO - This is a work-in-progress and may or may not be quite right.
+    title,
+    filename,
+    num_samples,
+    num_across=20):
+    ''' Patch plot of perceptually equally spaced pure colors.
 
-    # Get pure colors, for spectral lines with delta = 1 A, and purples.
-    num_spect = 10 * (ciexyz.end_wl_nm - ciexyz.start_wl_nm) + 1
-    wl_array  = numpy.linspace (ciexyz.start_wl_nm, ciexyz.end_wl_nm, num=num_spect)
-    # Get purple fractions.
-    num_purple = 200
-    purple_array = numpy.linspace (0.0, 1.0, num=num_purple)
-    xyzs = get_pure_colors (brightness, wl_array, purple_array)
-    # Get names for spectral and purple colors.
-    names = []
-    for j in range(wl_array.shape[0]):
-        name = '%.1f nm' % wl_array[j]
-        names.append (name)
-    for j in range (purple_array.shape[0]):
-        name = '%03d purp' % round (1000.0 * purple_array[j])
-        names.append (name)
-    num_colors = xyzs.shape[0]
-
-    # pick these two functions for either Luv or Lab
-    uniform_from_xyz = colormodels.luv_from_xyz
-    xyz_from_uniform = colormodels.xyz_from_luv
-    #uniform_from_xyz = colormodels.lab_from_xyz
-    #xyz_from_uniform = colormodels.xyz_from_lab
-
-    # convert colors to a nearly perceptually uniform space
-    uniforms = numpy.empty ((num_colors, 3))
-    for i in range (0, num_colors):
-        uniforms [i] = uniform_from_xyz (xyzs [i])
-    # determine spacing
-    sum_ds = 0.0
-    dss = numpy.empty ((num_colors, 1))
-    for i in range (0, num_colors-1):
-        dri = uniforms [i+1] - uniforms [i]
-        dsi = math.sqrt (numpy.dot (dri, dri))
-        dss [i] = dsi
-        sum_ds += dsi
-    # last point closes the curve
-    dri = uniforms [0] - uniforms [num_colors - 1]
-    dsi = math.sqrt (numpy.dot (dri, dri))
-    dss [num_colors - 1] = dsi
-    sum_ds += dsi
-    # pick out subsamples as evenly spaced as possible
-    num_samples = 160
-    ds_avg = sum_ds / float (num_samples - 1)
-    E_indices = []
-    index = 0
-    count = 0
-    need = 0.0
-    while True:
-        while need > 1.0e-10:
-            need -= dss [index]
-            index += 1
-        E_indices.append (index)
-        need += ds_avg
-        count += 1
-        if count >= num_samples:
-            break
-    # patch plot and save names
-    xyz_list = []
-    fil = open (table_name, 'wt')
-    fil.write ('%s\n' % plot_title)
-    fil.write ('Name iRGB\n')
-    fil.write ('\n')
-    for index in E_indices:
-        uniform_color = uniforms [index]
-        uniform_xyz   = xyz_from_uniform (uniform_color)
-        uniform_irgb  = colormodels.irgb_from_xyz (uniform_xyz)
-        uniform_name  = names [index]
-        xyz_list.append (uniform_xyz)
-        fil.write ('%s %s\n' % (uniform_name, str (uniform_irgb)))
-    fil.close ()
+    Pure colors means pure spectral lines plus purples.
+    Each color has max(rgb) = brightness.
+    '''
+    xyzs = get_perceptually_equal_spaced_colors (brightness, num_samples)
     plots.xyz_patch_plot (
-        xyz_list, None, plot_title, plot_name, num_across=20)
+        xyzs, None, title, filename, num_across=num_across)
 
-def perceptually_uniform_spectral_color_plots ():
+
+def perceptually_equal_spaced_color_plots ():
+    ''' Do the calculations for several brightness values. '''
+    # These are colors which are perceptually equally spaced.
+    # Various max(rgb) brightness values are used.
     brightness_list = [1.0, 0.9, 0.8, 0.75, 0.6, 0.5, 0.4, 0.3, 0.25]
     for brightness in brightness_list:
-        ibright = math.floor (100.0 * brightness + 0.5)
-        plot_name  = 'PerceptuallyEqualColors_%d' % ibright
-        plot_title = 'Perceptually (almost) Equally Spaced Pure Colors %d%%' % ibright
-        table_name = 'percep_equal_names_%d.txt' % ibright
-        perceptually_uniform_spectral_colors (brightness, plot_name, plot_title, table_name)
+        ibright     = int(round(100.0 * brightness))
+        title       = 'Perceptually Equally Spaced Pure Colors %d%%' % ibright
+        filename    = 'PerceptSpacedColors_%d' % ibright
+        num_samples = 160
+        perceptually_equal_spaced_color_plot (
+            brightness, title, filename, num_samples)
 
 #
 # Main.
@@ -228,9 +248,8 @@ def perceptually_uniform_spectral_color_plots ():
 
 def figures ():
     ''' Draw plots of the pure colors and purples. '''
-    # These are all pretty much a work-in-progress.
-    pure_colors_patch_plots ()
-    perceptually_uniform_spectral_color_plots ()
+    pure_colors_patch_plots()
+    perceptually_equal_spaced_color_plots()
 
 
 if __name__ == '__main__':
