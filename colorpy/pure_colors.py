@@ -197,109 +197,138 @@ def get_perceptually_equal_spaced_colors (brightness, num_samples, verbose=False
 # Write pure color values as an HTML document.
 #
 
-def get_color_hex_string (red, green, blue):
-    '''Convert color values to a hex string.'''
-    hexstr = '#%02X%02X%02X' % (red, green, blue)
-    return hexstr
-
-
-def visible_spectrum_table (filename='visible_spectrum.html'):
+def write_visible_spectrum_html (filename='visible_spectrum.html'):
     ''' Write an HTML file with the pure spectral colors. '''
-    spectrum = ciexyz.empty_spectrum()
-    (num_wl, num_cols) = spectrum.shape
-    # get rgb colors for each wavelength
-    rgb_colors_1 = numpy.empty ((num_wl, 3))
-    rgb_colors_2 = numpy.empty ((num_wl, 3))
-    for i in range (0, num_wl):
-        xyz = ciexyz.xyz_from_wavelength (spectrum [i][0])
-        rgb_1 = colormodels.rgb_from_xyz (xyz)
-        rgb_2 = colormodels.brightest_rgb_from_xyz (xyz)
-        rgb_colors_1 [i] = rgb_1
-        rgb_colors_2 [i] = rgb_2
-    # scale 1 to make brightest rgb value = 1.0
-    rgb_max = numpy.max (rgb_colors_1)
+    spectrum = ciexyz.Spectrum()
+    num_wl = spectrum.num_wl
+    # Get rgb colors for each wavelength.
+    # Scale the first so that max(rgb) = 1.0.
+    # Scale the second via brightest_rgb_from_xyz(). (?)
+    rgb_1 = numpy.empty ((num_wl, 3))
+    rgb_2 = numpy.empty ((num_wl, 3))
+    for i in range (num_wl):
+        xyz      = ciexyz.xyz_from_wavelength (spectrum.wavelength[i])
+        rgb_1[i] = colormodels.rgb_from_xyz (xyz)
+        rgb_2[i] = colormodels.brightest_rgb_from_xyz (xyz)
+    # Scale rgb_1 to make brightest rgb value = 1.0.
+    rgb_max = numpy.max (rgb_1)
     scaling = 1.0 / rgb_max
-    rgb_colors_1 *= scaling
-    # write HTML file
+    rgb_1 *= scaling
 
+    # Write the data as an HTML document.
+    with open (filename, 'w') as f:
+        # Html headers.
+        f.write ('<html>\n')
+        f.write ('<head>\n')
+        f.write ('<title>Colors of Pure Spectral Lines</title>\n')
+        f.write ('</head>\n')
+        f.write ('<body>\n')
+        f.write ('<p><h1>Colors of Pure Spectral Lines</h1></p>\n')
+        f.write ('<p>%s</p>\n' % 'White added to undisplayable pure colors to fit into rgb space.')
+        f.write ('<hr/>\n')
+        # Table headers.
+        f.write ('<table border cellpadding="5">\n')
+        f.write ('<tr>\n')
+        f.write ('<th>Wavelength</th>\n')
+        f.write ('<th>R</th>\n')
+        f.write ('<th>G</th>\n')
+        f.write ('<th>B</th>\n')
+        f.write ('<th>Hex Code</th>\n')
+        f.write ('<th width=200>Full Brightness</th>\n')
+        f.write ('<th width=200>Perceptual Brightness</th>\n')
+        f.write ('</tr>\n')
+        # Each row of table.
+        for i in range (num_wl):
+            irgb_1 = colormodels.irgb_from_rgb (rgb_1 [i])
+            irgb_2 = colormodels.irgb_from_rgb (rgb_2 [i])
+            red   = irgb_2 [0]
+            green = irgb_2 [1]
+            blue  = irgb_2 [2]
+            hexstr_1 = colormodels.irgb_string_from_irgb (irgb_1)
+            hexstr_2 = colormodels.irgb_string_from_irgb (irgb_2)
+
+            iwl = spectrum.wavelength[i]
+            code = '%.1f nm' % iwl
+
+            f.write ('<tr>\n')
+            f.write ('<td>%s</td>\n' % (code))
+            f.write ('<td>%d</td>\n' % (red))
+            f.write ('<td>%d</td>\n' % (green))
+            f.write ('<td>%d</td>\n' % (blue))
+            f.write ('<td>%s</td>\n' % (hexstr_2))
+            swatch = "&nbsp;"
+            f.write ('<td bgcolor="%s">%s</td>\n' % (hexstr_2, swatch))
+            f.write ('<td bgcolor="%s">%s</td>\n' % (hexstr_1, swatch))
+            f.write ('</tr>\n')
+        f.write ('</table>\n')
+        # End of html document.
+        f.write ('</body>\n')
+        f.write ('</html>\n')
+
+
+def write_pantone_reference_html (filename='pantone_references.html'):
+    ''' Write an HTML document with some references to Pantone colors.
+
+    These have nothing to do with pure spectral colors.
+    '''
     def write_link (f, url, text):
         '''Write an html link.'''
         link = '<a href="%s">%s</a><br/>\n' % (url, text)
         f.write (link)
 
-    f = open (filename, 'w')
-    # html headers
-    f.write ('<html>\n')
-    f.write ('<head>\n')
-    f.write ('<title>Colors of Pure Spectral Lines</title>\n')
-    f.write ('</head>\n')
-    f.write ('<body>\n')
-    f.write ('<p><h1>Colors of Pure Spectral Lines</h1></p>\n')
-    f.write ('<p>%s</p>\n' % 'White added to undisplayable pure colors to fit into rgb space.')
-    f.write ('<hr/>\n')
-    # table header
-    f.write ('<table border cellpadding="5">\n')
-    f.write ('<tr>\n')
-    f.write ('<th>Wavelength</th>\n')
-    f.write ('<th>R</th>\n')
-    f.write ('<th>G</th>\n')
-    f.write ('<th>B</th>\n')
-    f.write ('<th>Hex Code</th>\n')
-    f.write ('<th width=200>Full Brightness</th>\n')
-    f.write ('<th width=200>Perceptual Brightness</th>\n')
-    f.write ('</tr>\n')
-    # each row
-
-    for i in range (0, num_wl):
-        irgb_1 = colormodels.irgb_from_rgb (rgb_colors_1 [i])
-        irgb_2 = colormodels.irgb_from_rgb (rgb_colors_2 [i])
-        red   = irgb_2 [0]
-        green = irgb_2 [1]
-        blue  = irgb_2 [2]
-        hexstr_1 = colormodels.irgb_string_from_irgb (irgb_1)
-        hexstr_2 = colormodels.irgb_string_from_irgb (irgb_2)
-
-        iwl = spectrum [i][0]
-        code = '%.1f nm' % iwl
-
-        f.write ('<tr>\n')
-        f.write ('<td>%s</td>\n' % (code))
-        f.write ('<td>%d</td>\n' % (red))
-        f.write ('<td>%d</td>\n' % (green))
-        f.write ('<td>%d</td>\n' % (blue))
-        f.write ('<td>%s</td>\n' % (hexstr_2))
-        swatch = "&nbsp;"
-        f.write ('<td bgcolor="%s">%s</td>\n' % (hexstr_2, swatch))
-        f.write ('<td bgcolor="%s">%s</td>\n' % (hexstr_1, swatch))
-        f.write ('</tr>\n')
-
-    f.write ('</table>\n')
-    # references
-    f.write ('<hr/>\n')
-    f.write ('<p>References</p>\n')
-    # one source for data
-    write_link (f, 'http://goffgrafix.com/pantone-rgb-100.php', 'Goffgrafix.com')
-    # another source with basically the same data
-    write_link (f, 'http://www.sandaleo.com/pantone.asp', 'Sandaleo.com')
-    # one with more colors including metallic (also some errors), not quite consistent with the first two
-    write_link (f, 'http://www.loral.org/Z/Colors/100.html',
-        'Loral.org - Conversions based on CorelDRAW v12 Pantone Solid Coated or Pastel Coated tables and sRGB color space.')
-    # some colors for various sports teams
-    write_link (f, 'http://www.pennjersey.info/forums/questions-answers/7895-pantone-colors-colleges-university-mlb-nfl-teams.html',
-        'Pantone colors for some sports teams.')
-    # some colors for various national flags
-    write_link (f, 'http://desktoppub.about.com/od/colorpalettes/l/aa_flagcolors.htm', 'What color is your flag? Pantone colors for some flags.')
-    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpflagsrwb.htm', 'Red, White, &amp Blue - Pantone colors for some flags.')
-    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpflagsyellow.htm', 'Yellow or Gold - Pantone colors for some flags.')
-    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpflagsgreen.htm', 'Green - Pantone colors for some flags.')
-    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpatrioticswatches.htm', 'Color swatches - Pantone colors for some flags.')
-    # official Pantone webpages
-    write_link (f, 'http://pantone.com/pages/pantone/Pantone.aspx?pg=19970&ca=25', 'An official PANTONE page')
-    write_link (f, 'http://pantone.com/pages/products/product.aspx?ca=1&pid=293&', 'Another official PANTONE page')
-    # html ending
-    f.write ('</body>\n')
-    f.write ('</html>\n')
-    f.close()
+    with open (filename, 'w') as f:
+        f.write ('<html>\n')
+        f.write ('<head>\n')
+        f.write ('<title>Pantone Color References</title>\n')
+        f.write ('</head>\n')
+        f.write ('<body>\n')
+        f.write ('<p><h1>Pantone Color References</h1></p>\n')
+        f.write ('<hr/>\n')
+        # Reference links for Pantone colors.
+        # Links commented out failed 25 Feb 2015.
+        # One source for data.
+        write_link (f,
+            'http://goffgrafix.com/pantone-rgb-100.php',
+            'Goffgrafix.com')
+        ### Another source with basically the same data.
+        ##write_link (f,
+        ##    'http://www.sandaleo.com/pantone.asp',
+        ##    'Sandaleo.com')
+        ### One with more colors including metallic (also some errors), not quite consistent with the first two.
+        ##write_link (f,
+        ##    'http://www.loral.org/Z/Colors/100.html',
+        ##    'Loral.org - Conversions based on CorelDRAW v12 Pantone Solid Coated or Pastel Coated tables and sRGB color space.')
+        # Some example Pantone colors.
+        ### Some colors for various sports teams.
+        ##write_link (f,
+        ##    'http://www.pennjersey.info/forums/questions-answers/7895-pantone-colors-colleges-university-mlb-nfl-teams.html',
+        ##    'Pantone colors for some sports teams.')
+        # Some colors for various national flags.
+        write_link (f,
+            'http://desktoppub.about.com/od/colorpalettes/l/aa_flagcolors.htm',
+            'What color is your flag? Pantone colors for some flags.')
+        write_link (f,
+            'http://desktoppub.about.com/library/weekly/blcpflagsrwb.htm',
+            'Red, White, &amp Blue - Pantone colors for some flags.')
+        write_link (f,
+            'http://desktoppub.about.com/library/weekly/blcpflagsyellow.htm',
+            'Yellow or Gold - Pantone colors for some flags.')
+        write_link (f,
+            'http://desktoppub.about.com/library/weekly/blcpflagsgreen.htm',
+            'Green - Pantone colors for some flags.')
+        write_link (f,
+            'http://desktoppub.about.com/library/weekly/blcpatrioticswatches.htm',
+            'Color swatches - Pantone colors for some flags.')
+        ### Official Pantone webpages.
+        ##write_link (f,
+        ##    'http://pantone.com/pages/pantone/Pantone.aspx?pg=19970&ca=25',
+        ##    'An official PANTONE page')
+        ##write_link (f,
+        ##    'http://pantone.com/pages/products/product.aspx?ca=1&pid=293&',
+        ##    'Another official PANTONE page')
+        # End of html document.
+        f.write ('</body>\n')
+        f.write ('</html>\n')
 
 #
 # Figures.
@@ -356,9 +385,12 @@ def perceptually_equal_spaced_color_plots ():
 
 def figures ():
     ''' Draw plots of the pure colors and purples. '''
+    # Html documents.
+    write_pantone_reference_html()
+    write_visible_spectrum_html()
+    # Plots.
     pure_colors_patch_plots()
     perceptually_equal_spaced_color_plots()
-    visible_spectrum_table()
 
 
 if __name__ == '__main__':
