@@ -89,7 +89,7 @@ def get_num_pure_colors (brightness, num_spect, num_purple):
     # FIXME: The lowest and highest wavelength are probably not the best
     # ones to use for the violet and red values. As one approaches the end
     # of the visible spectrum, the colors approach zero, and then the scaled
-    # value is not well defined. But we do this for now.
+    # value is not well defined. But do this for now.
     wl_array     = numpy.linspace (ciexyz.start_wl_nm, ciexyz.end_wl_nm, num=num_spect)
     purple_array = numpy.linspace (0.0, 1.0, num=num_purple)
     xyzs         = get_pure_colors (brightness, wl_array, purple_array)
@@ -140,7 +140,6 @@ def get_perceptually_equal_spaced_colors (brightness, num_samples, verbose=False
     # The accumulated distances S[j] are the distances to the end of the
     # segments j. Thus S[0] is the distance to the end of the first segment,
     # and is greater than zero. It makes sense to consider S[-1] = 0.0.
-    # Distance between points.
     ds = numpy.zeros((num_colors))
     for i in range (num_colors):
         im = i

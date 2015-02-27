@@ -231,8 +231,6 @@ def xyz_patch_plot (
 # Spectrum plots
 #
 
-# FIXME: Somebody needs to still call spectrum_plot_old...
-# Needs to be a test. test_plots.py.
 def spectrum_plot_old (
     spectrum_array,
     title,
@@ -328,7 +326,7 @@ def spectrum_plot (
     plot_save (filename)
 
 #
-# Color vs param plot
+# Color vs param plot.
 #
 
 def color_vs_param_plot (
@@ -387,7 +385,7 @@ def color_vs_param_plot (
 # Some specialized figures.
 #
 
-def visible_spectrum_plot ():
+def visible_spectrum_plot (filename='VisibleSpectrum'):
     ''' Plot the visible spectrum, as a plot vs wavelength. '''
     spect = ciexyz.Spectrum()
     # Get rgb colors for each wavelength.
@@ -406,7 +404,7 @@ def visible_spectrum_plot ():
         spect.wavelength,
         rgb_colors,
         'The Visible Spectrum',
-        'VisibleSpectrum',
+        filename,
         tight = True,
         xlabel = r'Wavelength (nm)',
         ylabel = r'RGB Color')

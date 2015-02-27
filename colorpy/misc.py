@@ -110,6 +110,7 @@ primary_colors = [
     '#FFFFFF'
 ]
 
+# FIXME: Separated color and name is bug-prone.
 primary_names = [ 'Black', 'Red', 'Green', 'Blue', 'Yellow', 'Magenta', 'Cyan', 'White' ]
 
 def colorstring_patch_plot (colorstrings, color_names, title, filename, num_across=6):
@@ -130,8 +131,9 @@ def colorstring_patch_plot (colorstrings, color_names, title, filename, num_acro
 # Some example patch plots for xyz color values.
 #
 
-def MacBeth_ColorChecker_patch_plot ():
+def MacBeth_ColorChecker_plot (filename='MacBeth'):
     ''' MacBeth ColorChecker Chart. '''
+    # This is a standard test card for photographic use.
     # The xyz values are from Hall p. 119.
     # I do not know for what lighting conditions this applies.
     patches = [
@@ -167,7 +169,7 @@ def MacBeth_ColorChecker_patch_plot ():
         xyz_colors,
         color_names,
         'MacBeth ColorChecker Chart',
-        'MacBeth')
+        filename)
 
 def chemical_solutions_patch_plot ():
     ''' Colors of some chemical solutions. '''
@@ -223,7 +225,7 @@ def figures ():
     colorstring_patch_plot (jet_colors, None, 'Jet Colormap', 'jet')
     colorstring_patch_plot (primary_colors, primary_names, 'Primary Colors', 'primary', num_across=4)
     # Example patch plots of xyz colors.
-    MacBeth_ColorChecker_patch_plot ()
+    MacBeth_ColorChecker_plot()
     chemical_solutions_patch_plot ()
     universe_patch_plot ()
 
