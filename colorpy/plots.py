@@ -132,7 +132,9 @@ import ciexyz
 import pure_colors
 import rayleigh
 
-# Miscellaneous utilities for plots
+#
+# Utilities for plots.
+#
 
 def log_interpolate (y0, y1, num_values):
     '''Return a list of values, num_values in size, logarithmically interpolated
@@ -246,6 +248,7 @@ def spectrum_plot_old (
         xlabel=xlabel,
         ylabel=ylabel)
 
+
 def spectrum_subplot (spectrum):
     '''Plot a spectrum, with x-axis the wavelength, and y-axis the intensity.
     The curve is colored at that wavelength by the (approximate) color of a
@@ -281,6 +284,7 @@ def spectrum_subplot (spectrum):
     pylab.plot (
         spectrum.wavelength, spectrum.intensity,
         color='k', linewidth=2.0, antialiased=True)
+
 
 def spectrum_plot (
     spectrum,

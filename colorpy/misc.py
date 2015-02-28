@@ -27,26 +27,7 @@ universe_patch_plot () -
     This originally caused some controversy when the (correct) xyz color was incorrectly reported as light green.
     The authors also consider several other white points, here we just use the default (normally D65).
 
-License:
-
-Copyright (C) 2008 Mark Kness
-
-Author - Mark Kness - mkness@alumni.utexas.net
-
 This file is part of ColorPy.
-
-ColorPy is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as
-published by the Free Software Foundation, either version 3 of
-the License, or (at your option) any later version.
-
-ColorPy is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
 from __future__ import print_function
 
@@ -199,19 +180,21 @@ def universe_patch_plot ():
     # Karl Glazebrook and Ivan Baldry
     #     http://www.pha.jhu.edu/~kgb/cosspec/  (accessed 17 Sep 2008)
     # The color of the sum of all light in the universe.
-    # This caused some controversy when the (correct) xyz color was
-    # incorrectly reported as light green.
-    # The authors also consider several other white points,
-    # we just use the default (normally D65).
+    # The xy chromaticity (with Y=1) is 0.345, 0.345.
+    # There was some initial controversy when this xy color was incorrectly
+    # reported as light green. The authors also consider other white points.
+    # This just uses the default D65.
+    xy_patches = [
+        (0.345, 0.345, 'The Universe'),
+    ]
+    xyz_colors  = [colormodels.xyz_color_from_xyY (x, y, 1.0) for x,y,name in xy_patches]
+    color_names = [name for x,y,name in xy_patches]
 
-    # Use the published chromaticity but Y=1.0.
-    xyz_colors  = [colormodels.xyz_color_from_xyY (0.345, 0.345, 1.0)]
-    color_names = ['The Universe']
     plots.xyz_patch_plot (
         xyz_colors,
         color_names,
-        'Average Color of the Universe\nhttp://www.pha.jhu.edu/~kgb/cosspec/',
-        'Universe')
+        'Average Color of the Universe x=0.345, y=0.345\nhttp://www.pha.jhu.edu/~kgb/cosspec/',
+        'TheUniverse')
 
 #
 # Main.
@@ -221,8 +204,8 @@ def figures ():
     '''Draw the various miscellaneous figures.'''
     # patch plots of lists of color hex strings
     colorstring_patch_plot (matplotlib_colors, matplotlib_names, 'Default MatPlotLib Colormap', 'matplotlib', num_across=7)
-    colorstring_patch_plot (hsv_colors, None, 'HSV Colormap', 'hsv')
-    colorstring_patch_plot (jet_colors, None, 'Jet Colormap', 'jet')
+    colorstring_patch_plot (hsv_colors, None, 'HSV Colormap', 'hsv', num_across=8)
+    colorstring_patch_plot (jet_colors, None, 'Jet Colormap', 'jet', num_across=9)
     colorstring_patch_plot (primary_colors, primary_names, 'Primary Colors', 'primary', num_across=4)
     # Example patch plots of xyz colors.
     MacBeth_ColorChecker_plot()
