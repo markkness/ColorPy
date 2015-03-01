@@ -5,10 +5,14 @@ Pure colors mean spectral lines and the 'purples'.
 
 This file is part of ColorPy.
 '''
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import math
 import numpy
+import io
 
 import colormodels
 import ciexyz
@@ -124,6 +128,8 @@ def get_perceptually_equal_spaced_colors (brightness, num_samples, verbose=False
     xyzs = get_num_pure_colors (brightness, num_spect, num_purple)
     num_colors = xyzs.shape[0]
     # Choose either Luv or Lab (nearly) perceptually uniform color space.
+    # FIXME: Should be able to pass as a parameter.
+    # Would this be a colormodels object???
     if True:
         uniform_from_xyz = colormodels.luv_from_xyz
     else:
@@ -215,7 +221,7 @@ def write_visible_spectrum_html (filename='visible_spectrum.html'):
     rgb_1 *= scaling
 
     # Write the data as an HTML document.
-    with open (filename, 'w') as f:
+    with io.open (filename, 'w') as f:
         # Html headers.
         f.write ('<html>\n')
         f.write ('<head>\n')
@@ -265,6 +271,7 @@ def write_visible_spectrum_html (filename='visible_spectrum.html'):
         f.write ('</html>\n')
 
 
+# FIXME: Move to examples?
 def write_pantone_reference_html (filename='pantone_references.html'):
     ''' Write an HTML document with some references to Pantone colors.
 
@@ -275,7 +282,7 @@ def write_pantone_reference_html (filename='pantone_references.html'):
         link = '<a href="%s">%s</a><br/>\n' % (url, text)
         f.write (link)
 
-    with open (filename, 'w') as f:
+    with io.open (filename, 'w') as f:
         f.write ('<html>\n')
         f.write ('<head>\n')
         f.write ('<title>Pantone Color References</title>\n')
@@ -394,3 +401,11 @@ def figures ():
 
 if __name__ == '__main__':
     figures()
+
+
+# Tests:
+# Pure colors (pure_colors, num_pure_colors) should be some distance from white.
+# Purple 20-80 interpolate to 50.
+# Perceptually equal spaced colors:
+#   Distance between each point > threshold. Each some distance from white.
+#   Check brightness.

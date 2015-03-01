@@ -243,9 +243,13 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
-import math, numpy
+import math
+import numpy
 
 # The xyz constructors have some special versions to handle some common situations
 
@@ -923,5 +927,6 @@ def irgb_string_from_xyz (xyz):
 #   If a different rgb model is needed, then the startup can be re-done to set the new conditions.
 #
 
+# FIXME: This should exist as an object.
 init()
 # Default conversions setup on module load

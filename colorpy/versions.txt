@@ -1,16 +1,32 @@
 Changes in versions of ColorPy.
 
-Desired future improvements:
+Possible future improvements:
+	* Travis-CI testing.
+	* Atomic spectra, for the other elements.
+	* Correct or confirm intensity scaling, i.e. blackbody calculation.
+	* Theory description for thin film interference.
+    * Table reading for external code, e.g. mie scattering.
+	* Generally read through Wyszecki & Styles and improve as appropriate.
+
+
+Wanted for next release:
+    * pure_colors.py tests.
+	* Rec. 2020.
+	* Line spectra plot.
+	* Complete sharkfin.
+	* Complete file rearrangements.
     * Addition of BSD license.
-	* Publishing on PyPi.
-	* Travis-CI?
-	* Atomic spectra.
+	* Documentation.
+	    Sphinx, LaTex, local html file, GitHub page, my website.
+	* Packaging.
+	* Publishing on PyPi and markkness.net.
+
 
 Added to alpha:
     This is the current alpha branch on GitHub.
     This release introduces some minor compatibility changes,
 	which allow significant performance improvements.
-	This version should be compatible with both Python 2 and Python 3.
+	This version is compatible with both Python 2 and Python 3.
 
 	* New Spectrum() class type.
 	The main change is the Spectrum() class type.
@@ -21,7 +37,11 @@ Added to alpha:
 	The new and old structures are closely related, and there are calls
 	to make it easy to convert between them.
 
-	* Atomic line spectra for hydrogen, helium, and neon.
+	* New atomic line spectra for hydrogen, helium, and neon.
+
+    * New pure_colors.py module, for calculations of pure
+	spectral line colors and purples. These calculations existed in
+	some form previously, but they are improved now.
 
 	* Unit test improvements.
     The tests are improved in general. They are now designed
@@ -39,8 +59,8 @@ Added to alpha:
     conversion, the more likely it was changed in this way.
 
 	* Various internal improvements.
-	General refactoring that improves the code, but should not
-	require any adjustments in your code.
+	Minor new features or general refactoring that improves the code,
+	but should not require any adjustments in your existing code.
 
 	Compatibility changes:
 	This version has some changes that could break code using the older versions.
