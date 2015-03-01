@@ -3,12 +3,9 @@ misc.py - Miscellaneous color plots.
 
 Description:
 
-Some miscellaneous plots.
+Some miscellaneous patch plot utilities, and some samples.
 
-colorstring_patch_plot (colorstrings, color_names, title, filename, num_across=6) -
-    Color patch plot for colors specified as hex strings.
-
-MacBeth_ColorChecker_patch_plot () -
+MacBeth_ColorChecker_plot () -
     MacBeth ColorChecker Chart.
     The xyz values are from Hall p. 119.  I do not know for what lighting conditions this applies.
 
@@ -34,79 +31,53 @@ from __future__ import print_function
 import colormodels
 import plots
 
-# Some sample lists of displayable RGB colors as hex strings
+#
+# Utility functions to make various patch plots, with a name per color.
+# The input to these plot functions is a list of tuples, with each tuple
+# holding the color values and name.
+#
 
-# default colors in Matplotlib
-matplotlib_colors = [
-    '#0000FF',    # b
-    '#008000',    # g
-    '#FF0000',    # r
-    '#00BFBF',    # c
-    '#BF00BF',    # m
-    '#BFBF00',    # y
-    '#000000'     # k
-]
+def named_xyz_patch_plot (named_colors, title, filename, num_across=6):
+    ''' Make an patch plot with the specified xyz colors and names. '''
+    # Colors specified as x, y, z, name.
+    xyzs  = []
+    names = []
+    for named_color in named_colors:
+        # Unpack x, y, z, name.
+        x, y, z, name = named_color
+        xyz = colormodels.xyz_color(x, y, z)
+        xyzs.append (xyz)
+        names.append (name)
+    plots.xyz_patch_plot (xyzs, names, title, filename, num_across=num_across)
 
-matplotlib_names = [ 'b', 'g', 'r', 'c', 'm', 'y', 'k' ]
 
-# Following determined by sampling rgb values of a MATLAB gif of their colormaps - this is imperfect for several reasons...
-hsv_colors = [
-    '#FF0000',    # red
-    '#FF6300',    # orange
-    '#FFBD00',    # yellow-orange
-    '#DEFF00',    # yellow
-    '#84FF00',    # yellow-green
-    '#21FF00',    # green
-    '#00FF42',    # green
-    '#00FF9C',    # green
-    '#00FFFF',    # cyan
-    '#009CFF',    # light blue
-    '#0042FF',    # blue
-    '#2100FF',    # blue
-    '#8400FF',    # violet
-    '#DE00FF',    # magenta
-    '#FF00BD',    # hot pink
-    '#FF0063'     # red
-]
+def named_xy1_patch_plot (named_colors, title, filename, num_across=6):
+    ''' Make an patch plot with the specified xy (Y=1) colors and names. '''
+    # Colors specified as x, y, name. Assumes Y=1.
+    xyzs  = []
+    names = []
+    for named_color in named_colors:
+        # Unpack x, y, name.
+        x, y, name = named_color
+        xyz = colormodels.xyz_color_from_xyY (x, y, 1.0)
+        xyzs.append (xyz)
+        names.append (name)
+    plots.xyz_patch_plot (xyzs, names, title, filename, num_across=num_across)
 
-# Following determined by sampling rgb values of a MATLAB gif of their colormaps - this is imperfect for several reasons...
-# The jet colormap is associated with an astrophysical fluid jet simulation from the National Center for Supercomputer Applications.
-jet_colors = [
-    '#0000BD',  '#0000FF',  '#0042FF',  '#0084FF',
-    '#00DBFF',  '#00FFFF',  '#08FFEF',  '#42FFBD',
-    '#84FF84',  '#BDFF42',  '#FFFF00',  '#FFBD00',
-    '#FF8400',  '#FF4200',  '#FF0000',  '#BD0000',
-    '#840000'
-]
 
-# some primary colors, convenient for printer ribbon tests and calibration
-primary_colors = [
-    '#000000',
-    '#FF0000',
-    '#00FF00',
-    '#0000FF',
-    '#FFFF00',
-    '#FF00FF',
-    '#00FFFF',
-    '#FFFFFF'
-]
-
-# FIXME: Separated color and name is bug-prone.
-primary_names = [ 'Black', 'Red', 'Green', 'Blue', 'Yellow', 'Magenta', 'Cyan', 'White' ]
-
-def colorstring_patch_plot (colorstrings, color_names, title, filename, num_across=6):
-    '''Color patch plot for colors specified as hex strings.'''
-    rgb_colors = []
-    for color in colorstrings:
-        irgb = colormodels.irgb_from_irgb_string (color)
-        rgb = colormodels.rgb_from_irgb (irgb)
-        rgb_colors.append (rgb)
-    plots.rgb_patch_plot (
-        rgb_colors,
-        color_names,
-        title,
-        filename,
-        num_across=num_across)
+def named_colorstring_patch_plot (named_colors, title, filename, num_across=6):
+    ''' Make an patch plot with the specified hexstring colors and names. '''
+    # Colors specified as hexstring, name.
+    rgbs  = []
+    names = []
+    for named_color in named_colors:
+        # Unpack hexstring, name.
+        hexstring, name = named_color
+        irgb = colormodels.irgb_from_irgb_string (hexstring)
+        rgb  = colormodels.rgb_from_irgb (irgb)
+        rgbs.append(rgb)
+        names.append(name)
+    plots.rgb_patch_plot (rgbs, names, title, filename, num_across=num_across)
 
 #
 # Some example patch plots for xyz color values.
@@ -143,16 +114,10 @@ def MacBeth_ColorChecker_plot (filename='MacBeth'):
         (0.067, 0.068, 0.080, 'neutral 3.5'),
         (0.000, 0.000, 0.000, 'black'),
     ]
-    xyz_colors  = [colormodels.xyz_color (x,y,z) for x,y,z,name in patches]
-    color_names = [name for x,y,z,name in patches]
+    named_xyz_patch_plot (patches, 'MacBeth ColorChecker Chart', filename)
 
-    plots.xyz_patch_plot (
-        xyz_colors,
-        color_names,
-        'MacBeth ColorChecker Chart',
-        filename)
 
-def chemical_solutions_patch_plot ():
+def chemical_solutions_patch_plot (filename='ChemSolutions'):
     ''' Colors of some chemical solutions. '''
     # Darren L. Williams et. al.,
     #   'Beyond lambda-max: Transforming Visible Spectra into 24-bit Color Values'.
@@ -166,16 +131,12 @@ def chemical_solutions_patch_plot ():
         (0.742, 0.579, 0.905, '0.005 M KMnO4'),
         (0.949, 1.000, 1.087, 'H2O'),
     ]
-    xyz_colors  = [colormodels.xyz_color (x,y,z) for x,y,z,name in patches]
-    color_names = [name for x,y,z,name in patches]
-
-    plots.xyz_patch_plot (
-        xyz_colors,
-        color_names,
+    named_xyz_patch_plot (patches,
         'Colors of some chemical solutions\nJ. Chem. Ed., Vol 84, No 11, Nov 2007, p 1873-1877.',
-        'ChemSolutions')
+        filename)
 
-def universe_patch_plot ():
+
+def universe_patch_plot (filename='TheUniverse'):
     ''' The average color of the universe. '''
     # Karl Glazebrook and Ivan Baldry
     #     http://www.pha.jhu.edu/~kgb/cosspec/  (accessed 17 Sep 2008)
@@ -187,30 +148,104 @@ def universe_patch_plot ():
     xy_patches = [
         (0.345, 0.345, 'The Universe'),
     ]
-    xyz_colors  = [colormodels.xyz_color_from_xyY (x, y, 1.0) for x,y,name in xy_patches]
-    color_names = [name for x,y,name in xy_patches]
-
-    plots.xyz_patch_plot (
-        xyz_colors,
-        color_names,
+    named_xy1_patch_plot (xy_patches,
         'Average Color of the Universe x=0.345, y=0.345\nhttp://www.pha.jhu.edu/~kgb/cosspec/',
-        'TheUniverse')
+        filename)
+
+#
+# Some colormaps as hexstrings.
+#
+
+def primary_colors_patch_plot (filename='PrimaryColors'):
+    ''' Create a sample patch plot of the primary RGB colors. '''
+    named_colors = [
+        ('#000000', 'Black'),
+        ('#FF0000', 'Red'),
+        ('#00FF00', 'Green'),
+        ('#0000FF', 'Blue'),
+        ('#FFFF00', 'Yellow'),
+        ('#FF00FF', 'Magenta'),
+        ('#00FFFF', 'Cyan'),
+        ('#FFFFFF', 'White'),
+    ]
+    named_colorstring_patch_plot (named_colors,
+        'Primary RGB Colors', filename, num_across=4)
+
+
+def matplotlib_colormaps_patch_plots ():
+    ''' Create some sample patch plots of some MatPlotLib colormaps. '''
+    # Default colors in Matplotlib.
+    matplotlib_colors = [
+        ('#0000FF', 'b'),
+        ('#008000', 'g'),
+        ('#FF0000', 'r'),
+        ('#00BFBF', 'c'),
+        ('#BF00BF', 'm'),
+        ('#BFBF00', 'y'),
+        ('#000000', 'k'),
+    ]
+    named_colorstring_patch_plot (matplotlib_colors,
+        'MatPlotLib default colormap', 'Colormap-Matplotlib', num_across=7)
+    # Following determined by sampling MATLAB gifs of the colormaps.
+    # This is imperfect for several reasons.
+    # It should be possible to get the correct values from Matplotlib.
+    #
+    # Approximate HSV colormap.
+    hsv_colors = [
+        ('#FF0000', ''),   # red
+        ('#FF6300', ''),   # orange
+        ('#FFBD00', ''),   # yellow-orange
+        ('#DEFF00', ''),   # yellow
+        ('#84FF00', ''),   # yellow-green
+        ('#21FF00', ''),   # green
+        ('#00FF42', ''),   # green
+        ('#00FF9C', ''),   # green
+        ('#00FFFF', ''),   # cyan
+        ('#009CFF', ''),   # light blue
+        ('#0042FF', ''),   # blue
+        ('#2100FF', ''),   # blue
+        ('#8400FF', ''),   # violet
+        ('#DE00FF', ''),   # magenta
+        ('#FF00BD', ''),   # hot pink
+        ('#FF0063', ''),   # red
+    ]
+    named_colorstring_patch_plot (hsv_colors,
+        'MatPlotLib HSV colormap', 'Colormap-Hsv', num_across=8)
+    # The jet colormap is associated with an astrophysical fluid jet simulation
+    # from the National Center for Supercomputer Applications.
+    jet_colors = [
+        ('#0000BD', ''),
+        ('#0000FF', ''),
+        ('#0042FF', ''),
+        ('#0084FF', ''),
+        ('#00DBFF', ''),
+        ('#00FFFF', ''),
+        ('#08FFEF', ''),
+        ('#42FFBD', ''),
+        ('#84FF84', ''),
+        ('#BDFF42', ''),
+        ('#FFFF00', ''),
+        ('#FFBD00', ''),
+        ('#FF8400', ''),
+        ('#FF4200', ''),
+        ('#FF0000', ''),
+        ('#BD0000', ''),
+        ('#840000', ''),
+    ]
+    named_colorstring_patch_plot (jet_colors,
+        'MatPlotLib Jet colormap', 'Colormap-Jet', num_across=9)
 
 #
 # Main.
 #
 
 def figures ():
-    '''Draw the various miscellaneous figures.'''
-    # patch plots of lists of color hex strings
-    colorstring_patch_plot (matplotlib_colors, matplotlib_names, 'Default MatPlotLib Colormap', 'matplotlib', num_across=7)
-    colorstring_patch_plot (hsv_colors, None, 'HSV Colormap', 'hsv', num_across=8)
-    colorstring_patch_plot (jet_colors, None, 'Jet Colormap', 'jet', num_across=9)
-    colorstring_patch_plot (primary_colors, primary_names, 'Primary Colors', 'primary', num_across=4)
-    # Example patch plots of xyz colors.
+    '''Draw the various sample patch plots.'''
     MacBeth_ColorChecker_plot()
-    chemical_solutions_patch_plot ()
-    universe_patch_plot ()
+    chemical_solutions_patch_plot()
+    universe_patch_plot()
+    primary_colors_patch_plot()
+    matplotlib_colormaps_patch_plots()
 
 
 if __name__ == '__main__':

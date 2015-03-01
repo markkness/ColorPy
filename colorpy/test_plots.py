@@ -22,18 +22,19 @@ class TestPlots(unittest.TestCase):
     def test_rgb_patch_plot(self, verbose=True):
         ''' Test the rgb patch plot. '''
         # Draw some primary colors.
-        # FIXME: Separated color and name is bug-prone.
         primary_colors = [
-            '#000000', '#FF0000', '#00FF00', '#0000FF',
-            '#FFFF00', '#FF00FF', '#00FFFF', '#FFFFFF',
-        ]
-        primary_names = [
-            'Black',  'Red',     'Green', 'Blue',
-            'Yellow', 'Magenta', 'Cyan',  'White',
+            ('#000000', 'Black'),
+            ('#FF0000', 'Red'),
+            ('#00FF00', 'Green'),
+            ('#0000FF', 'Blue'),
+            ('#FFFF00', 'Yellow'),
+            ('#FF00FF', 'Magenta'),
+            ('#00FFFF', 'Cyan'),
+            ('#FFFFFF', 'White'),
         ]
         filename = 'Test-RgbPatch' if verbose else None
-        misc.colorstring_patch_plot (
-            primary_colors, primary_names,
+        misc.named_colorstring_patch_plot (
+            primary_colors,
             'Primary RGB Colors',
             filename, num_across=4)
 
