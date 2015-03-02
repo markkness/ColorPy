@@ -3,6 +3,9 @@ Changes in versions of ColorPy.
 Possible future improvements:
 	* Travis-CI testing.
 	* Atomic spectra, for the other elements.
+    * HSV conversions.
+    * CIE D illuminants besides D65.
+    * Scotopic visual sensitivity function.
 	* Correct or confirm intensity scaling, i.e. blackbody calculation.
 	* Theory description for thin film interference.
     * Table reading for external code, e.g. mie scattering.
@@ -10,15 +13,17 @@ Possible future improvements:
 
 
 Wanted for next release:
-    * pure_colors.py tests.
+    * Better pure_colors.py tests. Fix perceptual scaling.
 	* Rec. 2020.
 	* Line spectra plot.
 	* Complete sharkfin.
-	* Complete file rearrangements.
+    * dwl as part of Spectrum metadata?
+    * White/black text in patch plots as appropriate.
+	* Complete file rearrangements. Misc->Examples? Plot->Examples?
     * Addition of BSD license.
 	* Documentation.
 	    Sphinx, LaTex, local html file, GitHub page, my website.
-	* Packaging.
+	* Packaging. Anaconda?
 	* Publishing on PyPi and markkness.net.
 
 

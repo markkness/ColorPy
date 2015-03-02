@@ -18,10 +18,25 @@ import colormodels
 import ciexyz
 import plots
 
-#
-# Miscellaneous stuff for spectral line colors.
-# This is used by the shark fin plot as well as the examples in this file.
-#
+# FIXME: Rename these files to 'purecolors.py' or 'pure.py'?
+
+# Calculation of 'pure' colors. This means both, the colors of single spectral
+# lines, which are as saturated as possible, as well as the 'purples', which
+# are linear combinations of pure violet and pure red. These 'purples' are
+# not pure spectral lines, but they are as far from white as possible, so
+# they are still considered 'pure' colors here.
+
+# The full start and end of the visible wavelength range is 360 to 830 nm.
+# However, near these endpoints, the light is poorly percieved, and so the
+# color approaches zero. This means that the chromaticity is poorly defined.
+# However, the chromaticity is not changing much near these endpoints.
+# So, to use a start and end wavelength for the 'pure colors', it makes more
+# sense to use a slightly smaller range of wavelengths.
+# Wyszecki and Stiles, Color Science, p. 158 suggests that many practical
+# colorimetric applications use the range 380 to 780 nm, so use that instead.
+
+PURE_VIOLET_NM = 380.0    # Wavelength [nm] for practical 'pure' violet color.
+PURE_RED_NM    = 780.0    # Wavelength [nm] for practical 'pure' red color.
 
 def scale_rgb_max (xyz_array, brightness):
     ''' Scale each color to have the max rgb value be the desired brightness. '''
@@ -45,10 +60,14 @@ def get_spectral_colors (wl_array):
 
 
 def get_purple_colors (t_array, violet_xyz, red_xyz):
-    ''' Get the pure purple colors by interpolating between violet and red. '''
-    # t_array    = interpolation fractions 0.0 to 1.0
-    # violet_xyz = xyz color for pure violet
-    # red_xyz    = xyz_color for pure red
+    ''' Get the pure purple colors by interpolating between violet and red.
+
+    The purple for t=0.0 is exactly red, and the purple for t=1.0 is violet.
+
+    t_array   : 1D array of interpolation fractions 0.0 to 1.0.
+    violet_xyz: xyz color for pure violet.
+    red_xyz   : xyz_color for pure red.
+    '''
     num  = t_array.shape[0]
     xyzs = numpy.zeros((num, 3))
     # FIXME: violet and red may be backwards.
@@ -90,11 +109,7 @@ def get_num_pure_colors (brightness, num_spect, num_purple):
 
     The count of pure spectral colors and purples is as specified.
     '''
-    # FIXME: The lowest and highest wavelength are probably not the best
-    # ones to use for the violet and red values. As one approaches the end
-    # of the visible spectrum, the colors approach zero, and then the scaled
-    # value is not well defined. But do this for now.
-    wl_array     = numpy.linspace (ciexyz.start_wl_nm, ciexyz.end_wl_nm, num=num_spect)
+    wl_array     = numpy.linspace (PURE_VIOLET_NM, PURE_RED_NM, num=num_spect)
     purple_array = numpy.linspace (0.0, 1.0, num=num_purple)
     xyzs         = get_pure_colors (brightness, wl_array, purple_array)
     return xyzs
@@ -108,9 +123,13 @@ def get_normalized_spectral_line_colors (
     num_purples  : Number of colors to interpolate in the 'purple' range.
     dwl_angstroms: Wavelength separation, in angstroms (0.1 nm).
     '''
-    dwl_nm    = dwl_angstroms / 10.0
-    num_spect = int(round((ciexyz.end_wl_nm - ciexyz.start_wl_nm) / dwl_nm)) + 1
-    xyzs      = get_num_pure_colors (brightness, num_spect, num_purples)
+    # This is deprecated but retained for compatibility.
+    # Any previous users may want to consider the wavelength range.
+    dwl_nm       = dwl_angstroms / 10.0
+    num_spect    = int(round((PURE_RED_NM - PURE_VIOLET_NM) / dwl_nm)) + 1
+    wl_array     = numpy.linspace (PURE_VIOLET_NM, PURE_RED_NM, num=num_spect)
+    purple_array = numpy.linspace (0.0, 1.0, num=num_purples)
+    xyzs         = get_pure_colors (brightness, wl_array, purple_array)
     return xyzs
 
 
@@ -401,11 +420,3 @@ def figures ():
 
 if __name__ == '__main__':
     figures()
-
-
-# Tests:
-# Pure colors (pure_colors, num_pure_colors) should be some distance from white.
-# Purple 20-80 interpolate to 50.
-# Perceptually equal spaced colors:
-#   Distance between each point > threshold. Each some distance from white.
-#   Check brightness.

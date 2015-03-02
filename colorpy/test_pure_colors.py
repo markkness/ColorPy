@@ -76,6 +76,13 @@ class TestPureColors(unittest.TestCase):
         distance = 0.2
         self.check_colors_not_white(colors, distance, verbose)
 
+    def test_normalized_spectral_line_colors(self, verbose=False):
+        ''' Test of deprecated routine. '''
+        colors = pure_colors.get_normalized_spectral_line_colors ()
+        # Colors should not be white.
+        distance = 0.2
+        self.check_colors_not_white(colors, distance, verbose)
+
     def test_purple_chromaticity(self, verbose=True):
         ''' Test that purple(0.1) is close to red not violet,
         and that purple(0.9) is close to violet and not red. '''
