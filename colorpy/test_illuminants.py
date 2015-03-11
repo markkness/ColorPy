@@ -22,7 +22,10 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import numpy
 import unittest
@@ -69,6 +72,9 @@ class TestIlluminants(unittest.TestCase):
         # Constant
         c = illuminants.get_constant_illuminant()
         self.check_Y(c, expect, tolerance, verbose)
+        # Neon lamp.
+        neon = illuminants.get_neon_illuminant()
+        self.check_Y(neon, expect, tolerance, verbose)
         # Blackbodies of a few temperatures.
         T_list = [100.0, 1000.0, 5000.0, 9000.0, 1.0e6]
         for T in T_list:

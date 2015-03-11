@@ -1,43 +1,101 @@
 Changes in versions of ColorPy.
 
-Desired future improvements:
-    * Addition of BSD license.
-	* Publishing on PyPi.
-	* Travis-CI?
-	* Atomic spectra.
+Possible future improvements:
+	* Travis-CI testing.
+	* Atomic spectra, for the other elements.
+    * HSV conversions.
+    * CIE D illuminants besides D65.
+    * Scotopic visual sensitivity function.
+	* Correct or confirm intensity scaling, i.e. blackbody calculation.
+	* Theory description for thin film interference.
+    * Table reading for external code, e.g. mie scattering.
+	* Generally read through Wyszecki & Styles and improve as appropriate.
 
-New in 0.2.0:
+
+Wanted for next release:
+    * Better pure_colors.py tests. Fix perceptual scaling.
+	* Rec. 2020.
+	* Line spectra plot.
+	* Complete sharkfin.
+    * dwl as part of Spectrum metadata?
+    * White/black text in patch plots as appropriate.
+	* Complete file rearrangements. Misc->Examples? Plot->Examples?
+    * Addition of BSD license.
+	* Documentation.
+	    Sphinx, LaTex, local html file, GitHub page, my website.
+	* Packaging. Anaconda?
+	* Publishing on PyPi and markkness.net.
+
+
+Added to alpha:
+    This is the current alpha branch on GitHub.
     This release introduces some minor compatibility changes,
 	which allow significant performance improvements.
-	This version should be compatible with both Python 2 and Python 3.
-	
+	This version is compatible with both Python 2 and Python 3.
+
 	* New Spectrum() class type.
 	The main change is the Spectrum() class type.
 	This replaces the simple N by 2 array spectrum format.
 	This gives the wavelength and intensity arrays more meaningful names,
 	and allows some metadata to be added to the array data.
-	This allows some faster calculations when the wavelength list is standard.
+	This allows some faster calculations.
 	The new and old structures are closely related, and there are calls
 	to make it easy to convert between them.
 
+	* New atomic line spectra for hydrogen, helium, and neon.
+
+    * New pure_colors.py module, for calculations of pure
+	spectral line colors and purples. These calculations existed in
+	some form previously, but they are improved now.
+
 	* Unit test improvements.
-    The tests are substantially improved in general. They are now designed
+    The tests are improved in general. They are now designed
 	to be run via standard test runners, e.g. 'python -m unittest discover'.
 	However you can still run tests.py to exercise them.
+    Also run figures.py to test all of the figures.
 
-    * Minor rearrangements.
-	Since some compatibility breaking changes were required, this seemed
-	a good time to make some minor rearrangements that also are breaking,
-	but should be very easy to adjust to.
-	[Nothing so far, expect renaming and moving functions around.]
+    * Minor renaming.
+    Some functions were slightly renamed and/or moved to new modules.
+    This may break existing code that called these routines, but should
+    be easy to fix.
+    Since compatibility breaking changes were already required in this release,
+    it made sense make these minor changes at the same time.
+    The more some feature/routine was like an example, rather than a core
+    conversion, the more likely it was changed in this way.
 
 	* Various internal improvements.
-	General refactoring that improves the code, but should not require any
-	adjustments in your code.
-		
-	Compatibility:
+	Minor new features or general refactoring that improves the code,
+	but should not require any adjustments in your existing code.
+
+	Compatibility changes:
 	This version has some changes that could break code using the older versions.
 	* Spectrum() class.
+	  In general, the code is now designed to work with Spectrum() objects,
+	  instead of N by 2 arrays, as in previous versions. It should be fairly
+	  easy to convert between the two representations with the Spectrum
+	  methods from_array() and to_array(). If you want to use the old functions
+	  that directly accepted and/or returned arrays, most all of these still
+	  exist, usually with an '_old' added to their names.
+	* Various renaming.
+	  A number of routines, and output plot names, have been changed slightly.
+	  Functions may have moved into new source files, which could change how
+	  they are imported into other Python code.
 
-New in 0.1.2:
-    This is effectively what is on GitHub now in master.
+
+New in v0.1.2:
+    This is the current master branch on GitHub.
+	It is hopefully Python 3 compatible, at least much closer than before.
+	The tests are significantly improved, and are now designed to run with
+	the standard test runner, i.e. at the command line,
+	    'python -m unittest discover'
+	They can still be run via tests.py however.
+
+
+New in v0.1.1:
+    This includes work that I did locally after creating markkness.net.
+	A better shark fin chromaticity plot is included, along with some
+	other miscellaneous improvements.
+
+
+New in v0.1.0:
+    This is the version that I originally hosted on http://markkness.net

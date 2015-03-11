@@ -72,7 +72,7 @@ color_vs_param_plot (
     title,
     filename,
     tight    = False,
-    plotfunc = pylab.plot,
+    plotfunc = pyplot.plot,
     xlabel   = 'param',
     ylabel   = 'RGB Color') -
 
@@ -85,7 +85,7 @@ color_vs_param_plot (
     rgb_colors - numpy array, one row for each param in param_list
     title      - title for plot
     filename   - filename to save plot to
-    plotfunc   - optional plot function to use (default pylab.plot)
+    plotfunc   - optional plot function to use (default matplotlib.pyplot.plot)
     xlabel     - label for x axis
     ylabel     - label for y axis (default 'RGB Color')
 
@@ -100,38 +100,25 @@ cie_matching_functions_plot () -
 shark_fin_plot () -
     Draw the 'shark fin' CIE chromaticity diagram of the pure spectral lines (plus purples) in xy space.
 
-License:
-
-Copyright (C) 2008 Mark Kness
-
-Author - Mark Kness - mkness@alumni.utexas.net
-
 This file is part of ColorPy.
-
-ColorPy is free software: you can redistribute it and/or modify
-it under the terms of the GNU Lesser General Public License as
-published by the Free Software Foundation, either version 3 of
-the License, or (at your option) any later version.
-
-ColorPy is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public License
-along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import math
 import numpy
-import pylab
+import matplotlib.pyplot as pyplot
 
 import colormodels
 import ciexyz
+import pure_colors
 import rayleigh
 
-# Miscellaneous utilities for plots
+#
+# Utilities for plots.
+#
 
 def log_interpolate (y0, y1, num_values):
     '''Return a list of values, num_values in size, logarithmically interpolated
@@ -157,14 +144,14 @@ def tighten_x_axis (x_list):
     The y axis limits are not affected.'''
     x_min = min (x_list)
     x_max = max (x_list)
-    pylab.xlim ((x_min, x_max))
+    pyplot.xlim ((x_min, x_max))
 
 
 def plot_save (filename):
     ''' Save the current plot to the filename. '''
     if filename is not None:
         print ('Saving plot %s' % str (filename))
-        pylab.savefig (filename)
+        pyplot.savefig (filename)
 
 #
 # Patch plots - Plots with each color value as a solid patch, with optional labels.
@@ -189,13 +176,13 @@ def rgb_patch_plot (
         # construct vertices
         poly_x = [ x0 + dx_i for dx_i in poly_dx ]
         poly_y = [ y0 + dy_i for dy_i in poly_dy ]
-        pylab.fill (poly_x, poly_y, color)
+        pyplot.fill (poly_x, poly_y, color)
         if name != None:
             dtext = 0.1
-            pylab.text (x0+dtext, y0+dtext, name, size=8.0)
+            pyplot.text (x0+dtext, y0+dtext, name, size=8.0)
 
     # make plot with each color with one patch
-    pylab.clf()
+    pyplot.clf()
     num_colors = len (rgb_colors)
     for i in range (0, num_colors):
         (iy, ix) = divmod (i, num_across)
@@ -206,8 +193,8 @@ def rgb_patch_plot (
         else:
             name = None
         draw_patch (float (ix), float (-iy), colorstring, name, patch_gap)
-    pylab.axis ('off')
-    pylab.title (title)
+    pyplot.axis ('off')
+    pyplot.title (title)
     # Save.
     plot_save (filename)
 
@@ -230,8 +217,6 @@ def xyz_patch_plot (
 # Spectrum plots
 #
 
-# FIXME: Somebody needs to still call spectrum_plot_old...
-# Needs to be a test. test_plots.py.
 def spectrum_plot_old (
     spectrum_array,
     title,
@@ -246,6 +231,7 @@ def spectrum_plot_old (
         filename,
         xlabel=xlabel,
         ylabel=ylabel)
+
 
 def spectrum_subplot (spectrum):
     '''Plot a spectrum, with x-axis the wavelength, and y-axis the intensity.
@@ -277,11 +263,12 @@ def spectrum_subplot (spectrum):
         poly_x = [x0,  x1,  x1, x0]
         poly_y = [0.0, 0.0, y1, y0]
         color_string = colormodels.irgb_string_from_rgb (rgb_colors [i])
-        pylab.fill (poly_x, poly_y, color_string, edgecolor=color_string)
+        pyplot.fill (poly_x, poly_y, color_string, edgecolor=color_string)
     # Plot intensity as curve.
-    pylab.plot (
+    pyplot.plot (
         spectrum.wavelength, spectrum.intensity,
         color='k', linewidth=2.0, antialiased=True)
+
 
 def spectrum_plot (
     spectrum,
@@ -305,29 +292,29 @@ def spectrum_plot (
     xlabel   - label for x axis
     ylabel   - label for y axis
     '''
-    pylab.clf ()
+    pyplot.clf ()
     # upper plot - solid patch of color that matches the spectrum color
-    pylab.subplot (2,1,1)
-    pylab.title (title)
+    pyplot.subplot (2,1,1)
+    pyplot.title (title)
     color_string = colormodels.irgb_string_from_rgb (
         colormodels.rgb_from_xyz (spectrum.get_xyz()))
     poly_x = [0.0, 1.0, 1.0, 0.0]
     poly_y = [0.0, 0.0, 1.0, 1.0]
-    pylab.fill (poly_x, poly_y, color_string)
+    pyplot.fill (poly_x, poly_y, color_string)
     # draw a solid line around the patch to look nicer
-    pylab.plot (poly_x, poly_y, color='k', linewidth=2.0)
-    pylab.axis ('off')
+    pyplot.plot (poly_x, poly_y, color='k', linewidth=2.0)
+    pyplot.axis ('off')
     # lower plot - spectrum vs wavelength, with colors of the associated spectral lines below
-    pylab.subplot (2,1,2)
+    pyplot.subplot (2,1,2)
     spectrum_subplot (spectrum)
     tighten_x_axis (spectrum.wavelength)
-    pylab.xlabel (xlabel)
-    pylab.ylabel (ylabel)
+    pyplot.xlabel (xlabel)
+    pyplot.ylabel (ylabel)
     # Save.
     plot_save (filename)
 
 #
-# Color vs param plot
+# Color vs param plot.
 #
 
 def color_vs_param_plot (
@@ -336,7 +323,7 @@ def color_vs_param_plot (
     title,
     filename,
     tight    = False,
-    plotfunc = pylab.plot,
+    plotfunc = pyplot.plot,
     xlabel   = 'param',
     ylabel   = 'RGB Color'):
     '''Plot for a color that varies with a parameter -
@@ -348,14 +335,14 @@ def color_vs_param_plot (
     rgb_colors - numpy array, one row for each param in param_list
     title      - title for plot
     filename   - filename to save plot to
-    plotfunc   - optional plot function to use (default pylab.plot)
+    plotfunc   - optional plot function to use (default matplotlib.pyplot.plot)
     xlabel     - label for x axis
     ylabel     - label for y axis (default 'RGB Color')
     '''
-    pylab.clf ()
+    pyplot.clf ()
     # draw color bars in upper plot
-    pylab.subplot (2,1,1)
-    pylab.title (title)
+    pyplot.subplot (2,1,1)
+    pyplot.title (title)
     # no xlabel, ylabel in upper plot
     num_points = len (param_list)
     for i in range (0, num_points-1):
@@ -366,27 +353,27 @@ def color_vs_param_plot (
         poly_x = [x0, x1, x1, x0]
         poly_y = [y0, y0, y1, y1]
         color_string = colormodels.irgb_string_from_rgb (rgb_colors [i])
-        pylab.fill (poly_x, poly_y, color_string, edgecolor=color_string)
+        pyplot.fill (poly_x, poly_y, color_string, edgecolor=color_string)
     if tight:
         tighten_x_axis (param_list)
     # draw rgb curves in lower plot
-    pylab.subplot (2,1,2)
+    pyplot.subplot (2,1,2)
     # no title in lower plot
     plotfunc (param_list, rgb_colors [:,0], color='r', label='Red')
     plotfunc (param_list, rgb_colors [:,1], color='g', label='Green')
     plotfunc (param_list, rgb_colors [:,2], color='b', label='Blue')
     if tight:
         tighten_x_axis (param_list)
-    pylab.xlabel (xlabel)
-    pylab.ylabel (ylabel)
+    pyplot.xlabel (xlabel)
+    pyplot.ylabel (ylabel)
     # Save.
     plot_save (filename)
 
 #
-# Some specialized plots
+# Some specialized figures.
 #
 
-def visible_spectrum_plot ():
+def visible_spectrum_plot (filename='VisibleSpectrum'):
     ''' Plot the visible spectrum, as a plot vs wavelength. '''
     spect = ciexyz.Spectrum()
     # Get rgb colors for each wavelength.
@@ -405,7 +392,7 @@ def visible_spectrum_plot ():
         spect.wavelength,
         rgb_colors,
         'The Visible Spectrum',
-        'VisibleSpectrum',
+        filename,
         tight = True,
         xlabel = r'Wavelength (nm)',
         ylabel = r'RGB Color')
@@ -426,22 +413,22 @@ def cie_matching_functions_plot ():
     # Plot three separate subplots, with CIE X in the first,
     # CIE Y in the second, and CIE Z in the third.
     # Label appropriately for the whole plot.
-    pylab.clf ()
+    pyplot.clf ()
     # X
-    pylab.subplot (3,1,1)
-    pylab.title ('1931 CIE XYZ Matching Functions')
-    pylab.ylabel ('CIE $X$')
+    pyplot.subplot (3,1,1)
+    pyplot.title ('1931 CIE XYZ Matching Functions')
+    pyplot.ylabel ('CIE $X$')
     spectrum_subplot (spect_x)
     tighten_x_axis (spect_x.wavelength)
     # Y
-    pylab.subplot (3,1,2)
-    pylab.ylabel ('CIE $Y$')
+    pyplot.subplot (3,1,2)
+    pyplot.ylabel ('CIE $Y$')
     spectrum_subplot (spect_y)
     tighten_x_axis (spect_y.wavelength)
     # Z
-    pylab.subplot (3,1,3)
-    pylab.xlabel ('Wavelength (nm)')
-    pylab.ylabel ('CIE $Z$')
+    pyplot.subplot (3,1,3)
+    pyplot.xlabel ('Wavelength (nm)')
+    pyplot.ylabel ('CIE $Z$')
     spectrum_subplot (spect_z)
     tighten_x_axis (spect_z.wavelength)
     # Save.
@@ -488,10 +475,10 @@ def scattered_visual_brightness ():
         scaling = want_max / max_intensity
         spect.intensity *= scaling
     # Plot.
-    pylab.clf ()
-    pylab.title ('Perceptual Brightness of Rayleigh Scattered Light')
-    pylab.xlabel ('Wavelength (nm)')
-    pylab.ylabel ('CIE $Y$ / $\lambda^4$')
+    pyplot.clf ()
+    pyplot.title ('Perceptual Brightness of Rayleigh Scattered Light')
+    pyplot.xlabel ('Wavelength (nm)')
+    pyplot.ylabel ('CIE $Y$ / $\lambda^4$')
     spectrum_subplot (spect)
     tighten_x_axis (spect.wavelength)
     # Save.
@@ -502,7 +489,9 @@ def scattered_visual_brightness ():
 def shark_fin_plot ():
     '''Draw the 'shark fin' CIE chromaticity diagram of the pure spectral lines (plus purples) in xy space.'''
     # get array of (approximate) colors for the boundary of the fin
-    xyz_list = ciexyz.get_normalized_spectral_line_colors (brightness=1.0, num_purples=200, dwl_angstroms=2)
+    xyz_list = pure_colors.get_num_pure_colors (
+        num_spect=2351, num_purple=200, brightness=1.0)
+
     # get normalized colors
     xy_list = xyz_list.copy()
     (num_colors, num_cols) = xy_list.shape
@@ -527,7 +516,7 @@ def shark_fin_plot ():
         return (direc[0], direc[1])
 
     # plot
-    pylab.clf ()
+    pyplot.clf ()
 
     # draw best attempt at pure spectral colors on inner edge of shark fin
     s = 0.025     # distance in xy plane towards white point
@@ -545,7 +534,7 @@ def shark_fin_plot ():
         # draw (using full color, not normalized value)
         color_string = colormodels.irgb_string_from_rgb (
             colormodels.rgb_from_xyz (xyz_list [i]))
-        pylab.fill (poly_x, poly_y, color_string, edgecolor=color_string)
+        pyplot.fill (poly_x, poly_y, color_string, edgecolor=color_string)
 
     # fill in the monitor gamut with true colors
     def get_brightest_irgb_string (xyz):
@@ -579,35 +568,37 @@ def shark_fin_plot ():
                 avg = 0.25 * (v_aa + v_ab + v_ba + v_bb)
                 # convert to rgb and scale to maximum displayable brightness
                 color_string = get_brightest_irgb_string (avg)
-                pylab.fill (poly_x, poly_y, color_string, edgecolor=color_string)
+                pyplot.fill (poly_x, poly_y, color_string, edgecolor=color_string)
     fill_gamut_slice (white, blue,  green)
     fill_gamut_slice (white, green, red)
     fill_gamut_slice (white, red,   blue)
 
     # draw the curve of the xy values of the spectral lines and purples
-    pylab.plot (xy_list [:,0], xy_list [:,1], color='#808080', linewidth=3.0)
+    pyplot.plot (xy_list [:,0], xy_list [:,1], color='#808080', linewidth=3.0)
     # draw monitor gamut and white point
-    pylab.plot ([red  [0], green[0]], [red  [1], green[1]], 'o-', color='k')
-    pylab.plot ([green[0], blue [0]], [green[1], blue [1]], 'o-', color='k')
-    pylab.plot ([blue [0], red  [0]], [blue [1], red  [1]], 'o-', color='k')
-    pylab.plot ([white[0], white[0]], [white[1], white[1]], 'o-', color='k')
+    pyplot.plot ([red  [0], green[0]], [red  [1], green[1]], 'o-', color='k')
+    pyplot.plot ([green[0], blue [0]], [green[1], blue [1]], 'o-', color='k')
+    pyplot.plot ([blue [0], red  [0]], [blue [1], red  [1]], 'o-', color='k')
+    pyplot.plot ([white[0], white[0]], [white[1], white[1]], 'o-', color='k')
     # label phosphors
     dx = 0.01
     dy = 0.01
-    pylab.text (red   [0] + dx, red   [1], 'Red',   ha='left',   va='center')
-    pylab.text (green [0], green [1] + dy, 'Green', ha='center', va='bottom')
-    pylab.text (blue  [0] - dx, blue  [1], 'Blue',  ha='right',  va='center')
-    pylab.text (white [0], white [1] + dy, 'White', ha='center', va='bottom')
+    pyplot.text (red   [0] + dx, red   [1], 'Red',   ha='left',   va='center')
+    pyplot.text (green [0], green [1] + dy, 'Green', ha='center', va='bottom')
+    pyplot.text (blue  [0] - dx, blue  [1], 'Blue',  ha='right',  va='center')
+    pyplot.text (white [0], white [1] + dy, 'White', ha='center', va='bottom')
     # titles etc
-    pylab.axis ([0.0, 0.85, 0.0, 0.85])
-    pylab.xlabel (r'CIE $x$')
-    pylab.ylabel (r'CIE $y$')
-    pylab.title (r'CIE Chromaticity Diagram')
+    pyplot.axis ([0.0, 0.85, 0.0, 0.85])
+    pyplot.xlabel (r'CIE $x$')
+    pyplot.ylabel (r'CIE $y$')
+    pyplot.title (r'CIE Chromaticity Diagram')
     filename = 'ChromaticityDiagram'
     # Save.
     plot_save (filename)
 
-# Special figures
+#
+# Main.
+#
 
 def figures ():
     '''Draw specific figures not used anywhere else.'''
@@ -616,116 +607,6 @@ def figures ():
     cie_matching_functions_spectrum_plot()
     shark_fin_plot()
     scattered_visual_brightness()
-
-#
-# HTML. Does not really belong here?
-#
-
-def get_color_hex_string (red, green, blue):
-    '''Convert color values to a hex string.'''
-    hexstr = '#%02X%02X%02X' % (red, green, blue)
-    return hexstr
-
-def visible_spectrum_table (filename='visible_spectrum.html'):
-    '''Write an HTML table with the visible spectrum colors.'''
-    spectrum = ciexyz.empty_spectrum()
-    (num_wl, num_cols) = spectrum.shape
-    # get rgb colors for each wavelength
-    rgb_colors_1 = numpy.empty ((num_wl, 3))
-    rgb_colors_2 = numpy.empty ((num_wl, 3))
-    for i in range (0, num_wl):
-        xyz = ciexyz.xyz_from_wavelength (spectrum [i][0])
-        rgb_1 = colormodels.rgb_from_xyz (xyz)
-        rgb_2 = colormodels.brightest_rgb_from_xyz (xyz)
-        rgb_colors_1 [i] = rgb_1
-        rgb_colors_2 [i] = rgb_2
-    # scale 1 to make brightest rgb value = 1.0
-    rgb_max = numpy.max (rgb_colors_1)
-    scaling = 1.0 / rgb_max
-    rgb_colors_1 *= scaling
-    # write HTML file
-
-    def write_link (f, url, text):
-        '''Write an html link.'''
-        link = '<a href="%s">%s</a><br/>\n' % (url, text)
-        f.write (link)
-
-    f = open (filename, 'w')
-    # html headers
-    f.write ('<html>\n')
-    f.write ('<head>\n')
-    f.write ('<title>Colors of Pure Spectral Lines</title>\n')
-    f.write ('</head>\n')
-    f.write ('<body>\n')
-    f.write ('<p><h1>Colors of Pure Spectral Lines</h1></p>\n')
-    f.write ('<p>%s</p>\n' % 'White added to undisplayable pure colors to fit into rgb space.')
-    f.write ('<hr/>\n')
-    # table header
-    f.write ('<table border cellpadding="5">\n')
-    f.write ('<tr>\n')
-    f.write ('<th>Wavelength</th>\n')
-    f.write ('<th>R</th>\n')
-    f.write ('<th>G</th>\n')
-    f.write ('<th>B</th>\n')
-    f.write ('<th>Hex Code</th>\n')
-    f.write ('<th width=200>Full Brightness</th>\n')
-    f.write ('<th width=200>Perceptual Brightness</th>\n')
-    f.write ('</tr>\n')
-    # each row
-
-    for i in range (0, num_wl):
-        irgb_1 = colormodels.irgb_from_rgb (rgb_colors_1 [i])
-        irgb_2 = colormodels.irgb_from_rgb (rgb_colors_2 [i])
-        red   = irgb_2 [0]
-        green = irgb_2 [1]
-        blue  = irgb_2 [2]
-        hexstr_1 = colormodels.irgb_string_from_irgb (irgb_1)
-        hexstr_2 = colormodels.irgb_string_from_irgb (irgb_2)
-
-        iwl = spectrum [i][0]
-        code = '%.1f nm' % iwl
-
-        f.write ('<tr>\n')
-        f.write ('<td>%s</td>\n' % (code))
-        f.write ('<td>%d</td>\n' % (red))
-        f.write ('<td>%d</td>\n' % (green))
-        f.write ('<td>%d</td>\n' % (blue))
-        f.write ('<td>%s</td>\n' % (hexstr_2))
-        swatch = "&nbsp;"
-        f.write ('<td bgcolor="%s">%s</td>\n' % (hexstr_2, swatch))
-        f.write ('<td bgcolor="%s">%s</td>\n' % (hexstr_1, swatch))
-        f.write ('</tr>\n')
-
-    f.write ('</table>\n')
-    # references
-    f.write ('<hr/>\n')
-    f.write ('<p>References</p>\n')
-    # one source for data
-    write_link (f, 'http://goffgrafix.com/pantone-rgb-100.php', 'Goffgrafix.com')
-    # another source with basically the same data
-    write_link (f, 'http://www.sandaleo.com/pantone.asp', 'Sandaleo.com')
-    # one with more colors including metallic (also some errors), not quite consistent with the first two
-    write_link (f, 'http://www.loral.org/Z/Colors/100.html',
-        'Loral.org - Conversions based on CorelDRAW v12 Pantone Solid Coated or Pastel Coated tables and sRGB color space.')
-    # some colors for various sports teams
-    write_link (f, 'http://www.pennjersey.info/forums/questions-answers/7895-pantone-colors-colleges-university-mlb-nfl-teams.html',
-        'Pantone colors for some sports teams.')
-    # some colors for various national flags
-    write_link (f, 'http://desktoppub.about.com/od/colorpalettes/l/aa_flagcolors.htm', 'What color is your flag? Pantone colors for some flags.')
-    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpflagsrwb.htm', 'Red, White, &amp Blue - Pantone colors for some flags.')
-    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpflagsyellow.htm', 'Yellow or Gold - Pantone colors for some flags.')
-    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpflagsgreen.htm', 'Green - Pantone colors for some flags.')
-    write_link (f, 'http://desktoppub.about.com/library/weekly/blcpatrioticswatches.htm', 'Color swatches - Pantone colors for some flags.')
-    # official Pantone webpages
-    write_link (f, 'http://pantone.com/pages/pantone/Pantone.aspx?pg=19970&ca=25', 'An official PANTONE page')
-    write_link (f, 'http://pantone.com/pages/products/product.aspx?ca=1&pid=293&', 'Another official PANTONE page')
-    # html ending
-    f.write ('</body>\n')
-    f.write ('</html>\n')
-    f.close()
-
-def vst ():
-    visible_spectrum_table ()
 
 
 if __name__ == '__main__':

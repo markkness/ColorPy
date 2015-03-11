@@ -62,11 +62,14 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import math
+import matplotlib.pyplot as pyplot
 import numpy
-import pylab
 import time
 
 import colormodels
@@ -140,7 +143,7 @@ def rayleigh_color_vs_illuminant_temperature_plot (T_list, title, filename):
         title,
         filename,
         tight = True,
-        plotfunc = pylab.plot,
+        plotfunc = pyplot.plot,
         xlabel = r'Illuminant Temperature (K)',
         ylabel = r'RGB Color')
 

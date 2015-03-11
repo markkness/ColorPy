@@ -27,7 +27,10 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import unittest
 
@@ -35,11 +38,13 @@ import test_colormodels
 import test_ciexyz
 import test_illuminants
 import test_blackbody
+import test_plots
+import test_pure_colors
 import test_rayleigh
 import test_thinfilm
 
 def test ():
-    # no test cases for plots/misc - but figures.py will exercise those.
+    # No test cases for misc - but figures.py will exercise those.
     # Explicitly run the unittest cases in the modules.
     # This is perhaps a bit clumsy.
     # A more conventional way to run all of the tests, is at the command line:
@@ -50,6 +55,8 @@ def test ():
         test_colormodels,
         test_illuminants,
         test_rayleigh,
+        test_plots,
+        test_pure_colors,
         test_thinfilm,
     ]
     for module in modules:

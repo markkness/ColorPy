@@ -15,6 +15,10 @@ python setup.py sdist --formats=zip
 python setup.py sdist --formats=gztar
 python setup.py bdist_wininst
 '''
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 from distutils.core import setup
 
@@ -34,6 +38,8 @@ ColorPy is a Python package to convert physical descriptions of light -
     spectra, and some other color related functions as well.
 '''
 
+# FIXME: There may be some Programming Language description that should
+# indicate Python 2 and 3.  See: https://docs.python.org/3/howto/pyporting.html
 setup (
     name='colorpy',
     version='0.1.0',

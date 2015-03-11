@@ -42,24 +42,33 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import atomic
+import blackbody
 import colormodels
 import illuminants
+import misc
 import plots
-import blackbody
+import pure_colors
 import rayleigh
 import thinfilm
-import misc
 
 def figures ():
-    '''Create all the ColorPy sample figures.'''
-    # no figures for colormodels and ciexyz
-    colormodels.init()  # default
-    illuminants.figures()
-    plots.figures()
+    ''' Create all the ColorPy sample figures. '''
+    atomic.figures()
     blackbody.figures()
+    # No figures for ciexyz.
+    # No figures for colormodels.
+    illuminants.figures()
+    misc.figures()
+    plots.figures()
+    pure_colors.figures()
     rayleigh.figures()
     thinfilm.figures()
-    misc.figures()
 
 def figures_clip_clamp_to_zero ():
     '''Adjust the color clipping method, and create the sample figures.'''
@@ -84,4 +93,5 @@ def figures_white_A ():
 
 
 if __name__ == '__main__':
+    colormodels.init()
     figures()

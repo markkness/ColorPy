@@ -88,8 +88,14 @@ GNU Lesser General Public License for more details.
 You should have received a copy of the GNU Lesser General Public License
 along with ColorPy.  If not, see <http://www.gnu.org/licenses/>.
 '''
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import time
 
+import atomic
 import ciexyz
 import blackbody
 import plots
@@ -695,10 +701,7 @@ def get_constant_illuminant ():
 
 def get_neon_illuminant ():
     ''' Get a neon lamp illuminant. '''
-    # FIXME: Delayed import to avoid circular imports.
-    # misc.py is not the right place for the atomic spectra.
-    import misc
-    illuminant = ciexyz.Spectrum_from_array (misc.emission_spectrum_Ne)
+    illuminant = ciexyz.Spectrum_from_array (atomic.emission_spectrum_Ne)
     xyz = illuminant.get_xyz()
     if xyz [1] != 0.0:
         scaling = 1.0 / xyz [1]
