@@ -85,7 +85,6 @@ def get_purple_colors (t_array, violet_xyz, red_xyz, brightness):
     '''
     num  = t_array.shape[0]
     xyzs = numpy.zeros((num, 3))
-    # FIXME: violet and red may be backwards.
     first_xyz = violet_xyz
     last_xyz  = red_xyz
     for i in range (num):

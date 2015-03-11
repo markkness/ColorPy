@@ -8,6 +8,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import math
 import numpy
 import unittest
 
@@ -34,6 +35,9 @@ class TestPureColors(unittest.TestCase):
         for xyz in xyzs:
             rgb = colormodels.rgb_from_xyz (xyz)
             bright = max(rgb)
+            msg = 'Color: %s    Brightness: %.12f' % (str(xyz), bright)
+            if verbose:
+                print (msg)
             self.assertAlmostEqual(bright, brightness, delta=tolerance)
 
     def check_colors_not_white(self, xyzs, distance, verbose):
@@ -115,16 +119,38 @@ class TestPureColors(unittest.TestCase):
     def test_purple_chromaticity(self, verbose=True):
         ''' Test that purple(0.1) is close to red not violet,
         and that purple(0.9) is close to violet and not red. '''
-        # TODO.
-        # FIXME: Make sure of/define the direction.
-        pass
+
+        def dist(color1, color2):
+            ''' Cartesian distance between xyz colors. '''
+            d0 = color1[0] - color2[0]
+            d1 = color1[1] - color2[1]
+            d2 = color1[2] - color2[2]
+            d = math.sqrt(d0*d0 + d1*d1 + d2*d2)
+            return d
+
+        violet, red  = pure_colors.PURE_VIOLET_NM, pure_colors.PURE_RED_NM
+        wl_array     = numpy.array([violet, red])
+        purple_array = numpy.array([0.1, 0.9])
+        colors = pure_colors.get_pure_colors (wl_array, purple_array, 0.8)
+        pure_violet   = colors[0]
+        pure_red      = colors[1]
+        pure_purple_1 = colors[2]
+        pure_purple_9 = colors[3]
+        # Purple(0.9) should be closer to violet than Purple(0.1).
+        dv1 = dist(pure_violet, pure_purple_1)
+        dv9 = dist(pure_violet, pure_purple_9)
+        self.assertLess(dv9, dv1)
+        # Purple(0.1) should be closer to red than Purple(0.9).
+        dr1 = dist(pure_red, pure_purple_1)
+        dr9 = dist(pure_red, pure_purple_9)
+        self.assertLess(dr1, dr9)
 
     def test_perceptually_equal(self, verbose=False):
         ''' Test the perceptually equal colors. '''
         # Mostly a coverage test for now.
         brightness = 1.0
         colors = pure_colors.get_perceptually_equal_spaced_colors (
-            brightness, 100)
+            brightness, 100, verbose)
         # Colors should have expected brightness.
         tolerance = 1.0e-10
         # FIXME: They are changed a little bit, probably by interpolation.
