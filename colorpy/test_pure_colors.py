@@ -87,7 +87,7 @@ class TestPureColors(unittest.TestCase):
         distance = 0.2
         self.check_colors_not_white(colors, distance, verbose)
 
-    def test_pure_scaling(self, verbose=True):
+    def test_pure_scaling(self, verbose=False):
         ''' Test order of pure color scaling vs. purple interpolation. '''
         # This test confirms that scaling to max(rgb)=1 must happen both
         # for the original violet/red and after the purple interpolation.
@@ -116,7 +116,7 @@ class TestPureColors(unittest.TestCase):
         match = numpy.allclose(purple_scaled_1, purple_scaled_2, atol=tolerance)
         self.assertFalse(match)
 
-    def test_purple_chromaticity(self, verbose=True):
+    def test_purple_chromaticity(self, verbose=False):
         ''' Test that purple(0.1) is close to red not violet,
         and that purple(0.9) is close to violet and not red. '''
 
@@ -147,15 +147,11 @@ class TestPureColors(unittest.TestCase):
 
     def test_perceptually_equal(self, verbose=False):
         ''' Test the perceptually equal colors. '''
-        # Mostly a coverage test for now.
         brightness = 1.0
         colors = pure_colors.get_perceptually_equal_spaced_colors (
             brightness, 100, verbose)
         # Colors should have expected brightness.
         tolerance = 1.0e-10
-        # FIXME: They are changed a little bit, probably by interpolation.
-        # Thus a large tolerance is required.
-        tolerance = 0.01
         self.check_colors_brightness(colors, brightness, tolerance, verbose)
         # Colors should not be white.
         distance = 0.2

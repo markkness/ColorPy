@@ -220,14 +220,23 @@ def get_perceptually_equal_spaced_colors (brightness, num_samples, verbose=False
         if v1 >= num_colors:
             # Last segment ends at first point.
             v1 = 0
-        if verbose:
-            print ('i: %d    f: %.4f    s: %.4f    j: %d    t: %g    v0: %d    v1: %d' % (
-                i, fi, si, j, t, v0, v1))
         # Now interpolate between the xyz colors at vertices.
         xyz0 = xyzs[v0, :]
         xyz1 = xyzs[v1, :]
         xyz = (1.0 - t) * xyz0 + t * xyz1
         xyz_samples[i, :] = xyz
+        if verbose:
+            msg = 'i: %d    f: %.4f    s: %.4f    j: %d    t: %g    v0: %d    v1: %d' % (
+                i, fi, si, j, t, v0, v1)
+            print (msg)
+    # Interpolation may have changed brightness, so rescale.
+    # Note: Usually the interpolation will not change the brightness,
+    # as the two colors ususally have a max=1 in the same rgb component,
+    # and the interpolation does not change that.
+    # But when the max rgb component is changing (i.e. green to blue),
+    # then the interpolation will in fact change the brightness.
+    # So this scaling does not affect most of the colors.
+    scale_rgb_max (xyz_samples, brightness)
     return xyz_samples
 
 #
