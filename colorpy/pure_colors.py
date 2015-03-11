@@ -39,34 +39,49 @@ PURE_VIOLET_NM = 380.0    # Wavelength [nm] for practical 'pure' violet color.
 PURE_RED_NM    = 780.0    # Wavelength [nm] for practical 'pure' red color.
 
 def scale_rgb_max (xyz_array, brightness):
-    ''' Scale each color to have the max rgb value be the desired brightness. '''
+    ''' Scale each xyz color to have max(rgb) value be the desired brightness.
+
+    xyz_array : Array of colors as xyz values.
+    brightness: Desired max(rgb).
+    '''
+    # Comments on selecting this scaling algorithm:
+    # Scaling to Y=1 puts all the colors at equal perceptual brightness,
+    # which seems like possibly a good starting point.
+    # But it does not work. It makes the extreme wls very bright,
+    # as it compensates for their originally small Y. So skip this idea.
+    # Instead, to get the 'pure essence' color, we want as bright as possible
+    # with the same chromaticity. So scale so max(rgb) = 1.0.
     num_points = xyz_array.shape[0]
     for i in range (num_points):
         rgb = colormodels.brightest_rgb_from_xyz (xyz_array [i], brightness)
         xyz_array [i] = colormodels.xyz_from_rgb (rgb)
 
 
-def get_spectral_colors (wl_array):
-    ''' Get the pure spectral line colors. '''
-    # wl_array = wavelengths in nm.
+def get_spectral_colors (wl_array, brightness):
+    ''' Get the pure spectral line xyz colors.
+
+    wl_array  : array of wavelengths in nm.
+    brightness: colors are scaled so max(rgb) = brightness.
+    '''
     num  = wl_array.shape[0]
     xyzs = numpy.zeros((num, 3))
     for i in range (num):
         wl  = wl_array [i]
         xyz = ciexyz.xyz_from_wavelength (wl)
-        colormodels.xyz_normalize (xyz)
         xyzs [i] = xyz
+    scale_rgb_max (xyzs, brightness)
     return xyzs
 
 
-def get_purple_colors (t_array, violet_xyz, red_xyz):
-    ''' Get the pure purple colors by interpolating between violet and red.
+def get_purple_colors (t_array, violet_xyz, red_xyz, brightness):
+    ''' Get the pure purple xyz colors by interpolating between violet and red.
 
     The purple for t=0.0 is exactly red, and the purple for t=1.0 is violet.
 
     t_array   : 1D array of interpolation fractions 0.0 to 1.0.
     violet_xyz: xyz color for pure violet.
     red_xyz   : xyz_color for pure red.
+    brightness: colors are scaled so max(rgb) = brightness.
     '''
     num  = t_array.shape[0]
     xyzs = numpy.zeros((num, 3))
@@ -77,41 +92,40 @@ def get_purple_colors (t_array, violet_xyz, red_xyz):
         t   = t_array [i]
         omt = 1.0 - t
         xyz = t * first_xyz + omt * last_xyz
-        colormodels.xyz_normalize (xyz)
         xyzs [i] = xyz
+    scale_rgb_max (xyzs, brightness)
     return xyzs
 
 
-def get_pure_colors (brightness, wl_array, purple_array):
+def get_pure_colors (wl_array, purple_array, brightness):
     ''' Get an array of xyz colors, for pure spectral lines and purples.
 
     The 'purples' are colors interpolated between the lowest wavelength (violet)
     and the highest wavelength (red).
 
-    brightness  : The maximum rgb component of each returned color.
     wl_array    : Array of wavelengths [nm] representing the visible wavelengths.
     purple_array: Array of interpolation fractions [0.0-1.0].
+    brightness  : The maximum rgb component of each returned xyz color.
     '''
     # Get the spectral line colors.
-    xyzs_spect = get_spectral_colors (wl_array)
+    xyzs_spect = get_spectral_colors (wl_array, brightness)
     # Get the purples.
     violet_xyz  = xyzs_spect [ 0, :]
     red_xyz     = xyzs_spect [-1, :]
-    xyzs_purple = get_purple_colors (purple_array, violet_xyz, red_xyz)
-    # Join spectral colors and purples and scale.
+    xyzs_purple = get_purple_colors (purple_array, violet_xyz, red_xyz, brightness)
+    # Join spectral colors and purples.
     xyzs = numpy.vstack ([xyzs_spect, xyzs_purple])
-    scale_rgb_max (xyzs, brightness)
     return xyzs
 
 
-def get_num_pure_colors (brightness, num_spect, num_purple):
+def get_num_pure_colors (num_spect, num_purple, brightness):
     ''' Get an array of xyz colors, for pure spectral lines and purples.
 
     The count of pure spectral colors and purples is as specified.
     '''
     wl_array     = numpy.linspace (PURE_VIOLET_NM, PURE_RED_NM, num=num_spect)
     purple_array = numpy.linspace (0.0, 1.0, num=num_purple)
-    xyzs         = get_pure_colors (brightness, wl_array, purple_array)
+    xyzs         = get_pure_colors (wl_array, purple_array, brightness)
     return xyzs
 
 
@@ -129,7 +143,7 @@ def get_normalized_spectral_line_colors (
     num_spect    = int(round((PURE_RED_NM - PURE_VIOLET_NM) / dwl_nm)) + 1
     wl_array     = numpy.linspace (PURE_VIOLET_NM, PURE_RED_NM, num=num_spect)
     purple_array = numpy.linspace (0.0, 1.0, num=num_purples)
-    xyzs         = get_pure_colors (brightness, wl_array, purple_array)
+    xyzs         = get_pure_colors (wl_array, purple_array, brightness)
     return xyzs
 
 
@@ -144,7 +158,7 @@ def get_perceptually_equal_spaced_colors (brightness, num_samples, verbose=False
     # Anything finer than 1 nm is probably sufficient.
     num_spect  = 1000
     num_purple = 100
-    xyzs = get_num_pure_colors (brightness, num_spect, num_purple)
+    xyzs = get_num_pure_colors (num_spect, num_purple, brightness)
     num_colors = xyzs.shape[0]
     # Choose either Luv or Lab (nearly) perceptually uniform color space.
     # FIXME: Should be able to pass as a parameter.
@@ -216,6 +230,28 @@ def get_perceptually_equal_spaced_colors (brightness, num_samples, verbose=False
         xyz = (1.0 - t) * xyz0 + t * xyz1
         xyz_samples[i, :] = xyz
     return xyz_samples
+
+#
+# Routines to print the color values nicely. Should move elsewhere.
+#
+
+def print_color3(xyz):
+    ''' Print a 3-element color value sensibly. '''
+    sxyz = xyz[0] + xyz[1] + xyz[2]
+    txt = '[% .8f  % .8f  % .8f]  sum: %.8f' % (
+        xyz[0], xyz[1], xyz[2], sxyz)
+    return txt
+
+
+def print_colors(xyzs):
+    ''' Print the array of colors sensibly. '''
+    num_colors = xyzs.shape[0]
+    for i in range(num_colors):
+        xyz = xyzs[i, :]
+        rgb = colormodels.rgb_from_xyz (xyz)
+        msg = '%2d:  xyz: %s    rgb: %s' % (
+            i, print_color3(xyz), print_color3(rgb))
+        print (msg)
 
 #
 # Write pure color values as an HTML document.
@@ -364,12 +400,12 @@ def pure_colors_patch_plots ():
     brightness = 1.0
     # Pure spectral colors, and no purples.
     num_spect = 400
-    xyzs      = get_num_pure_colors (brightness, num_spect, 0)
+    xyzs      = get_num_pure_colors (num_spect, 0, brightness)
     plots.xyz_patch_plot (xyzs, None,
         'Colors of pure spectral lines',
         'PureColors-Spectral', num_across=20)
     # With 100 purples.
-    xyzs      = get_num_pure_colors (brightness, num_spect, 100)
+    xyzs      = get_num_pure_colors (num_spect, 100, brightness)
     plots.xyz_patch_plot (xyzs, None,
         'Colors of pure spectral lines plus purples',
         'PureColors-SpectralPurples', num_across=20)
@@ -405,17 +441,27 @@ def perceptually_equal_spaced_color_plots ():
             brightness, title, filename, num_samples)
 
 #
+# 'Shark fin' chromaticity plot.
+# FIXME: That perhaps should move to this source file.
+#
+
+def shark_fin_plot ():
+    import plots
+    plots.shark_fin_plot()
+
+#
 # Main.
 #
 
 def figures ():
     ''' Draw plots of the pure colors and purples. '''
-    # Html documents.
-    write_pantone_reference_html()
-    write_visible_spectrum_html()
     # Plots.
     pure_colors_patch_plots()
     perceptually_equal_spaced_color_plots()
+    shark_fin_plot()
+    # Html documents.
+    write_pantone_reference_html()
+    write_visible_spectrum_html()
 
 
 if __name__ == '__main__':

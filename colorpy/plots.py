@@ -490,7 +490,7 @@ def shark_fin_plot ():
     '''Draw the 'shark fin' CIE chromaticity diagram of the pure spectral lines (plus purples) in xy space.'''
     # get array of (approximate) colors for the boundary of the fin
     xyz_list = pure_colors.get_num_pure_colors (
-        brightness=1.0, num_spect=2351, num_purple=200)
+        num_spect=2351, num_purple=200, brightness=1.0)
 
     # get normalized colors
     xy_list = xyz_list.copy()

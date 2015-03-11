@@ -56,7 +56,7 @@ class TestPureColors(unittest.TestCase):
         brightness = 1.0
         wls     = numpy.linspace (360.0, 830.0, 100)
         purples = numpy.linspace (0.0, 1.0, 100)
-        colors  = pure_colors.get_pure_colors (brightness, wls, purples)
+        colors  = pure_colors.get_pure_colors (wls, purples, brightness)
         # Colors should have expected brightness.
         tolerance = 1.0e-10
         self.check_colors_brightness(colors, brightness, tolerance, verbose)
@@ -68,7 +68,7 @@ class TestPureColors(unittest.TestCase):
         ''' Test get_num_pure_colors. '''
         # Use a different brightness than 1.0 for more testing.
         brightness = 0.5
-        colors = pure_colors.get_num_pure_colors (brightness, 100, 100)
+        colors = pure_colors.get_num_pure_colors (100, 100, brightness)
         # Colors should have expected brightness.
         tolerance = 1.0e-10
         self.check_colors_brightness(colors, brightness, tolerance, verbose)
@@ -83,30 +83,41 @@ class TestPureColors(unittest.TestCase):
         distance = 0.2
         self.check_colors_not_white(colors, distance, verbose)
 
+    def test_pure_scaling(self, verbose=True):
+        ''' Test order of pure color scaling vs. purple interpolation. '''
+        # This test confirms that scaling to max(rgb)=1 must happen both
+        # for the original violet/red and after the purple interpolation.
+
+        def scale_pure_color(xyz, bright):
+            ''' Scale the color to max(rgb) = bright. '''
+            rgb = colormodels.brightest_rgb_from_xyz (xyz, bright)
+            xyz = colormodels.xyz_from_rgb (rgb)
+            return xyz
+
+        # Get pure violet and red color.
+        violet_xyz = ciexyz.xyz_from_wavelength (pure_colors.PURE_VIOLET_NM)
+        red_xyz    = ciexyz.xyz_from_wavelength (pure_colors.PURE_RED_NM)
+        bright = 1.0
+        # Scale violet and red and then interpolate, then scale purple.
+        violet_scaled   = scale_pure_color (violet_xyz, bright)
+        red_scaled      = scale_pure_color (red_xyz, bright)
+        purple_interp_1 = 0.3 * violet_scaled + 0.7 * red_scaled
+        purple_scaled_1 = scale_pure_color (purple_interp_1, bright)
+        # Interpolate first, then scale purple.
+        purple_interp_2 = 0.3 * violet_xyz + 0.7 * red_xyz
+        purple_scaled_2 = scale_pure_color (purple_interp_2, bright)
+        # The two purples do NOT match.
+        # This confirms that two scaling steps are indeed required.
+        tolerance = 0.4
+        match = numpy.allclose(purple_scaled_1, purple_scaled_2, atol=tolerance)
+        self.assertFalse(match)
+
     def test_purple_chromaticity(self, verbose=True):
         ''' Test that purple(0.1) is close to red not violet,
         and that purple(0.9) is close to violet and not red. '''
         # TODO.
         # FIXME: Make sure of/define the direction.
         pass
-
-    def test_purple_interpolate(self, verbose=False):
-        ''' Test that purple chromaticities are linearly interpolated. '''
-        wls     = numpy.array([ciexyz.start_wl_nm, ciexyz.end_wl_nm])
-        purples = numpy.array([0.2, 0.5, 0.8])
-        colors  = pure_colors.get_pure_colors (1.0, wls, purples)
-        # Color 0 is violet, color 1 is red, colors 2,3,4 are purples.
-        purp_20 = colors[2]
-        purp_50 = colors[3]
-        purp_80 = colors[4]
-        # Scale them all consistently.
-        purp_20 = colormodels.xyz_normalize (purp_20)
-        purp_50 = colormodels.xyz_normalize (purp_50)
-        purp_80 = colormodels.xyz_normalize (purp_80)
-        # Purple-50 should be average of 20 and 80.
-        expect_50 = 0.5 * (purp_20 + purp_80)
-        tolerance = 1.0e-10
-        self.check_color_match(purp_50, expect_50, tolerance, verbose)
 
     def test_perceptually_equal(self, verbose=False):
         ''' Test the perceptually equal colors. '''
