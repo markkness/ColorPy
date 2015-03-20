@@ -13,7 +13,6 @@ Possible future improvements:
 
 
 Wanted for next release:
-    * Better pure_colors.py tests. Fix perceptual scaling.
 	* Rec. 2020.
 	* Line spectra plot.
 	* Complete sharkfin.
