@@ -14,7 +14,7 @@ import unittest
 import blackbody
 import ciexyz
 import colormodels
-import misc
+import examples
 import plots
 
 class TestPlots(unittest.TestCase):
@@ -36,7 +36,7 @@ class TestPlots(unittest.TestCase):
             ('#FFFFFF', 'White'),
         ]
         filename = 'Test-RgbPatch' if verbose else None
-        misc.named_colorstring_patch_plot (
+        examples.named_colorstring_patch_plot (
             primary_colors,
             'Primary RGB Colors',
             filename, num_across=4)
@@ -45,7 +45,7 @@ class TestPlots(unittest.TestCase):
         ''' Test the xyz patch plot. '''
         # MacBeth ColorChecker is a fine test here.
         filename = 'Test-XyzPatch' if verbose else None
-        misc.MacBeth_ColorChecker_plot (filename)
+        examples.MacBeth_ColorChecker_plot (filename)
 
     # Spectrum plots, old and new style.
 

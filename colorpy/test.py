@@ -44,7 +44,7 @@ import test_rayleigh
 import test_thinfilm
 
 def test ():
-    # No test cases for misc - but figures.py will exercise those.
+    # No test cases for examples - but figures.py will exercise those.
     # Explicitly run the unittest cases in the modules.
     # This is perhaps a bit clumsy.
     # A more conventional way to run all of the tests, is at the command line:
