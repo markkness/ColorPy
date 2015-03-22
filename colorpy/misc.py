@@ -5,6 +5,12 @@ Description:
 
 Some miscellaneous patch plot utilities, and some samples.
 
+visible_spectrum_plot () -
+    Plot the visible spectrum, as a plot vs wavelength.
+
+cie_matching_functions_plot () -
+    Plot the CIE XYZ matching functions, as three spectral subplots.
+
 MacBeth_ColorChecker_plot () -
     MacBeth ColorChecker Chart.
     The xyz values are from Hall p. 119.  I do not know for what lighting conditions this applies.
@@ -31,10 +37,131 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import numpy
+import matplotlib.pyplot as pyplot
+
+import ciexyz
 import colormodels
 import plots
+import rayleigh
 
 # FIXME: Rename to examples?
+
+#
+# Some specialized figures.
+#
+
+def visible_spectrum_plot (filename='VisibleSpectrum'):
+    ''' Plot the visible spectrum, as a plot vs wavelength. '''
+    spect = ciexyz.Spectrum()
+    # Get rgb colors for each wavelength.
+    rgb_colors = numpy.empty ((spect.num_wl, 3))
+    for i in range (spect.num_wl):
+        xyz = ciexyz.xyz_from_wavelength (spect.wavelength [i])
+        rgb = colormodels.rgb_from_xyz (xyz)
+        rgb_colors [i] = rgb
+    # Scale to make brightest rgb value = 1.0.
+    rgb_max = numpy.max (rgb_colors)
+    if rgb_max != 0.0:
+        scaling = 1.0 / rgb_max
+        rgb_colors *= scaling
+    # plot colors and rgb values vs wavelength
+    plots.color_vs_param_plot (
+        spect.wavelength,
+        rgb_colors,
+        'The Visible Spectrum',
+        filename,
+        tight = True,
+        xlabel = r'Wavelength (nm)',
+        ylabel = r'RGB Color')
+
+
+def cie_matching_functions_plot ():
+    ''' Plot the CIE XYZ matching functions, as three spectral subplots. '''
+    # Get 'spectra' for x,y,z matching functions.
+    spect_x = ciexyz.Spectrum()
+    spect_y = ciexyz.Spectrum()
+    spect_z = ciexyz.Spectrum()
+    for i in range (spect_x.num_wl):
+        wl_nm = spect_x.wavelength [i]
+        xyz = ciexyz.xyz_from_wavelength (wl_nm)
+        spect_x.intensity [i] = xyz [0]
+        spect_y.intensity [i] = xyz [1]
+        spect_z.intensity [i] = xyz [2]
+    # Plot three separate subplots, with CIE X in the first,
+    # CIE Y in the second, and CIE Z in the third.
+    # Label appropriately for the whole plot.
+    pyplot.clf ()
+    # X
+    pyplot.subplot (3,1,1)
+    pyplot.title ('1931 CIE XYZ Matching Functions')
+    pyplot.ylabel ('CIE $X$')
+    plots.spectrum_subplot (spect_x)
+    plots.tighten_x_axis (spect_x.wavelength)
+    # Y
+    pyplot.subplot (3,1,2)
+    pyplot.ylabel ('CIE $Y$')
+    plots.spectrum_subplot (spect_y)
+    plots.tighten_x_axis (spect_y.wavelength)
+    # Z
+    pyplot.subplot (3,1,3)
+    pyplot.xlabel ('Wavelength (nm)')
+    pyplot.ylabel ('CIE $Z$')
+    plots.spectrum_subplot (spect_z)
+    plots.tighten_x_axis (spect_z.wavelength)
+    # Save.
+    filename = 'CIEXYZ_Matching'
+    plots.plot_save (filename)
+
+
+def cie_matching_functions_spectrum_plot ():
+    ''' Plot each of the CIE XYZ matching functions, as spectrum plots. '''
+    # Get 'spectra' for x,y,z matching functions.
+    spect_x = ciexyz.Spectrum()
+    spect_y = ciexyz.Spectrum()
+    spect_z = ciexyz.Spectrum()
+    for i in range (spect_x.num_wl):
+        wl_nm = spect_x.wavelength [i]
+        xyz = ciexyz.xyz_from_wavelength (wl_nm)
+        spect_x.intensity [i] = xyz [0]
+        spect_y.intensity [i] = xyz [1]
+        spect_z.intensity [i] = xyz [2]
+    # Create three spectrum plots.
+    plots.spectrum_plot (spect_x, 'CIE X', 'CIE-X')
+    plots.spectrum_plot (spect_y, 'CIE Y', 'CIE-Y')
+    plots.spectrum_plot (spect_z, 'CIE Z', 'CIE-Z')
+
+
+def scattered_visual_brightness ():
+    ''' Plot the perceptual brightness of Rayleigh scattered light. '''
+    # This combines the extent of scattering with how bright it appears.
+    # It shows why a green laser shows a distinct trail in the air,
+    # while a red laser does not.
+    # Get 'spectra' as CIE Y matching function and multiply by scattering.
+    # Rayleigh scattering is proportional to 1 / wl^4.
+    spect = ciexyz.Spectrum()
+    for i in range (spect.num_wl):
+        wl_nm = spect.wavelength [i]
+        xyz = ciexyz.xyz_from_wavelength (wl_nm)
+        scatter = rayleigh.rayleigh_scattering (wl_nm)
+        spect.intensity [i] = xyz[1] * scatter
+    # Scale is arbitrary so make max intensity nearly 1.0.
+    # It looks a little better if the max is just under 1.
+    max_intensity = max (spect.intensity)
+    want_max = 0.99
+    if max_intensity != 0.0:
+        scaling = want_max / max_intensity
+        spect.intensity *= scaling
+    # Plot.
+    pyplot.clf ()
+    pyplot.title ('Perceptual Brightness of Rayleigh Scattered Light')
+    pyplot.xlabel ('Wavelength (nm)')
+    pyplot.ylabel ('CIE $Y$ / $\lambda^4$')
+    plots.spectrum_subplot (spect)
+    plots.tighten_x_axis (spect.wavelength)
+    # Save.
+    filename = 'Laser-Scatter'
+    plots.plot_save (filename)
 
 #
 # Utility functions to make various patch plots, with a name per color.
@@ -42,14 +169,14 @@ import plots
 # holding the color values and name.
 #
 
-def named_xyz_patch_plot (named_colors, title, filename, num_across=6):
+def named_xyz_patch_plot (named_xyz_colors, title, filename, num_across=6):
     ''' Make an patch plot with the specified xyz colors and names. '''
     # Colors specified as x, y, z, name.
     xyzs  = []
     names = []
-    for named_color in named_colors:
+    for named_xyz_color in named_xyz_colors:
         # Unpack x, y, z, name.
-        x, y, z, name = named_color
+        x, y, z, name = named_xyz_color
         xyz = colormodels.xyz_color(x, y, z)
         xyzs.append (xyz)
         names.append (name)
@@ -58,7 +185,7 @@ def named_xyz_patch_plot (named_colors, title, filename, num_across=6):
 
 def named_xy1_patch_plot (named_colors, title, filename, num_across=6):
     ''' Make an patch plot with the specified xy (Y=1) colors and names. '''
-    # Colors specified as x, y, name. Assumes Y=1.
+    # Colors specified as x, y, name, assuming Y=1.
     xyzs  = []
     names = []
     for named_color in named_colors:
@@ -245,7 +372,13 @@ def matplotlib_colormaps_patch_plots ():
 #
 
 def figures ():
-    '''Draw the various sample patch plots.'''
+    '''Draw the various example plots.'''
+    # Spectrum plots.
+    visible_spectrum_plot()
+    cie_matching_functions_plot()
+    cie_matching_functions_spectrum_plot()
+    scattered_visual_brightness()
+    # Patch plots.
     MacBeth_ColorChecker_plot()
     chemical_solutions_patch_plot()
     universe_patch_plot()
