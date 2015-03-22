@@ -83,7 +83,7 @@ Added to alpha:
 
 New in v0.1.2:
     This is the current master branch on GitHub.
-	It is hopefully Python 3 compatible, at least much closer than before.
+	It is now Python 3 compatible.
 	The tests are significantly improved, and are now designed to run with
 	the standard test runner, i.e. at the command line,
 	    'python -m unittest discover'
