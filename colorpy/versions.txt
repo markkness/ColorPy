@@ -13,13 +13,12 @@ Possible future improvements:
 
 
 Wanted for next release:
-    * Better pure_colors.py tests. Fix perceptual scaling.
 	* Rec. 2020.
 	* Line spectra plot.
 	* Complete sharkfin.
     * dwl as part of Spectrum metadata?
     * White/black text in patch plots as appropriate.
-	* Complete file rearrangements. Misc->Examples? Plot->Examples?
+	* Complete file rearrangements.
     * Addition of BSD license.
 	* Documentation.
 	    Sphinx, LaTex, local html file, GitHub page, my website.
@@ -84,7 +83,7 @@ Added to alpha:
 
 New in v0.1.2:
     This is the current master branch on GitHub.
-	It is hopefully Python 3 compatible, at least much closer than before.
+	It is now Python 3 compatible.
 	The tests are significantly improved, and are now designed to run with
 	the standard test runner, i.e. at the command line,
 	    'python -m unittest discover'

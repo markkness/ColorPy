@@ -39,12 +39,12 @@ import test_ciexyz
 import test_illuminants
 import test_blackbody
 import test_plots
-import test_pure_colors
+import test_purecolors
 import test_rayleigh
 import test_thinfilm
 
 def test ():
-    # No test cases for misc - but figures.py will exercise those.
+    # No test cases for examples - but figures.py will exercise those.
     # Explicitly run the unittest cases in the modules.
     # This is perhaps a bit clumsy.
     # A more conventional way to run all of the tests, is at the command line:
@@ -56,7 +56,7 @@ def test ():
         test_illuminants,
         test_rayleigh,
         test_plots,
-        test_pure_colors,
+        test_purecolors,
         test_thinfilm,
     ]
     for module in modules:

@@ -50,10 +50,9 @@ from __future__ import unicode_literals
 import atomic
 import blackbody
 import colormodels
+import examples
 import illuminants
-import misc
-import plots
-import pure_colors
+import purecolors
 import rayleigh
 import thinfilm
 
@@ -63,10 +62,10 @@ def figures ():
     blackbody.figures()
     # No figures for ciexyz.
     # No figures for colormodels.
+    examples.figures()
     illuminants.figures()
-    misc.figures()
-    plots.figures()
-    pure_colors.figures()
+    # No figures for plots.
+    purecolors.figures()
     rayleigh.figures()
     thinfilm.figures()
 
