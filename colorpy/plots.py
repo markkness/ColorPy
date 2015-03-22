@@ -153,6 +153,19 @@ def rgb_patch_plot (
     num_across = 6):
     '''Draw a set of color patches, specified as linear rgb colors.'''
 
+    def get_text_color (color_string):
+        ''' Get a color for the label on a patch of the specified color. '''
+        # This is not sophisticated but is a start.
+        color_irgb = colormodels.irgb_from_irgb_string (color_string)
+        # Get average color value on 0.0 - 1.0 scale.
+        avg = (color_irgb[0] + color_irgb[1] + color_irgb[2]) / (3 * 255.0)
+        # Choose black or white.
+        if avg >= 0.35:
+            text_color = 'black'
+        else:
+            text_color = 'white'
+        return text_color
+
     def draw_patch (x0, y0, color, name, patch_gap):
         '''Draw a patch of color.'''
         # patch relative vertices
@@ -166,7 +179,8 @@ def rgb_patch_plot (
         pyplot.fill (poly_x, poly_y, color)
         if name != None:
             dtext = 0.1
-            pyplot.text (x0+dtext, y0+dtext, name, size=8.0)
+            text_color = get_text_color (color)
+            pyplot.text (x0+dtext, y0+dtext, name, size=8.0, color=text_color)
 
     # make plot with each color with one patch
     pyplot.clf()
