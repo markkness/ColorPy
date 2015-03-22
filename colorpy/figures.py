@@ -52,7 +52,7 @@ import blackbody
 import colormodels
 import examples
 import illuminants
-import pure_colors
+import purecolors
 import rayleigh
 import thinfilm
 
@@ -65,7 +65,7 @@ def figures ():
     examples.figures()
     illuminants.figures()
     # No figures for plots.
-    pure_colors.figures()
+    purecolors.figures()
     rayleigh.figures()
     thinfilm.figures()
 

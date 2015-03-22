@@ -39,7 +39,7 @@ import test_ciexyz
 import test_illuminants
 import test_blackbody
 import test_plots
-import test_pure_colors
+import test_purecolors
 import test_rayleigh
 import test_thinfilm
 
@@ -56,7 +56,7 @@ def test ():
         test_illuminants,
         test_rayleigh,
         test_plots,
-        test_pure_colors,
+        test_purecolors,
         test_thinfilm,
     ]
     for module in modules:

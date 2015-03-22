@@ -1,5 +1,5 @@
 '''
-test_pure_colors.py - Test module for pure_colors.py.
+test_purecolors.py - Test module for purecolors.py.
 
 This file is part of ColorPy.
 '''
@@ -14,9 +14,8 @@ import unittest
 
 import ciexyz
 import colormodels
-import pure_colors
+import purecolors
 
-# FIXME: Rename these files to 'purecolors.py' or 'pure.py'?
 
 class TestPureColors(unittest.TestCase):
     ''' Test cases for pure colors. '''
@@ -60,7 +59,7 @@ class TestPureColors(unittest.TestCase):
         brightness = 1.0
         wls     = numpy.linspace (360.0, 830.0, 100)
         purples = numpy.linspace (0.0, 1.0, 100)
-        colors  = pure_colors.get_pure_colors (wls, purples, brightness)
+        colors  = purecolors.get_pure_colors (wls, purples, brightness)
         # Colors should have expected brightness.
         tolerance = 1.0e-10
         self.check_colors_brightness(colors, brightness, tolerance, verbose)
@@ -72,7 +71,7 @@ class TestPureColors(unittest.TestCase):
         ''' Test get_num_pure_colors. '''
         # Use a different brightness than 1.0 for more testing.
         brightness = 0.5
-        colors = pure_colors.get_num_pure_colors (100, 100, brightness)
+        colors = purecolors.get_num_pure_colors (100, 100, brightness)
         # Colors should have expected brightness.
         tolerance = 1.0e-10
         self.check_colors_brightness(colors, brightness, tolerance, verbose)
@@ -82,7 +81,7 @@ class TestPureColors(unittest.TestCase):
 
     def test_normalized_spectral_line_colors(self, verbose=False):
         ''' Test of deprecated routine. '''
-        colors = pure_colors.get_normalized_spectral_line_colors ()
+        colors = purecolors.get_normalized_spectral_line_colors ()
         # Colors should not be white.
         distance = 0.2
         self.check_colors_not_white(colors, distance, verbose)
@@ -99,8 +98,8 @@ class TestPureColors(unittest.TestCase):
             return xyz
 
         # Get pure violet and red color.
-        violet_xyz = ciexyz.xyz_from_wavelength (pure_colors.PURE_VIOLET_NM)
-        red_xyz    = ciexyz.xyz_from_wavelength (pure_colors.PURE_RED_NM)
+        violet_xyz = ciexyz.xyz_from_wavelength (purecolors.PURE_VIOLET_NM)
+        red_xyz    = ciexyz.xyz_from_wavelength (purecolors.PURE_RED_NM)
         bright = 1.0
         # Scale violet and red and then interpolate, then scale purple.
         violet_scaled   = scale_pure_color (violet_xyz, bright)
@@ -128,10 +127,10 @@ class TestPureColors(unittest.TestCase):
             d = math.sqrt(d0*d0 + d1*d1 + d2*d2)
             return d
 
-        violet, red  = pure_colors.PURE_VIOLET_NM, pure_colors.PURE_RED_NM
+        violet, red  = purecolors.PURE_VIOLET_NM, purecolors.PURE_RED_NM
         wl_array     = numpy.array([violet, red])
         purple_array = numpy.array([0.1, 0.9])
-        colors = pure_colors.get_pure_colors (wl_array, purple_array, 0.8)
+        colors = purecolors.get_pure_colors (wl_array, purple_array, 0.8)
         pure_violet   = colors[0]
         pure_red      = colors[1]
         pure_purple_1 = colors[2]
@@ -148,7 +147,7 @@ class TestPureColors(unittest.TestCase):
     def test_perceptually_equal(self, verbose=False):
         ''' Test the perceptually equal colors. '''
         brightness = 1.0
-        colors = pure_colors.get_perceptually_equal_spaced_colors (
+        colors = purecolors.get_perceptually_equal_spaced_colors (
             brightness, 100, verbose)
         # Colors should have expected brightness.
         tolerance = 1.0e-10

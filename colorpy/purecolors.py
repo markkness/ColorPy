@@ -1,5 +1,5 @@
 '''
-pure_colors.py - Some work-in-progress related to pure colors.
+purecolors.py - Calculation of 'pure colors'.
 
 Pure colors mean spectral lines and the 'purples'.
 
@@ -23,8 +23,6 @@ import matplotlib.pyplot as pyplot
 import colormodels
 import ciexyz
 import plots
-
-# FIXME: Rename these files to 'purecolors.py' or 'pure.py'?
 
 # Calculation of 'pure' colors. This means both, the colors of single spectral
 # lines, which are as saturated as possible, as well as the 'purples', which

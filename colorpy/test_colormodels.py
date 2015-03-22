@@ -33,7 +33,7 @@ import random
 import unittest
 
 import colormodels
-import pure_colors
+import purecolors
 
 # Functions to calculate the cutoff point between various algorithms.
 # These do not really belong here...
@@ -198,7 +198,7 @@ class TestColormodels(unittest.TestCase):
     def test_clipping(self, verbose=False):
         ''' Test the various color clipping methods. '''
         # This is just a coverage test.
-        xyz_colors = pure_colors.get_normalized_spectral_line_colors ()
+        xyz_colors = purecolors.get_normalized_spectral_line_colors ()
         num_wl = xyz_colors.shape[0]
         for i in range (num_wl):
             # Get rgb values for standard add white clipping.
