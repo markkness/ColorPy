@@ -180,7 +180,7 @@ def named_xyz_patch_plot (named_xyz_colors, title, filename, num_across=6):
         xyz = colormodels.xyz_color(x, y, z)
         xyzs.append (xyz)
         names.append (name)
-    plots.xyz_patch_plot (xyzs, names, title, filename, num_across=num_across)
+    plots.xyz_patch_plot (xyzs, names, None, title, filename, num_across=num_across)
 
 
 def named_xy1_patch_plot (named_colors, title, filename, num_across=6):
@@ -194,7 +194,7 @@ def named_xy1_patch_plot (named_colors, title, filename, num_across=6):
         xyz = colormodels.xyz_color_from_xyY (x, y, 1.0)
         xyzs.append (xyz)
         names.append (name)
-    plots.xyz_patch_plot (xyzs, names, title, filename, num_across=num_across)
+    plots.xyz_patch_plot (xyzs, names, None, title, filename, num_across=num_across)
 
 
 def named_colorstring_patch_plot (named_colors, title, filename, num_across=6):
@@ -209,7 +209,7 @@ def named_colorstring_patch_plot (named_colors, title, filename, num_across=6):
         rgb  = colormodels.rgb_from_irgb (irgb)
         rgbs.append(rgb)
         names.append(name)
-    plots.rgb_patch_plot (rgbs, names, title, filename, num_across=num_across)
+    plots.rgb_patch_plot (rgbs, names, None, title, filename, num_across=num_across)
 
 #
 # Some example patch plots for xyz color values.

@@ -121,11 +121,12 @@ def rayleigh_patch_plot (named_illuminants, title, filename):
     ''' Make a patch plot of the Rayleigh scattering color for each illuminant. '''
     xyz_colors = []
     color_names = []
+    text_colors = None
     for illum, name in named_illuminants:
         xyz = get_rayleigh_illuminated_color (illum)
         xyz_colors.append (xyz)
         color_names.append (name)
-    plots.xyz_patch_plot (xyz_colors, color_names, title, filename)
+    plots.xyz_patch_plot (xyz_colors, color_names, text_colors, title, filename)
 
 
 def rayleigh_color_vs_illuminant_temperature_plot (T_list, title, filename):

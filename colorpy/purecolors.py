@@ -413,12 +413,12 @@ def pure_colors_patch_plots ():
     # Pure spectral colors, and no purples.
     num_spect = 400
     xyzs      = get_num_pure_colors (num_spect, 0, brightness)
-    plots.xyz_patch_plot (xyzs, None,
+    plots.xyz_patch_plot (xyzs, None, None,
         'Colors of pure spectral lines',
         'PureColors-Spectral', num_across=20)
     # With 100 purples.
     xyzs      = get_num_pure_colors (num_spect, 100, brightness)
-    plots.xyz_patch_plot (xyzs, None,
+    plots.xyz_patch_plot (xyzs, None, None,
         'Colors of pure spectral lines plus purples',
         'PureColors-SpectralPurples', num_across=20)
 
@@ -436,7 +436,7 @@ def perceptually_equal_spaced_color_plot (
     '''
     xyzs = get_perceptually_equal_spaced_colors (brightness, num_samples)
     plots.xyz_patch_plot (
-        xyzs, None, title, filename, num_across=num_across)
+        xyzs, None, None, title, filename, num_across=num_across)
 
 
 def perceptually_equal_spaced_color_plots ():
