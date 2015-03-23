@@ -144,6 +144,24 @@ def plot_save (filename):
 # Patch plots - Plots with each color value as a solid patch, with optional labels.
 #
 
+def get_rgb_patch_text_color (rgb_color):
+    ''' Get a color for the label on a patch of the specified color. '''
+    # This is not sophisticated but is a start.
+    # Choose black or white from average rgb value.
+    avg = (rgb_color[0] + rgb_color[1] + rgb_color[2]) / 3.0
+    if avg >= 0.15:
+        text_color = 'black'
+    else:
+        text_color = 'white'
+    return text_color
+
+
+def get_xyz_patch_text_color (xyz_color):
+    ''' Get a color for the label on a patch of the specified color. '''
+    rgb_color = colormodels.rgb_from_xyz (xyz_color)
+    return get_rgb_patch_text_color (rgb_color)
+
+
 def rgb_patch_plot (
     rgb_colors,
     color_names,
@@ -157,13 +175,8 @@ def rgb_patch_plot (
         ''' Get a color for the label on a patch of the specified color. '''
         # This is not sophisticated but is a start.
         color_irgb = colormodels.irgb_from_irgb_string (color_string)
-        # Get average color value on 0.0 - 1.0 scale.
-        avg = (color_irgb[0] + color_irgb[1] + color_irgb[2]) / (3 * 255.0)
-        # Choose black or white.
-        if avg >= 0.35:
-            text_color = 'black'
-        else:
-            text_color = 'white'
+        color_rgb  = colormodels.rgb_from_irgb (color_irgb)
+        text_color = get_rgb_patch_text_color (color_rgb)
         return text_color
 
     def draw_patch (x0, y0, color, name, patch_gap):
