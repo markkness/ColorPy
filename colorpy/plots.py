@@ -148,21 +148,21 @@ def plot_save (filename):
 
 def get_rgb_patch_text_color (rgb_color):
     ''' Get a color for the label on a patch of the specified color. '''
-    # This is not sophisticated but is a start.
-    # Choose black or white from average rgb value.
-    avg = (rgb_color[0] + rgb_color[1] + rgb_color[2]) / 3.0
-    if avg >= 0.15:
-        text_color = 'black'
-    else:
-        text_color = 'white'
+    xyz_color = colormodels.xyz_from_rgb (rgb_color)
+    text_color = get_xyz_patch_text_color (xyz_color)
     return text_color
 
 
 def get_xyz_patch_text_color (xyz_color):
     ''' Get a color for the label on a patch of the specified color. '''
-    rgb_color = colormodels.rgb_from_xyz (xyz_color)
-    rtn = get_rgb_patch_text_color (rgb_color)
-    return rtn
+    # CIE Y is the perceptual brightness of the color, so select on that.
+    Y = xyz_color[1]
+    # Cutoff is empirically chosen to look good.
+    if Y >= 0.145:
+        text_color = 'black'
+    else:
+        text_color = 'white'
+    return text_color
 
 
 def rgb_patch_plot (
