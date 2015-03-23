@@ -152,12 +152,13 @@ def blackbody_patch_plot (T_list, title, filename):
     ''' Draw a patch plot of blackbody colors for the given temperatures. '''
     xyz_colors = []
     color_names = []
+    text_colors = None
     for T in T_list:
         xyz = blackbody_color (T)
         xyz_colors.append (xyz)
         name = '%g K' % (T)
         color_names.append (name)
-    plots.xyz_patch_plot (xyz_colors, color_names, title, filename)
+    plots.xyz_patch_plot (xyz_colors, color_names, text_colors, title, filename)
 
 
 def blackbody_color_vs_temperature_plot (T_list, title, filename):

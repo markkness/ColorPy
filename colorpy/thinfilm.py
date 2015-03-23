@@ -211,13 +211,14 @@ def thinfilm_patch_plot (n1, n2, n3, thickness_list, illuminant, title, filename
     '''Make a patch plot of the color of the film for each thickness [nm].'''
     films = create_thin_films(n1, n2, n3, thickness_list)
     xyz_colors = []
-    labels = []
+    color_names = []
+    text_colors = None
     for film in films:
         xyz = film.get_illuminated_color (illuminant)
         xyz_colors.append (xyz)
         label = '%.1f nm' % (film.thickness_nm)
-        labels.append(label)
-    plots.xyz_patch_plot (xyz_colors, labels, title, filename)
+        color_names.append(label)
+    plots.xyz_patch_plot (xyz_colors, color_names, text_colors, title, filename)
 
 
 def thinfilm_color_vs_thickness_plot (n1, n2, n3, thickness_list, illuminant, title, filename):

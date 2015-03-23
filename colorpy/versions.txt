@@ -17,7 +17,6 @@ Wanted for next release:
 	* Line spectra plot.
 	* Complete sharkfin.
     * dwl as part of Spectrum metadata?
-    * White/black text in patch plots as appropriate.
 	* Complete file rearrangements.
     * Addition of BSD license.
 	* Documentation.

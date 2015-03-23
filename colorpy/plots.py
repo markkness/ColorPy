@@ -20,6 +20,7 @@ General plots:
 rgb_patch_plot (
     rgb_colors,
     color_names,
+    text_colors,
     title,
     filename,
     patch_gap = 0.05,
@@ -29,6 +30,7 @@ rgb_patch_plot (
 xyz_patch_plot (
     xyz_colors,
     color_names,
+    text_colors,
     title,
     filename,
     patch_gap = 0.05,
@@ -144,16 +146,36 @@ def plot_save (filename):
 # Patch plots - Plots with each color value as a solid patch, with optional labels.
 #
 
+def get_rgb_patch_text_color (rgb_color):
+    ''' Get a color for the label on a patch of the specified color. '''
+    xyz_color = colormodels.xyz_from_rgb (rgb_color)
+    text_color = get_xyz_patch_text_color (xyz_color)
+    return text_color
+
+
+def get_xyz_patch_text_color (xyz_color):
+    ''' Get a color for the label on a patch of the specified color. '''
+    # CIE Y is the perceptual brightness of the color, so select on that.
+    Y = xyz_color[1]
+    # Cutoff is empirically chosen to look good.
+    if Y >= 0.145:
+        text_color = 'black'
+    else:
+        text_color = 'white'
+    return text_color
+
+
 def rgb_patch_plot (
     rgb_colors,
     color_names,
-    title,
-    filename,
+    text_colors = None,
+    title = None,
+    filename = None,
     patch_gap = 0.05,
     num_across = 6):
     '''Draw a set of color patches, specified as linear rgb colors.'''
 
-    def draw_patch (x0, y0, color, name, patch_gap):
+    def draw_patch (x0, y0, color, text_color, name, patch_gap):
         '''Draw a patch of color.'''
         # patch relative vertices
         m = patch_gap
@@ -166,22 +188,27 @@ def rgb_patch_plot (
         pyplot.fill (poly_x, poly_y, color)
         if name != None:
             dtext = 0.1
-            pyplot.text (x0+dtext, y0+dtext, name, size=8.0)
+            pyplot.text (x0+dtext, y0+dtext, name, size=8.0, color=text_color)
 
+    # Select text colors if not specified.
+    if text_colors is None:
+        text_colors = [get_rgb_patch_text_color(rgb) for rgb in rgb_colors]
     # make plot with each color with one patch
     pyplot.clf()
     num_colors = len (rgb_colors)
     for i in range (0, num_colors):
         (iy, ix) = divmod (i, num_across)
-        # get color as a displayable string
+        # Get color as a displayable string.
         colorstring = colormodels.irgb_string_from_rgb (rgb_colors [i])
         if color_names != None:
             name = color_names [i]
         else:
             name = None
-        draw_patch (float (ix), float (-iy), colorstring, name, patch_gap)
+        text_color = text_colors [i]
+        draw_patch (float (ix), float (-iy), colorstring, text_color, name, patch_gap)
     pyplot.axis ('off')
-    pyplot.title (title)
+    if title is not None:
+        pyplot.title (title)
     # Save.
     plot_save (filename)
 
@@ -189,8 +216,9 @@ def rgb_patch_plot (
 def xyz_patch_plot (
     xyz_colors,
     color_names,
-    title,
-    filename,
+    text_colors = None,
+    title = None,
+    filename = None,
     patch_gap = 0.05,
     num_across = 6):
     '''Draw a set of color patches specified as xyz colors.'''
@@ -198,7 +226,10 @@ def xyz_patch_plot (
     for xyz in xyz_colors:
         rgb = colormodels.rgb_from_xyz (xyz)
         rgb_colors.append (rgb)
-    rgb_patch_plot (rgb_colors, color_names, title, filename, patch_gap=patch_gap, num_across=num_across)
+    if text_colors is None:
+        text_colors = [get_xyz_patch_text_color(xyz) for xyz in xyz_colors]
+    rgb_patch_plot (rgb_colors, color_names, text_colors, title, filename,
+        patch_gap=patch_gap, num_across=num_across)
 
 #
 # Spectrum plots
