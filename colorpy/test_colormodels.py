@@ -27,6 +27,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import functools
 import math
 import numpy
 import random
@@ -66,8 +67,12 @@ class TestColormodels(unittest.TestCase):
 
     def test_rgb_xyz_matrices_inverses(self, verbose=False):
         ''' Test that the rgb<--->xyz conversion matrices are inverses of each other. '''
-        test_eye0 = numpy.dot (colormodels.rgb_from_xyz_matrix, colormodels.xyz_from_rgb_matrix)
-        test_eye1 = numpy.dot (colormodels.xyz_from_rgb_matrix, colormodels.rgb_from_xyz_matrix)
+        test_eye0 = numpy.dot (
+            colormodels.color_converter.rgb_from_xyz_matrix,
+            colormodels.color_converter.xyz_from_rgb_matrix)
+        test_eye1 = numpy.dot (
+            colormodels.color_converter.xyz_from_rgb_matrix,
+            colormodels.color_converter.rgb_from_xyz_matrix)
         msg0 = 'RGB_from_XYZ * XYZ_from_RGB =\n%s' % (str(test_eye0))
         msg1 = 'XYZ_from_RGB * RGB_from_XYZ =\n%s' % (str(test_eye1))
         if verbose:
@@ -202,12 +207,12 @@ class TestColormodels(unittest.TestCase):
         num_wl = xyz_colors.shape[0]
         for i in range (num_wl):
             # Get rgb values for standard add white clipping.
-            colormodels.init_clipping (colormodels.CLIP_ADD_WHITE)
+            colormodels.color_converter.init_clipping (colormodels.CLIP_ADD_WHITE)
             rgb_white_color = colormodels.irgb_string_from_rgb (
                 colormodels.rgb_from_xyz (xyz_colors [i]))
 
             # Get rgb values for clamp-to-zero clipping.
-            colormodels.init_clipping (colormodels.CLIP_CLAMP_TO_ZERO)
+            colormodels.color_converter.init_clipping (colormodels.CLIP_CLAMP_TO_ZERO)
             rgb_clamp_color = colormodels.irgb_string_from_rgb (
                 colormodels.rgb_from_xyz (xyz_colors [i]))
 
@@ -224,9 +229,9 @@ class TestColormodels(unittest.TestCase):
         ''' Check if the current gamma correction is consistent. '''
         for i in range (10):
             x = 10.0 * (2.0 * random.random() - 1.0)
-            a = colormodels.linear_from_display_component (x)
-            y = colormodels.display_from_linear_component (a)
-            b = colormodels.linear_from_display_component (y)
+            a = colormodels.color_converter.linear_from_display_component (x)
+            y = colormodels.color_converter.display_from_linear_component (a)
+            b = colormodels.color_converter.linear_from_display_component (y)
             # Check errors.
             abs_err1 = math.fabs (y - x)
             rel_err1 = math.fabs (abs_err1 / (y + x))
@@ -246,7 +251,7 @@ class TestColormodels(unittest.TestCase):
         msg = 'Testing sRGB gamma:'
         if verbose:
             print (msg)
-        colormodels.init_gamma_correction (
+        colormodels.color_converter.init_gamma_correction (
             display_from_linear_function = colormodels.srgb_gamma_invert,
             linear_from_display_function = colormodels.srgb_gamma_correct)
         self.check_gamma_correction(verbose)
@@ -258,9 +263,12 @@ class TestColormodels(unittest.TestCase):
             msg = 'Testing power-law gamma: %g' % (gamma)
             if verbose:
                 print (msg)
-            colormodels.init_gamma_correction (
-                display_from_linear_function = colormodels.simple_gamma_invert,
-                linear_from_display_function = colormodels.simple_gamma_correct,
+            # Compose 1-argument gamma adjustment functions with functools.partial.
+            gamma_invert  = functools.partial(colormodels.simple_gamma_invert,  gamma_exponent=gamma)
+            gamma_correct = functools.partial(colormodels.simple_gamma_correct, gamma_exponent=gamma)
+            colormodels.color_converter.init_gamma_correction (
+                display_from_linear_function = gamma_invert,
+                linear_from_display_function = gamma_correct,
                 gamma = gamma)
             self.check_gamma_correction(verbose)
 

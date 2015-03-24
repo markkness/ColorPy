@@ -13,7 +13,8 @@ Possible future improvements:
 
 
 Wanted for next release:
-	* Rec. 2020.
+	* Rec. 2020. New chromaticities and gamma correction, and variable bit depths.
+      Create a colormodel object to manage all this.
 	* Line spectra plot.
 	* Complete sharkfin.
     * dwl as part of Spectrum metadata?
@@ -42,7 +43,7 @@ Added to alpha:
 
 	* New atomic line spectra for hydrogen, helium, and neon.
 
-    * New pure_colors.py module, for calculations of pure
+    * New purecolors.py module, for calculations of pure
 	spectral line colors and purples. These calculations existed in
 	some form previously, but they are improved now.
 
@@ -51,6 +52,10 @@ Added to alpha:
 	to be run via standard test runners, e.g. 'python -m unittest discover'.
 	However you can still run tests.py to exercise them.
     Also run figures.py to test all of the figures.
+
+    * Minor improvements.
+    Patch plots can be given colors for the text labels, or they will choose
+    senible defaults based on the patch color brightness.
 
     * Minor renaming.
     Some functions were slightly renamed and/or moved to new modules.
