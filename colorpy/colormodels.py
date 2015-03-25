@@ -710,14 +710,13 @@ class ColorConverter(object):
         # Clipping method.
         self.init_clipping(clip_method)
         # Bit depth for integer rgb values.
-        # FIXME: This is unused.
-        self.bit_depth = bit_depth
+        self.init_bit_depth(bit_depth)
 
     def init_rgb_xyz(self,
-        phosphor_red   = SRGB_Red,
-        phosphor_green = SRGB_Green,
-        phosphor_blue  = SRGB_Blue,
-        white_point    = SRGB_White):
+        phosphor_red,
+        phosphor_green,
+        phosphor_blue,
+        white_point):
         '''Setup the conversions between CIE XYZ and linear RGB spaces.
 
         The default arguments correspond to the sRGB standard RGB space.
@@ -754,9 +753,9 @@ class ColorConverter(object):
         self.reference_u_prime, self.reference_v_prime = uv_primes (self.reference_white)
 
     def init_gamma_correction(self,
-        display_from_linear_function = srgb_gamma_invert,
-        linear_from_display_function = srgb_gamma_correct,
-        gamma = STANDARD_GAMMA):
+        display_from_linear_function,
+        linear_from_display_function,
+        gamma):
         '''Setup gamma correction.
         The functions used for gamma correction/inversion can be specified,
         as well as a gamma value.
@@ -784,14 +783,24 @@ class ColorConverter(object):
         self.linear_from_display_component = linear_from_display_function
         self.gamma_exponent = gamma
 
-    def init_clipping(self, clip_method = CLIP_ADD_WHITE):
+    def init_clipping(self, clip_method):
         '''Specify the color clipping method.'''
+        if not clip_method in [CLIP_CLAMP_TO_ZERO, CLIP_ADD_WHITE]:
+            raise ValueError('Invalid color clipping method %s' % (str(clip_method)))
         self.clip_method = clip_method
+
+    def init_bit_depth(self, bit_depth):
+        ''' Initialize the bit depth for displayable integer rgb colors. '''
+        self.bit_depth = bit_depth
+        self.max_value = (1 << self.bit_depth) - 1
 
     def dump(self):
         ''' Print some info about the color conversions. '''
         print ('xyz_from_rgb', str (self.xyz_from_rgb_matrix))
         print ('rgb_from_xyz', str (self.rgb_from_xyz_matrix))
+        # Bit depth.
+        print ('bit_depth = %d' % (self.bit_depth))
+        print ('max_value = %d' % (self.max_value))
 
     # Conversions between xyz and rgb.
     # (rgb here is linear, not gamma adjusted.)
@@ -929,9 +938,8 @@ class ColorConverter(object):
         # The input color is modified as necessary.
         clipped = False
         rgb_max = max (rgb)
-        # Do not actually overflow until 255.0 * intensity > 255.5, so instead of 1.0 use:
-        # FIXME: Adjust to different bit depths.
-        intensity_cutoff = 1.0 + (0.5 / 255.0)
+        # Does not actually overflow until 2^B * intensity > (2^B + 0.5).
+        intensity_cutoff = 1.0 + (0.5 / self.max_value)
         if rgb_max > intensity_cutoff:
             scaling = intensity_cutoff / rgb_max
             rgb *= scaling
@@ -943,26 +951,24 @@ class ColorConverter(object):
     def scale_int_from_float(self, rgb):
         ''' Scale a color with component range 0.0 - 1.0 to integer values
         in range 0 - 2^(bitdepth) - 1. '''
-        # FIXME: Adjust to bitdepth.
-        ir = round (255.0 * rgb [0])
-        ig = round (255.0 * rgb [1])
-        ib = round (255.0 * rgb [2])
+        ir = round (self.max_value * rgb [0])
+        ig = round (self.max_value * rgb [1])
+        ib = round (self.max_value * rgb [2])
         # Ensure that values are in the valid range.
         # This is redundant if the value was properly clipped, but make sure.
-        ir = min (255, max (0, ir))
-        ig = min (255, max (0, ig))
-        ib = min (255, max (0, ib))
+        ir = min (self.max_value, max (0, ir))
+        ig = min (self.max_value, max (0, ig))
+        ib = min (self.max_value, max (0, ib))
         irgb = irgb_color (ir, ig, ib)
         return irgb
 
     def scale_float_from_int(self, irgb):
         ''' Scale a color with integer components 0 - 2^(bitdepth) - 1
         to floating point values in range 0.0 - 1.0. '''
-        # FIXME: Adjust to bitdepth.
         # Scale to 0.0 - 1.0.
-        r = float (irgb [0]) / 255.0
-        g = float (irgb [1]) / 255.0
-        b = float (irgb [2]) / 255.0
+        r = float (irgb [0]) / self.max_value
+        g = float (irgb [1]) / self.max_value
+        b = float (irgb [2]) / self.max_value
         rgb = rgb_color (r, g, b)
         return rgb
 
@@ -993,21 +999,21 @@ class ColorConverter(object):
         for index in range (0, 3):
             rgb [index] = self.display_from_linear_component (rgb [index])
 
-        # scale to 0 - 255
+        # Scale to 0 - 2^B - 1.
         irgb = self.scale_int_from_float(rgb)
         return (irgb, (clipped_chromaticity, clipped_intensity))
 
     # Conversions between linear rgb colors (0.0 - 1.0 range) and
-    # displayable irgb values (0 - 255 range).
+    # displayable irgb values (0 - 2^B - 1 range).
 
     def irgb_from_rgb(self, rgb):
-        '''Convert a (linear) rgb value (range 0.0 - 1.0) into a 0-255 displayable integer irgb value (range 0 - 255).'''
+        '''Convert a (linear) rgb value (range 0.0 - 1.0) into a displayable integer irgb value (range 0 - 2^B - 1).'''
         result = self.clip_rgb_color (rgb)
         (irgb, (clipped_chrom,clipped_int)) = result
         return irgb
 
     def rgb_from_irgb(self, irgb):
-        '''Convert a displayable (gamma corrected) irgb value (range 0 - 255) into a linear rgb value (range 0.0 - 1.0).'''
+        '''Convert a displayable (gamma corrected) irgb value (range 0 - 2^B - 1) into a linear rgb value (range 0.0 - 1.0).'''
         # scale to 0.0 - 1.0
         rgb0 = self.scale_float_from_int(irgb)
         # gamma adjustment

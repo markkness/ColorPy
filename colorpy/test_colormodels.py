@@ -253,7 +253,8 @@ class TestColormodels(unittest.TestCase):
             print (msg)
         colormodels.color_converter.init_gamma_correction (
             display_from_linear_function = colormodels.srgb_gamma_invert,
-            linear_from_display_function = colormodels.srgb_gamma_correct)
+            linear_from_display_function = colormodels.srgb_gamma_correct,
+            gamma = None)
         self.check_gamma_correction(verbose)
 
     def test_gamma_power(self, verbose=False):
