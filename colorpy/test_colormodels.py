@@ -27,7 +27,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import functools
 import math
 import numpy
 import random
@@ -229,9 +228,9 @@ class TestColormodels(unittest.TestCase):
         ''' Check if the current gamma correction is consistent. '''
         for i in range (10):
             x = 10.0 * (2.0 * random.random() - 1.0)
-            a = colormodels.color_converter.linear_from_display_component (x)
-            y = colormodels.color_converter.display_from_linear_component (a)
-            b = colormodels.color_converter.linear_from_display_component (y)
+            a = colormodels.color_converter.gamma_linear_from_display_component (x)
+            y = colormodels.color_converter.gamma_display_from_linear_component (a)
+            b = colormodels.color_converter.gamma_linear_from_display_component (y)
             # Check errors.
             abs_err1 = math.fabs (y - x)
             rel_err1 = math.fabs (abs_err1 / (y + x))
@@ -252,25 +251,18 @@ class TestColormodels(unittest.TestCase):
         if verbose:
             print (msg)
         colormodels.color_converter.init_gamma_correction (
-            display_from_linear_function = colormodels.srgb_gamma_invert,
-            linear_from_display_function = colormodels.srgb_gamma_correct,
-            gamma = None)
+            gamma_method=colormodels.GAMMA_CORRECT_SRGB, gamma_value=None)
         self.check_gamma_correction(verbose)
 
     def test_gamma_power(self, verbose=False):
         ''' Test simple power law gamma (can supply exponent). '''
         gamma_set = [0.1, 0.5, 1.0, 1.1, 1.5, 2.0, 2.2, 2.5, 10.0]
-        for gamma in gamma_set:
-            msg = 'Testing power-law gamma: %g' % (gamma)
+        for gamma_value in gamma_set:
+            msg = 'Testing power-law gamma: %g' % (gamma_value)
             if verbose:
                 print (msg)
-            # Compose 1-argument gamma adjustment functions with functools.partial.
-            gamma_invert  = functools.partial(colormodels.simple_gamma_invert,  gamma_exponent=gamma)
-            gamma_correct = functools.partial(colormodels.simple_gamma_correct, gamma_exponent=gamma)
             colormodels.color_converter.init_gamma_correction (
-                display_from_linear_function = gamma_invert,
-                linear_from_display_function = gamma_correct,
-                gamma = gamma)
+                gamma_method=colormodels.GAMMA_CORRECT_POWER, gamma_value=gamma_value)
             self.check_gamma_correction(verbose)
 
     # Conversions between standard device independent color space (CIE XYZ)
