@@ -612,6 +612,89 @@ def srgb_gamma_correct (x):
     return rtn
 
 #
+# New gamma correction...
+#
+
+class GammaCorrect(object):
+    ''' Gamma correction formulas as used in several standards.
+
+    'display' - Color values as would be used in display code.
+    'linear'  - Color values with numbers proportional to physical intensity.
+    Both are nominally in the range 0.0 - 1.0.
+
+    The curves have a linear region near black,
+    and approximately exponential for visibly bright colors.
+    The linear region avoids numerical trouble near zero.
+
+    Note that the effective gamma exponent that this model provides,
+    is not exactly the same value as the gamma that is nominally supplied.
+    For example, sRGB uses the number gamma=2.4, but its curve actually
+    better approximates an exponent of 2.2.
+
+    C_display = Phi * C_linear,                    C_linear <  K0 / Phi
+    C_display = (1+a) * C_linear^(1/gamma) - a,    C_linear >= K0 / Phi
+
+    C_linear = C_display / Phi,                    C_display <  K0
+    C_linear = ((C_display + a) / (1+a))^gamma,    C_display >= K0
+
+    The two regions (linear/exponential) ought to connect sensibly.
+    '''
+
+    def __init__(self,
+        gamma,    # gamma exponent.
+        a,        # offset.
+        K0,       # intensity cutoff.
+        Phi):     # linear scaling.
+        self.gamma = float(gamma)
+        self.a     = float(a)
+        self.K0    = float(K0)
+        self.Phi   = float(Phi)
+        # Precompute.
+        self.K0_over_Phi = self.K0 / self.Phi
+        self.one_plus_a  = 1.0 + self.a
+        self.inv_gamma   = 1.0 / self.gamma
+
+    def display_from_linear(self, C_linear):
+        ''' Convert physical intensity to display values. '''
+        if C_linear < self.K0_over_Phi:
+            # Linear region.
+            C_display = self.Phi * C_linear
+        else:
+            # Pseudo-exponential region.
+            C_linear_inv_gamma = math.pow(C_linear, self.inv_gamma)
+            C_display = self.one_plus_a * C_linear_inv_gamma - self.a
+        return C_display
+
+    def linear_from_display(self, C_display):
+        ''' Convert display values to physical intensity. '''
+        if C_display < self.K0:
+            # Linear region.
+            C_linear = C_display / self.Phi
+        else:
+            # Pseudo-exponential region.
+            C_display_term = (C_display + self.a) / self.one_plus_a
+            C_linear = math.pow(C_display_term, self.gamma)
+        return C_linear
+
+
+# sRGB gamma correction.
+# Note that, despite the nominal gamma=2.4, the function overall is designed
+# to approximate gamma=2.2.
+srgb_gamma_corrector = GammaCorrect(
+    gamma=2.4, a=0.055, K0=0.03928, Phi=12.92)
+
+xyzzy_0 = srgb_gamma_corrector.display_from_linear (0.5)
+xyzzy_1 = srgb_gamma_corrector.linear_from_display (0.5)
+
+xyzzy_2 = srgb_gamma_corrector.display_from_linear (0.00005)
+xyzzy_3 = srgb_gamma_corrector.linear_from_display (0.00005)
+
+# Tests to do:
+# Functions are inverses.
+# Sensible boundary conditions.
+# Matches existing srgb and simple gamma corrections.
+
+#
 # Color clipping - Physical color values may exceed the what the display can show,
 #   either because the color is too pure (indicated by negative rgb values), or
 #   because the color is too bright (indicated by rgb values > 1.0).
@@ -688,6 +771,14 @@ def irgb_string_from_xyz (xyz):
 #
 # Object to hold color conversion values.
 #
+
+# Note: In the previous version of this code, you could specify arbitrary
+# functions for the gamma conversions. This is now not directly possible,
+# instead you choose the method from the enumerated list. This should be
+# easier and more reliable for most all actual usage. If the arbitary
+# functions are needed, a new gamma method is needed.
+#
+# FIXME: Add this new gamma method.
 
 class ColorConverter(object):
     ''' An object to keep track of how to convert between color spaces. '''

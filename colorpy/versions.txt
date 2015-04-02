@@ -6,7 +6,9 @@ Possible future improvements:
     * HSV conversions.
     * CIE D illuminants besides D65.
     * Scotopic visual sensitivity function.
-	* Correct or confirm intensity scaling, i.e. blackbody calculation.
+	* Correct/confirm the absolute intensity scaling.
+      I have attempted to get this correct but am not confident that it is.
+      i.e. blackbody calculation.
 	* Theory description for thin film interference.
     * Table reading for external code, e.g. mie scattering.
 	* Generally read through Wyszecki & Styles and improve as appropriate.
