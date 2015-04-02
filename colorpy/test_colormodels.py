@@ -529,6 +529,7 @@ class TestGammaCorrection(unittest.TestCase):
     # Functions are inverses.
     # Sensible boundary conditions.
     # Matches existing srgb and simple gamma corrections.
+    # Consistency of precomputed constants.
 
 
 if __name__ == '__main__':

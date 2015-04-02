@@ -650,16 +650,18 @@ class GammaCorrect(object):
         self.K0    = float(K0)
         self.Phi   = float(Phi)
         # Precompute.
-        self.K0_over_Phi = self.K0 / self.Phi
         self.one_plus_a  = 1.0 + self.a
         self.inv_gamma   = 1.0 / self.gamma
+        self.K0_over_Phi = self.K0 / self.Phi
         # Enforce continuity at the 'edge of black'.
+        # This discards the original K0 and Phi.
         self.set_continuous_slope()
         # Improve K0 values.
         # This does nothing after set_continuous_slope().
         # Before it does not seem to converge!
         for i in range(4):
-            self.improve_K0()
+            #self.improve_K0()
+            self.improve_Phi()
 
     def display_from_linear(self, C_linear):
         ''' Convert physical intensity to display values. '''
@@ -686,21 +688,39 @@ class GammaCorrect(object):
     # Continuity between the linear and pseudo-exponential regions requires:
     #     ((K0 + a) / (1+a))^gamma = K0 / Phi
     #
-    # This can be used to improve a K0 estimate.
-    # Well, actually this code does not improve anything.
+    # This can be used to check a K0 estimate.
+    # At present it does not seem to be a useful iteration.
+    # Or you could calculate Phi.
+    # That works sometimes but not reliably.
 
     def improve_K0(self):
-        ''' Improve K0 value. This converges poorly. '''
+        ''' Check K0 value. This converges poorly as an improvement attempt. '''
         K0_start = self.K0
         lhs_term = ((self.K0 + self.a) / (self.one_plus_a))
         lhs = math.pow(lhs_term, self.gamma)
         rhs = self.K0 / self.Phi
-        # Get new K0 value that is hopefully better.
-        # It seems to actually be worse!!!
+        # New K0 value that was hoped better, but actually seems worse!
         K0_better = self.Phi * lhs
         self.K0 = K0_better
         msg = 'K0_start=%g    lhs=%g    rhs=%g    K0_better=%g' % (
             K0_start, lhs, rhs, K0_better)
+        print (msg)
+
+    def improve_Phi(self):
+        ''' Automatically set Phi to enforce continuity at the edge of black. '''
+        # This seems to work well for sRGB and poorly for UHDTV.
+        # Perhaps there are two solutions???
+        Phi_start = self.Phi
+        lhs_term = ((self.K0 + self.a) / (self.one_plus_a))
+        lhs = math.pow(lhs_term, self.gamma)
+        rhs = self.K0 / self.Phi
+        # New Phi value that is ideally better.
+        # Sometimes yes, sometimes no.
+        Phi_better = self.K0 / lhs
+        self.Phi = Phi_better
+        self.K0_over_Phi = self.K0 / self.Phi
+        msg = 'Phi_start=%.12f    lhs=%g    rhs=%g    Phi_better=%.12f' % (
+            Phi_start, lhs, rhs, Phi_better)
         print (msg)
 
     # Continuity of value and slope requires:
@@ -726,26 +746,29 @@ class GammaCorrect(object):
         Phi_better = (Phi_term_1 * Phi_term_2) / (Phi_term_3 * Phi_term_4)
         self.K0  = K0_better
         self.Phi = Phi_better
-        msg = 'K0_start=%g    Phi_start=%g    K0_better=%g    Phi_better=%g' % (
+        self.K0_over_Phi = self.K0 / self.Phi
+        msg = 'K0_start=%g    Phi_start=%g    K0_better=%.12f    Phi_better=%.12f' % (
             K0_start, Phi_start, K0_better, Phi_better)
         print (msg)
 
-# sRGB gamma correction.
+# sRGB gamma correction, for HDTV.
+#   http://en.wikipedia.org/wiki/SRGB, accessed 1 Apr 2015
 # Note that, despite the nominal gamma=2.4, the function overall is designed
 # to approximate gamma=2.2.
+
 srgb_gamma_corrector = GammaCorrect(
     gamma=2.4, a=0.055, K0=0.03928, Phi=12.92)
 
-# Rec 2020, for UHDTV.
-# https://en.wikipedia.org/wiki/Rec._2020, accessed 1 Apr 2015.
+# Rec 2020 gamma correction, for UHDTV.
+#   https://en.wikipedia.org/wiki/Rec._2020, accessed 1 Apr 2015.
 
 # Rec 2020/UHDTV for 10 bits per component.
 uhdtv_10_gamma_corrector = GammaCorrect(
-    gamma=(1.0/0.45), a=0.099, K0=0.01, Phi=4.5)    # FIXME: K0 is wrong.
+	gamma=(1.0/0.45), a=0.099, K0=0.01, Phi=4.5)	# FIXME: K0 is wrong.
 
 # Rec 2020/UHDTV for 12 bits per component.
 uhdtv_12_gamma_corrector = GammaCorrect(
-    gamma=(1.0/0.45), a=0.0993, K0=0.01, Phi=4.5)    # FIXME: K0 is wrong.
+	gamma=(1.0/0.45), a=0.0993, K0=0.01, Phi=4.5)	# FIXME: K0 is wrong.
 
 #
 # Color clipping - Physical color values may exceed the what the display can show,
