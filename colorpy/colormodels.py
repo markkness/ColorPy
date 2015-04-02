@@ -653,6 +653,13 @@ class GammaCorrect(object):
         self.K0_over_Phi = self.K0 / self.Phi
         self.one_plus_a  = 1.0 + self.a
         self.inv_gamma   = 1.0 / self.gamma
+        # Enforce continuity at the 'edge of black'.
+        self.set_continuous_slope()
+        # Improve K0 values.
+        # This does nothing after set_continuous_slope().
+        # Before it does not seem to converge!
+        for i in range(4):
+            self.improve_K0()
 
     def display_from_linear(self, C_linear):
         ''' Convert physical intensity to display values. '''
@@ -676,12 +683,69 @@ class GammaCorrect(object):
             C_linear = math.pow(C_display_term, self.gamma)
         return C_linear
 
+    # Continuity between the linear and pseudo-exponential regions requires:
+    #     ((K0 + a) / (1+a))^gamma = K0 / Phi
+    #
+    # This can be used to improve a K0 estimate.
+    # Well, actually this code does not improve anything.
+
+    def improve_K0(self):
+        ''' Improve K0 value. This converges poorly. '''
+        K0_start = self.K0
+        lhs_term = ((self.K0 + self.a) / (self.one_plus_a))
+        lhs = math.pow(lhs_term, self.gamma)
+        rhs = self.K0 / self.Phi
+        # Get new K0 value that is hopefully better.
+        # It seems to actually be worse!!!
+        K0_better = self.Phi * lhs
+        self.K0 = K0_better
+        msg = 'K0_start=%g    lhs=%g    rhs=%g    K0_better=%g' % (
+            K0_start, lhs, rhs, K0_better)
+        print (msg)
+
+    # Continuity of value and slope requires:
+    #     K0 = a / (gamma - 1)
+    #     Phi = ((1+a)^gamma * (gamma-1)^(gamma-1)) /
+    #           (a^(gamma-1) * gamma^gamma)
+    #
+    # This seems to make a lot of sense to enforce.
+    # The K0 and Phi values apply to the 'edge of black' and so
+    # it is unlikely they are really carefully chosen, while the
+    # continuity condition seems natural. And it also makes sense to
+    # enforce the 'edge of black' all at once.
+
+    def set_continuous_slope(self):
+        ''' Automatically set K0 and Phi to enforce slope continuity. '''
+        K0_start  = self.K0
+        Phi_start = self.Phi
+        K0_better = (self.a / (self.gamma - 1.0))
+        Phi_term_1 = math.pow(self.one_plus_a, self.gamma)
+        Phi_term_2 = math.pow(self.gamma - 1.0, self.gamma - 1.0)
+        Phi_term_3 = math.pow(self.a, self.gamma - 1.0)
+        Phi_term_4 = math.pow(self.gamma, self.gamma)
+        Phi_better = (Phi_term_1 * Phi_term_2) / (Phi_term_3 * Phi_term_4)
+        self.K0  = K0_better
+        self.Phi = Phi_better
+        msg = 'K0_start=%g    Phi_start=%g    K0_better=%g    Phi_better=%g' % (
+            K0_start, Phi_start, K0_better, Phi_better)
+        print (msg)
 
 # sRGB gamma correction.
 # Note that, despite the nominal gamma=2.4, the function overall is designed
 # to approximate gamma=2.2.
 srgb_gamma_corrector = GammaCorrect(
     gamma=2.4, a=0.055, K0=0.03928, Phi=12.92)
+
+# Rec 2020, for UHDTV.
+# https://en.wikipedia.org/wiki/Rec._2020, accessed 1 Apr 2015.
+
+# Rec 2020/UHDTV for 10 bits per component.
+uhdtv_10_gamma_corrector = GammaCorrect(
+    gamma=(1.0/0.45), a=0.099, K0=0.01, Phi=4.5)    # FIXME: K0 is wrong.
+
+# Rec 2020/UHDTV for 12 bits per component.
+uhdtv_12_gamma_corrector = GammaCorrect(
+    gamma=(1.0/0.45), a=0.0993, K0=0.01, Phi=4.5)    # FIXME: K0 is wrong.
 
 #
 # Color clipping - Physical color values may exceed the what the display can show,
@@ -768,6 +832,7 @@ def irgb_string_from_xyz (xyz):
 # functions are needed, a new gamma method is needed.
 #
 # FIXME: Add this new gamma method.
+# FIXME: Should be able to specify maximum value rather than bit depth.
 
 class ColorConverter(object):
     ''' An object to keep track of how to convert between color spaces. '''
@@ -1158,7 +1223,7 @@ def init (
         gamma_value    = gamma_value,
         clip_method    = clip_method,
         bit_depth      = bit_depth)
-    color_converter.dump()
+    #color_converter.dump()
 
 
 init()
