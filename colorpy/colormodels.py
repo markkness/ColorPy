@@ -683,17 +683,6 @@ class GammaCorrect(object):
 srgb_gamma_corrector = GammaCorrect(
     gamma=2.4, a=0.055, K0=0.03928, Phi=12.92)
 
-xyzzy_0 = srgb_gamma_corrector.display_from_linear (0.5)
-xyzzy_1 = srgb_gamma_corrector.linear_from_display (0.5)
-
-xyzzy_2 = srgb_gamma_corrector.display_from_linear (0.00005)
-xyzzy_3 = srgb_gamma_corrector.linear_from_display (0.00005)
-
-# Tests to do:
-# Functions are inverses.
-# Sensible boundary conditions.
-# Matches existing srgb and simple gamma corrections.
-
 #
 # Color clipping - Physical color values may exceed the what the display can show,
 #   either because the color is too pure (indicated by negative rgb values), or
