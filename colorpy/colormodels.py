@@ -654,14 +654,7 @@ class GammaCorrect(object):
         self.inv_gamma   = 1.0 / self.gamma
         self.K0_over_Phi = self.K0 / self.Phi
         # Enforce continuity at the 'edge of black'.
-        # This discards the original K0 and Phi.
         self.set_continuous_slope()
-        # Improve K0 values.
-        # This does nothing after set_continuous_slope().
-        # Before it does not seem to converge!
-        for i in range(4):
-            #self.improve_K0()
-            self.improve_Phi()
 
     def display_from_linear(self, C_linear):
         ''' Convert physical intensity to display values. '''
@@ -685,6 +678,45 @@ class GammaCorrect(object):
             C_linear = math.pow(C_display_term, self.gamma)
         return C_linear
 
+    # The values of K0 and Phi really come naturally from gamma and a,
+    # if the two regions connect sensibly.
+    # Setting K0 and Phi to enforce value and slope continuity works well.
+    # An alternate method to enforce continuity only seems less useful...
+    # See:
+    #     https://en.wikipedia.org/wiki/SRGB
+    #     https://en.wikipedia.org/wiki/Rec._2020
+
+    # Continuity of value and slope requires:
+    #     K0 = a / (gamma - 1)
+    #     Phi = ((1+a)^gamma * (gamma-1)^(gamma-1)) /
+    #           (a^(gamma-1) * gamma^gamma)
+    #
+    # This seems to make a lot of sense to enforce.
+    # The K0 and Phi values apply to the 'edge of black' and so
+    # it is unlikely they are really carefully chosen, while the
+    # continuity condition seems natural. And it also makes sense to
+    # enforce the 'edge of black' all at once.
+
+    def set_continuous_slope(self, verbose=False):
+        ''' Automatically set K0 and Phi to enforce slope continuity. '''
+        # Enforce continuity at the 'edge of black'.
+        # This discards the original K0 and Phi.
+        K0_start  = self.K0
+        Phi_start = self.Phi
+        K0_better = (self.a / (self.gamma - 1.0))
+        Phi_term_1 = math.pow(self.one_plus_a, self.gamma)
+        Phi_term_2 = math.pow(self.gamma - 1.0, self.gamma - 1.0)
+        Phi_term_3 = math.pow(self.a, self.gamma - 1.0)
+        Phi_term_4 = math.pow(self.gamma, self.gamma)
+        Phi_better = (Phi_term_1 * Phi_term_2) / (Phi_term_3 * Phi_term_4)
+        self.K0  = K0_better
+        self.Phi = Phi_better
+        self.K0_over_Phi = self.K0 / self.Phi
+        msg = 'K0_start=%g    Phi_start=%g    K0_better=%.12f    Phi_better=%.12f' % (
+            K0_start, Phi_start, K0_better, Phi_better)
+        if verbose:
+            print (msg)
+
     # Continuity between the linear and pseudo-exponential regions requires:
     #     ((K0 + a) / (1+a))^gamma = K0 / Phi
     #
@@ -692,6 +724,19 @@ class GammaCorrect(object):
     # At present it does not seem to be a useful iteration.
     # Or you could calculate Phi.
     # That works sometimes but not reliably.
+    # Generally these routines (improve_K0, improve_Phi) are experimental,
+    # and not really successful.
+
+    def set_continuous_only(self):
+        ''' Try and enforce continuity only, which does not work well. '''
+        # Try and improve K0, Phi values.
+        # This does nothing after set_continuous_slope().
+        # Before it does not seem to converge!
+        for i in range(4):
+            # improve_K0 is not useful...
+            #self.improve_K0()
+            # improve_Phi is inconsistent...
+            self.improve_Phi()
 
     def improve_K0(self):
         ''' Check K0 value. This converges poorly as an improvement attempt. '''
@@ -723,33 +768,6 @@ class GammaCorrect(object):
             Phi_start, lhs, rhs, Phi_better)
         print (msg)
 
-    # Continuity of value and slope requires:
-    #     K0 = a / (gamma - 1)
-    #     Phi = ((1+a)^gamma * (gamma-1)^(gamma-1)) /
-    #           (a^(gamma-1) * gamma^gamma)
-    #
-    # This seems to make a lot of sense to enforce.
-    # The K0 and Phi values apply to the 'edge of black' and so
-    # it is unlikely they are really carefully chosen, while the
-    # continuity condition seems natural. And it also makes sense to
-    # enforce the 'edge of black' all at once.
-
-    def set_continuous_slope(self):
-        ''' Automatically set K0 and Phi to enforce slope continuity. '''
-        K0_start  = self.K0
-        Phi_start = self.Phi
-        K0_better = (self.a / (self.gamma - 1.0))
-        Phi_term_1 = math.pow(self.one_plus_a, self.gamma)
-        Phi_term_2 = math.pow(self.gamma - 1.0, self.gamma - 1.0)
-        Phi_term_3 = math.pow(self.a, self.gamma - 1.0)
-        Phi_term_4 = math.pow(self.gamma, self.gamma)
-        Phi_better = (Phi_term_1 * Phi_term_2) / (Phi_term_3 * Phi_term_4)
-        self.K0  = K0_better
-        self.Phi = Phi_better
-        self.K0_over_Phi = self.K0 / self.Phi
-        msg = 'K0_start=%g    Phi_start=%g    K0_better=%.12f    Phi_better=%.12f' % (
-            K0_start, Phi_start, K0_better, Phi_better)
-        print (msg)
 
 # sRGB gamma correction, for HDTV.
 #   http://en.wikipedia.org/wiki/SRGB, accessed 1 Apr 2015
