@@ -87,9 +87,10 @@ def create_CIE_XYZ_1931_table_5nm ():
     dict_z = read_CIE_file (CIE_z)
     # get keys
     keys = dict_x.keys()   # all should be the same
+    keys = list(keys)
     keys.sort()
     msgs.append ('_CIEXYZ_1931_table = [\n')
-    for i in xrange (0, len (keys)):
+    for i in range (0, len (keys)):
         ikey = keys [i]
         wl_nm = ikey
         x = dict_x [ikey]
@@ -124,7 +125,7 @@ def create_CVRL_XYZ_1931_table_1nm ():
     lines = f.readlines()
     f.close()
     msgs.append ('_CIEXYZ_1931_table = [\n')
-    for i in xrange (0, len (lines)):
+    for i in range (0, len (lines)):
         iline = lines [i].rstrip()
         sep = ','
         if i == len (lines)-1:
@@ -150,7 +151,7 @@ def create_CVRL_D65_table_1nm ():
     lines = f.readlines()
     f.close()
     msgs.append ('_Illuminant_D65_table = [\n')
-    for i in xrange (0, len (lines)):
+    for i in range (0, len (lines)):
         iline = lines [i].rstrip()
         sep = ','
         if i == len (lines)-1:

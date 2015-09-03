@@ -1,27 +1,32 @@
 Changes in versions of ColorPy.
 
 Possible future improvements:
+	* Line spectra plot.
 	* Travis-CI testing.
 	* Atomic spectra, for the other elements.
     * HSV conversions.
     * CIE D illuminants besides D65.
     * Scotopic visual sensitivity function.
-	* Correct or confirm intensity scaling, i.e. blackbody calculation.
+	* Correct/confirm the absolute intensity scaling.
+      I have attempted to get this correct but am not confident that it is.
+      i.e. blackbody calculation.
+    * Discussion of green laser scattering.
 	* Theory description for thin film interference.
     * Table reading for external code, e.g. mie scattering.
 	* Generally read through Wyszecki & Styles and improve as appropriate.
+    * Documentation improvements: Sphinx, LaTeX.
+	* Documentation: local html file, GitHub page, my website.
+    * Documentation: Luv inverse.
 
 
 Wanted for next release:
-	* Rec. 2020.
-	* Line spectra plot.
+	* Rec. 2020. New chromaticities and gamma correction, and variable bit depths.
 	* Complete sharkfin.
     * dwl as part of Spectrum metadata?
 	* Complete file rearrangements.
     * Addition of BSD license.
-	* Documentation.
-	    Sphinx, LaTex, local html file, GitHub page, my website.
-	* Packaging. Anaconda?
+    * Documentation improvements on GitHub.
+	* Packaging. Anaconda Binstar?
 	* Publishing on PyPi and markkness.net.
 
 
@@ -40,9 +45,13 @@ Added to alpha:
 	The new and old structures are closely related, and there are calls
 	to make it easy to convert between them.
 
+    * New ColorConverter() object.
+    There is now an object that keeps track of the chromaticities and
+    other parameters that define the color conversions.
+
 	* New atomic line spectra for hydrogen, helium, and neon.
 
-    * New pure_colors.py module, for calculations of pure
+    * New purecolors.py module, for calculations of pure
 	spectral line colors and purples. These calculations existed in
 	some form previously, but they are improved now.
 
@@ -51,6 +60,11 @@ Added to alpha:
 	to be run via standard test runners, e.g. 'python -m unittest discover'.
 	However you can still run tests.py to exercise them.
     Also run figures.py to test all of the figures.
+    The document test_procedure.txt describes the test suite to test ColorPy.
+
+    * Minor improvements.
+    Patch plots can be given colors for the text labels, or they will choose
+    senible defaults based on the patch color brightness.
 
     * Minor renaming.
     Some functions were slightly renamed and/or moved to new modules.
