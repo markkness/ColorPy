@@ -23,7 +23,7 @@ Wanted for next release:
 	* Rec. 2020. New chromaticities and gamma correction, and variable bit depths.
 	* Complete sharkfin.
     * dwl as part of Spectrum metadata?
-	* Complete file rearrangements.
+	* Complete file rearrangements, including references.py.
     * Addition of BSD license.
     * Documentation improvements on GitHub.
 	* Packaging. Anaconda Binstar?

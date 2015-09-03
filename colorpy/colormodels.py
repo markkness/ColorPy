@@ -611,12 +611,101 @@ def srgb_gamma_correct (x):
         rtn = math.pow ((x + 0.055) / 1.055, 2.4)
     return rtn
 
+def srgb_gamma_invert_reference (x):
+    '''Reference implementation of sRGB standard for gamma inverse correction.'''
+    return srgb_gamma_invert(x)
+
+def srgb_gamma_correct_reference (x):
+    '''Reference implementation of sRGB standard for gamma correction.'''
+    return srgb_gamma_correct(x)
+
 #
 # New gamma correction...
 # FIXME: Is this even used??? It is tested, but ColorConverter() may not use it!!!
 #
 
-class GammaCorrect(object):
+class GammaConverter(object):
+    ''' Interface for gamma correction objects.
+
+     There should be two methods. Both take a float argument and return a float.
+     They should be inverses.
+
+    'display' - Color values as would be used in display code.
+    'linear'  - Color values with numbers proportional to physical intensity.
+     Both are nominally in the range 0.0 - 1.0.
+     '''
+
+    def display_from_linear(self, C_linear):
+        ''' Convert linear physical intensity to nonlinear display values. '''
+        # This is gamma inversion, not gamma correction.
+        raise NotImplementedError
+
+    def linear_from_display(self, C_display):
+        ''' Convert nonlinear display values to linear physical intensity. '''
+        # This is gamma correction.
+        raise NotImplementedError
+
+
+class GammaConverterPower(GammaConverter):
+    ''' Gamma correction with a simple power law. '''
+
+    def __init__(self, gamma):
+        ''' Constructor. '''
+        self.gamma = gamma    # Gamma exponent.
+
+    def display_from_linear(self, C_linear):
+        ''' Convert linear physical intensity to nonlinear display values. '''
+        # This is gamma inversion, not gamma correction.
+        C_display = simple_gamma_invert (C_linear, self.gamma)
+        return C_display
+
+    def linear_from_display(self, C_display):
+        ''' Convert nonlinear display values to linear physical intensity. '''
+        # This is gamma correction.
+        C_linear = simple_gamma_correct (C_display, self.gamma)
+        return C_linear
+
+
+class GammaConverterSrgb(GammaConverter):
+    ''' Gamma correction according to sRGB standard. '''
+
+    def display_from_linear(self, C_linear):
+        ''' Convert linear physical intensity to nonlinear display values. '''
+        # This is gamma inversion, not gamma correction.
+        C_display = srgb_gamma_invert (C_linear)
+        return C_display
+
+    def linear_from_display(self, C_display):
+        ''' Convert nonlinear display values to linear physical intensity. '''
+        # This is gamma correction.
+        C_linear = srgb_gamma_correct (C_display)
+        return C_linear
+
+
+class GammaConverterFunction(GammaConverter):
+    ''' Gamma correction with arbitrary conversion functions. '''
+
+    def __init__(self,
+        display_from_linear_function,    # Gamma invert function.
+        linear_from_display_function):   # Gamma correction function.
+        ''' Constructor. '''
+        self.display_from_linear_function = display_from_linear_function
+        self.linear_from_display_function = linear_from_display_function
+
+    def display_from_linear(self, C_linear):
+        ''' Convert linear physical intensity to nonlinear display values. '''
+        # This is gamma inversion, not gamma correction.
+        C_display = self.display_from_linear_function (C_linear)
+        return C_display
+
+    def linear_from_display(self, C_display):
+        ''' Convert nonlinear display values to linear physical intensity. '''
+        # This is gamma correction.
+        C_linear = self.linear_from_display_function (C_display)
+        return C_linear
+
+
+class GammaConverterHybrid(GammaConverter):
     ''' Gamma correction formulas as used in several standards.
 
     'display' - Color values as would be used in display code.
@@ -642,20 +731,23 @@ class GammaCorrect(object):
     '''
 
     def __init__(self,
-        gamma,    # gamma exponent.
-        a,        # offset.
-        K0,       # intensity cutoff.
-        Phi):     # linear scaling.
-        self.gamma = float(gamma)
-        self.a     = float(a)
-        self.K0    = float(K0)
-        self.Phi   = float(Phi)
-        # Precompute.
-        self.one_plus_a  = 1.0 + self.a
-        self.inv_gamma   = 1.0 / self.gamma
+        gamma,            # Gamma exponent.
+        a,                # Offset.
+        K0,               # Intensity cutoff for linear range.
+        Phi,              # Linear scaling.
+        improve=True):    # True to enforce continuity at the 'edge-of-black'.
+        # gamma and a are the main parameters.
+        self.gamma      = float(gamma)
+        self.a          = float(a)
+        self.one_plus_a = 1.0 + self.a
+        self.inv_gamma  = 1.0 / self.gamma
+        # K0 and Phi can be specified, or derived from gamma and a.
+        self.K0          = float(K0)
+        self.Phi         = float(Phi)
         self.K0_over_Phi = self.K0 / self.Phi
-        # Enforce continuity at the 'edge of black'.
-        self.set_continuous_slope()
+        if improve:
+            # Enforce continuity at the 'edge of black' and derive K0 and Phi.
+            self.set_continuous_slope()
 
     def display_from_linear(self, C_linear):
         ''' Convert physical intensity to display values. '''
@@ -778,19 +870,19 @@ class GammaCorrect(object):
 # Note that, despite the nominal gamma=2.4, the function overall is designed
 # to approximate gamma=2.2.
 
-srgb_gamma_corrector = GammaCorrect(
+srgb_gamma_converter = GammaConverterHybrid(
     gamma=2.4, a=0.055, K0=0.03928, Phi=12.92)
 
 # Rec 2020 gamma correction, for UHDTV.
 #   https://en.wikipedia.org/wiki/Rec._2020, accessed 1 Apr 2015.
 
 # Rec 2020/UHDTV for 10 bits per component.
-uhdtv_10_gamma_corrector = GammaCorrect(
-	gamma=(1.0/0.45), a=0.099, K0=0.01, Phi=4.5)	# FIXME: K0 is wrong.
+uhdtv_10_gamma_converter = GammaConverterHybrid(
+	gamma=(1.0/0.45), a=0.099, K0=(4.5*0.018), Phi=4.5)
 
 # Rec 2020/UHDTV for 12 bits per component.
-uhdtv_12_gamma_corrector = GammaCorrect(
-	gamma=(1.0/0.45), a=0.0993, K0=0.01, Phi=4.5)	# FIXME: K0 is wrong.
+uhdtv_12_gamma_converter = GammaConverterHybrid(
+	gamma=(1.0/0.45), a=0.0993, K0=(4.5*0.0181), Phi=4.5)
 
 #
 # Color clipping - Physical color values may exceed the what the display can show,
@@ -963,6 +1055,12 @@ class ColorConverter(object):
             raise ValueError('Invalid gamma correction method %s' % (str(gamma_method)))
         self.gamma_method = gamma_method
         self.gamma_value  = gamma_value
+        if gamma_method == GAMMA_CORRECT_POWER:
+            self.gamma_converter = GammaConverterPower(gamma=gamma_value)
+        elif gamma_method == GAMMA_CORRECT_SRGB:
+            self.gamma_converter = GammaConverterSrgb()
+        else:
+            raise ValueError('Invalid gamma correction method %s' % (str(gamma_method)))
 
     def init_clipping(self, clip_method):
         '''Specify the color clipping method.'''
@@ -1256,7 +1354,8 @@ def init (
     gamma_method   = GAMMA_CORRECT_SRGB,
     gamma_value    = STANDARD_GAMMA,
     clip_method    = CLIP_ADD_WHITE,
-    bit_depth      = 8):
+    bit_depth      = 8,
+    verbose        = True):
     ''' Initialize. '''
     global color_converter
     color_converter = ColorConverter(
@@ -1268,7 +1367,8 @@ def init (
         gamma_value    = gamma_value,
         clip_method    = clip_method,
         bit_depth      = bit_depth)
-    #color_converter.dump()
+    if verbose:
+        color_converter.dump()
 
 
 init()
