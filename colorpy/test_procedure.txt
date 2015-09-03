@@ -4,6 +4,7 @@ Some of these need to run from a normal Windows shell, not GitBash.
 They are written as if run from ColorPy\colorpy.
 
 clean:
+    Basically, delete files that git considers untracked.
     rm *.pyc
     rm *.png
     rm pantone_references.html

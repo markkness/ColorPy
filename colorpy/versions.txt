@@ -21,7 +21,6 @@ Possible future improvements:
 
 Wanted for next release:
 	* Rec. 2020. New chromaticities and gamma correction, and variable bit depths.
-      Create a colormodel object to manage all this.
 	* Complete sharkfin.
     * dwl as part of Spectrum metadata?
 	* Complete file rearrangements.
@@ -29,7 +28,6 @@ Wanted for next release:
     * Documentation improvements on GitHub.
 	* Packaging. Anaconda Binstar?
 	* Publishing on PyPi and markkness.net.
-    * Write simple test plan (Py2 + Py3) via conda.
 
 
 Added to alpha:
@@ -47,6 +45,10 @@ Added to alpha:
 	The new and old structures are closely related, and there are calls
 	to make it easy to convert between them.
 
+    * New ColorConverter() object.
+    There is now an object that keeps track of the chromaticities and
+    other parameters that define the color conversions.
+
 	* New atomic line spectra for hydrogen, helium, and neon.
 
     * New purecolors.py module, for calculations of pure
@@ -58,6 +60,7 @@ Added to alpha:
 	to be run via standard test runners, e.g. 'python -m unittest discover'.
 	However you can still run tests.py to exercise them.
     Also run figures.py to test all of the figures.
+    The document test_procedure.txt describes the test suite to test ColorPy.
 
     * Minor improvements.
     Patch plots can be given colors for the text labels, or they will choose
