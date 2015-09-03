@@ -1,0 +1,46 @@
+Testing Procedure for ColorPy
+
+Some of these need to run from a normal Windows shell, not GitBash.
+They are written as if run from ColorPy\colorpy.
+
+clean:
+    rm *.pyc
+    rm *.png
+    rm pantone_references.html
+    rm visible_spectrum.html
+    rmdir __pycache__
+
+python -m unittest discover
+    Runs all unit tests.
+
+python test.py
+    Old-style test framework.
+
+python examples.py
+
+python figures.py
+
+Manually examine figures *.png and html documents *.html.
+
+Run data massage.
+    cd data
+    rm CIE_XYZ_1931_5nm.txt
+    rm CVRL_D65_1nm.txt
+    rm CVRL_XYZ_1931_1nm.txt
+    python massage_CIEXYZ.py
+    Manually examine the new text files.
+    cd ..
+    
+cd ..
+pyflakes colorpy
+cd colorpy
+    Run pyflakes passing folder as argument.
+
+activate py3
+    Activate Python3 conda environment.
+    
+Repeat test suite with Python3.
+
+deactivate
+    Return to normal Python 2.7 environment.
+    

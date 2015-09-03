@@ -613,6 +613,7 @@ def srgb_gamma_correct (x):
 
 #
 # New gamma correction...
+# FIXME: Is this even used??? It is tested, but ColorConverter() may not use it!!!
 #
 
 class GammaCorrect(object):
@@ -681,7 +682,7 @@ class GammaCorrect(object):
     # The values of K0 and Phi really come naturally from gamma and a,
     # if the two regions connect sensibly.
     # Setting K0 and Phi to enforce value and slope continuity works well.
-    # An alternate method to enforce continuity only seems less useful...
+    # Alternate methods to enforce only continuity seem less useful...
     # See:
     #     https://en.wikipedia.org/wiki/SRGB
     #     https://en.wikipedia.org/wiki/Rec._2020
@@ -729,6 +730,7 @@ class GammaCorrect(object):
 
     def set_continuous_only(self):
         ''' Try and enforce continuity only, which does not work well. '''
+        # This is not currently useful.
         # Try and improve K0, Phi values.
         # This does nothing after set_continuous_slope().
         # Before it does not seem to converge!
@@ -740,6 +742,7 @@ class GammaCorrect(object):
 
     def improve_K0(self):
         ''' Check K0 value. This converges poorly as an improvement attempt. '''
+        # This is not currently useful.
         K0_start = self.K0
         lhs_term = ((self.K0 + self.a) / (self.one_plus_a))
         lhs = math.pow(lhs_term, self.gamma)
@@ -753,6 +756,7 @@ class GammaCorrect(object):
 
     def improve_Phi(self):
         ''' Automatically set Phi to enforce continuity at the edge of black. '''
+        # This is not currently useful.
         # This seems to work well for sRGB and poorly for UHDTV.
         # Perhaps there are two solutions???
         Phi_start = self.Phi
