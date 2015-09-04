@@ -363,9 +363,9 @@ srgb_gamma_converter = GammaConverterHybrid(
 #   https://en.wikipedia.org/wiki/Rec._2020, accessed 1 Apr 2015.
 
 # Rec 2020/UHDTV for 10 bits per component.
-uhdtv_10_gamma_converter = GammaConverterHybrid(
+uhdtv10_gamma_converter = GammaConverterHybrid(
 	gamma=(1.0/0.45), a=0.099, K0=(4.5*0.018), Phi=4.5)
 
 # Rec 2020/UHDTV for 12 bits per component.
-uhdtv_12_gamma_converter = GammaConverterHybrid(
+uhdtv12_gamma_converter = GammaConverterHybrid(
 	gamma=(1.0/0.45), a=0.0993, K0=(4.5*0.0181), Phi=4.5)
