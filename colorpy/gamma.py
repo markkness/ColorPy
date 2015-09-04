@@ -44,10 +44,6 @@ import math
 # With LCD displays, it is less clear (at least to me), what the genuinely
 # correct correction should be.
 
-# Available gamma correction methods.
-GAMMA_CORRECT_POWER = 0    # Simple power law, using supplied gamma exponent.
-GAMMA_CORRECT_SRGB  = 1    # sRGB correction formula.
-
 # sRGB standard effective gamma.  This exponent is not applied explicitly.
 STANDARD_GAMMA = 2.2
 
@@ -97,17 +93,8 @@ def srgb_gamma_correct (x):
         rtn = math.pow ((x + 0.055) / 1.055, 2.4)
     return rtn
 
-def srgb_gamma_invert_reference (x):
-    '''Reference implementation of sRGB standard for gamma inverse correction.'''
-    return srgb_gamma_invert(x)
-
-def srgb_gamma_correct_reference (x):
-    '''Reference implementation of sRGB standard for gamma correction.'''
-    return srgb_gamma_correct(x)
-
 #
-# New gamma correction...
-# FIXME: Is this even used??? It is tested, but ColorConverter() may not use it!!!
+# Gamma converter objects.
 #
 
 class GammaConverter(object):
@@ -123,7 +110,7 @@ class GammaConverter(object):
 
     def display_from_linear(self, C_linear):
         ''' Convert linear physical intensity to nonlinear display values. '''
-        # This is gamma inversion, not gamma correction.
+        # This is gamma inversion.
         raise NotImplementedError
 
     def linear_from_display(self, C_display):
@@ -141,7 +128,7 @@ class GammaConverterPower(GammaConverter):
 
     def display_from_linear(self, C_linear):
         ''' Convert linear physical intensity to nonlinear display values. '''
-        # This is gamma inversion, not gamma correction.
+        # This is gamma inversion.
         C_display = simple_gamma_invert (C_linear, self.gamma)
         return C_display
 
@@ -152,12 +139,14 @@ class GammaConverterPower(GammaConverter):
         return C_linear
 
 
-class GammaConverterSrgb(GammaConverter):
-    ''' Gamma correction according to sRGB standard. '''
+class GammaConverterSrgbReference(GammaConverter):
+    ''' Gamma correction according to sRGB standard.
+
+    This is a reference implementation only, and not normally used. '''
 
     def display_from_linear(self, C_linear):
         ''' Convert linear physical intensity to nonlinear display values. '''
-        # This is gamma inversion, not gamma correction.
+        # This is gamma inversion.
         C_display = srgb_gamma_invert (C_linear)
         return C_display
 
@@ -180,7 +169,7 @@ class GammaConverterFunction(GammaConverter):
 
     def display_from_linear(self, C_linear):
         ''' Convert linear physical intensity to nonlinear display values. '''
-        # This is gamma inversion, not gamma correction.
+        # This is gamma inversion.
         C_display = self.display_from_linear_function (C_linear)
         return C_display
 
@@ -351,10 +340,12 @@ class GammaConverterHybrid(GammaConverter):
         print (msg)
 
 
+# Some explicitly defined gamma conversion functions:
+
 # sRGB gamma correction, for HDTV.
 #   http://en.wikipedia.org/wiki/SRGB, accessed 1 Apr 2015
-# Note that, despite the nominal gamma=2.4, the function overall is designed
-# to approximate gamma=2.2.
+# Note that, despite the nominal gamma=2.4,
+# the function overall is designed to approximate gamma=2.2.
 
 srgb_gamma_converter = GammaConverterHybrid(
     gamma=2.4, a=0.055, K0=0.03928, Phi=12.92)

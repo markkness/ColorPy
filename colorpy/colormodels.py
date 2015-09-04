@@ -558,15 +558,22 @@ def xyz_from_lab (Lab):
 # proportional to the amount of light energy present.
 #
 
+# Available gamma correction methods.
+GAMMA_CORRECT_SRGB     = 0    # sRGB/HDTV correction formula.
+GAMMA_CORRECT_UHDTV10  = 1    # Rec 2020/UHDTV for 10 bits per component.
+GAMMA_CORRECT_UHDTV12  = 2    # Rec 2020/UHDTV for 12 bits per component.
+GAMMA_CORRECT_POWER    = 3    # Simple power law, using supplied gamma exponent.
+GAMMA_CORRECT_FUNCTION = 4    # Explicitly supplied conversion functions.
+
 def display_from_linear_component(x):
     ''' Gamma invert a single value. '''
-    a = color_converter.gamma_converter.display_from_linear(x)
-    return a
+    y = color_converter.gamma_converter.display_from_linear(x)
+    return y
 
-def linear_from_display_component(a):
+def linear_from_display_component(x):
     ''' Gamma correct a single value. '''
-    x = color_converter.gamma_converter.linear_from_display(a)
-    return x
+    y = color_converter.gamma_converter.linear_from_display(x)
+    return y
 
 #
 # Color clipping - Physical color values may exceed the what the display can show,
@@ -646,27 +653,22 @@ def irgb_string_from_xyz (xyz):
 # Object to hold color conversion values.
 #
 
-# Note: In the previous version of this code, you could specify arbitrary
-# functions for the gamma conversions. This is now not directly possible,
-# instead you choose the method from the enumerated list. This should be
-# easier and more reliable for most all actual usage. If the arbitary
-# functions are needed, a new gamma method is needed.
-#
-# FIXME: Add this new gamma method.
 # FIXME: Should be able to specify maximum value rather than bit depth.
 
 class ColorConverter(object):
     ''' An object to keep track of how to convert between color spaces. '''
 
     def __init__ (self,
-        phosphor_red   = SRGB_Red,
-        phosphor_green = SRGB_Green,
-        phosphor_blue  = SRGB_Blue,
-        white_point    = SRGB_White,
-        gamma_method   = gamma.GAMMA_CORRECT_SRGB,
-        gamma_value    = gamma.STANDARD_GAMMA,
-        clip_method    = CLIP_ADD_WHITE,
-        bit_depth      = 8):
+        phosphor_red       = SRGB_Red,
+        phosphor_green     = SRGB_Green,
+        phosphor_blue      = SRGB_Blue,
+        white_point        = SRGB_White,
+        gamma_method       = GAMMA_CORRECT_SRGB,
+        gamma_value        = None,
+        gamma_correct_func = None,
+        gamma_invert_func  = None,
+        clip_method        = CLIP_ADD_WHITE,
+        bit_depth          = 8):
         ''' Initialize the color conversions. '''
         # xyz <-> rgb conversions need phosphor chromaticities and white point.
         self.init_rgb_xyz(
@@ -674,7 +676,8 @@ class ColorConverter(object):
         # xyz <-> Luv and Lab conversions need white point.
         self.init_Luv_Lab_white_point(white_point)
         # Gamma correction method.
-        self.init_gamma_correction(gamma_method, gamma_value)
+        self.init_gamma_correction(
+            gamma_method, gamma_value, gamma_correct_func, gamma_invert_func)
         # Clipping method.
         self.init_clipping(clip_method)
         # Bit depth for integer rgb values.
@@ -720,25 +723,47 @@ class ColorConverter(object):
         xyz_normalize_Y1 (self.reference_white)
         self.reference_u_prime, self.reference_v_prime = uv_primes (self.reference_white)
 
-    def init_gamma_correction(self, gamma_method, gamma_value):
+    def init_gamma_correction(self,
+        gamma_method,          # gamma conversion method.
+        gamma_value,           # gamma exponent value, for GAMMA_CORRECT_POWER.
+        gamma_correct_func,    # linear_from_display function, for GAMMA_CORRECT_FUNCTION.
+        gamma_invert_func):    # display_from_linear function, for GAMMA_CORRECT_FUNCTION.
         '''Specify the gamma correction method.
 
-        Gamma correction converts rgb components, in 0.0 - 1.0 range, between
-        linear values, proportional to light intensity, and
-        displayable values, proportional to palette values.
+        Gamma correction converts rgb components, in 0.0 - 1.0 range,
+        between linear values, proportional to light intensity,
+        and displayable values, proportional to palette values.
 
         The choices for the method:
+        GAMMA_CORRECT_SRGB:
+            Apply the sRGB correction formula, with improvements to K0, Phi.
+            The gamma exponent, and correction and inversion functions are ignored.
+            The effective gamma is about 2.2.
+        GAMMA_CORRECT_UHDTV10:
+            Apply the UHDTV/Rec-2020 correction formula, for 10-bit color depth.
+            The gamma exponent, and correction and inversion functions are ignored.
+        GAMMA_CORRECT_UHDTV12:
+            Apply the UHDTV/Rec-2020 correction formula, for 12-bit color depth.
+            The gamma exponent, and correction and inversion functions are ignored.
         GAMMA_CORRECT_POWER:
             Apply a simple exponent conversion.
-            The gamma value should be specified.
-        GAMMA_CORRECT_SRGB:
-            Apply the sRGB correction formula.
-            The gamma exponent is ignored. It is effectively 2.2.
+            The gamma exponent value should be specified.
+        GAMMA_CORRECT_FUNCTION:
+            Apply explicitly supplied correction and inversion functions.
+            The gamma exponent is ignored.
         '''
-        if gamma_method == gamma.GAMMA_CORRECT_POWER:
+        if gamma_method == GAMMA_CORRECT_SRGB:
+            self.gamma_converter = gamma.srgb_gamma_converter
+        elif gamma_method == GAMMA_CORRECT_UHDTV10:
+            self.gamma_converter = gamma.uhdtv10_gamma_converter
+        elif gamma_method == GAMMA_CORRECT_UHDTV12:
+            self.gamma_converter = gamma.uhdtv12_gamma_converter
+        elif gamma_method == GAMMA_CORRECT_POWER:
             self.gamma_converter = gamma.GammaConverterPower(gamma=gamma_value)
-        elif gamma_method == gamma.GAMMA_CORRECT_SRGB:
-            self.gamma_converter = gamma.GammaConverterSrgb()
+        elif gamma_method == GAMMA_CORRECT_FUNCTION:
+            self.gamma_converter = gamma.GammaConverterFunction(
+                display_from_linear_function=gamma_invert_func,
+                linear_from_display_function=gamma_correct_func)
         else:
             raise ValueError('Invalid gamma correction method %s' % (str(gamma_method)))
 
@@ -906,33 +931,31 @@ class ColorConverter(object):
         return clipped
 
     # Gamma correction, to convert between linear and displayable values.
-    # Linear = Component value is proportional to physical light intensity.
-    # Displayable = Component value is appropriate to display on monitor.
+    # Linear  = Component value is proportional to physical light intensity.
+    # Display = Component value is appropriate to display on monitor.
 
     def display_from_linear_component(self, x):
-        ''' Gamma adjust an rgb component (range 0.0 - 1.0) to convert
-        from linear to displayable values. '''
-        # This is gamma inversion, not gamma correction.
+        ''' Gamma invert a value (nominal range 0.0 - 1.0)
+        to convert from linear to displayable values. '''
         y = self.gamma_converter.display_from_linear(x)
         return y
 
     def linear_from_display_component(self, x):
-        ''' Gamma adjust an rgb component (range 0.0 - 1.0) to convert
-        from displayable to linear values. '''
-        # This is gamma correction.
+        ''' Gamma correct a value (nominal range 0.0 - 1.0)
+        to convert from displayable to linear values. '''
         y = self.gamma_converter.linear_from_display(x)
         return y
 
     def display_from_linear(self, rgb):
-        ''' Gamma adjust an rgb color (range 0.0 - 1.0) to convert
-        from linear to displayable values. '''
+        ''' Gamma invert an rgb color (nominal range 0.0 - 1.0)
+        to convert from linear to displayable values. '''
         rgb[0] = self.gamma_converter.display_from_linear(rgb[0])
         rgb[1] = self.gamma_converter.display_from_linear(rgb[1])
         rgb[2] = self.gamma_converter.display_from_linear(rgb[2])
 
     def linear_from_display(self, rgb):
-        ''' Gamma adjust an rgb color (range 0.0 - 1.0) to convert
-        from displayable to linear values. '''
+        ''' Gamma correct an rgb color (nominal range 0.0 - 1.0)
+        to convert from displayable to linear values. '''
         rgb[0] = self.gamma_converter.linear_from_display(rgb[0])
         rgb[1] = self.gamma_converter.linear_from_display(rgb[1])
         rgb[2] = self.gamma_converter.linear_from_display(rgb[2])
@@ -1017,26 +1040,30 @@ class ColorConverter(object):
 color_converter = None
 
 def init (
-    phosphor_red   = SRGB_Red,
-    phosphor_green = SRGB_Green,
-    phosphor_blue  = SRGB_Blue,
-    white_point    = SRGB_White,
-    gamma_method   = gamma.GAMMA_CORRECT_SRGB,
-    gamma_value    = gamma.STANDARD_GAMMA,
-    clip_method    = CLIP_ADD_WHITE,
-    bit_depth      = 8,
-    verbose        = False):
+    phosphor_red       = SRGB_Red,
+    phosphor_green     = SRGB_Green,
+    phosphor_blue      = SRGB_Blue,
+    white_point        = SRGB_White,
+    gamma_method       = GAMMA_CORRECT_SRGB,
+    gamma_value        = None,
+    gamma_correct_func = None,
+    gamma_invert_func  = None,
+    clip_method        = CLIP_ADD_WHITE,
+    bit_depth          = 8,
+    verbose            = False):
     ''' Initialize. '''
     global color_converter
     color_converter = ColorConverter(
-        phosphor_red   = phosphor_red,
-        phosphor_green = phosphor_green,
-        phosphor_blue  = phosphor_blue,
-        white_point    = white_point,
-        gamma_method   = gamma_method,
-        gamma_value    = gamma_value,
-        clip_method    = clip_method,
-        bit_depth      = bit_depth)
+        phosphor_red       = phosphor_red,
+        phosphor_green     = phosphor_green,
+        phosphor_blue      = phosphor_blue,
+        white_point        = white_point,
+        gamma_method       = gamma_method,
+        gamma_value        = gamma_value,
+        gamma_correct_func = gamma_correct_func,
+        gamma_invert_func  = gamma_invert_func,
+        clip_method        = clip_method,
+        bit_depth          = bit_depth)
     if verbose:
         color_converter.dump()
 
