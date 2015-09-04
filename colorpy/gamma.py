@@ -59,17 +59,17 @@ STANDARD_GAMMA = 2.2
 # [Poynton, Gamma FAQ p.5, p.9, Hall, p. 121]
 POYNTON_GAMMA = 2.45
 
-# Simple power laws for gamma correction
+# Simple power laws for gamma correction.
 
 def simple_gamma_invert (x, gamma_exponent):
-    '''Simple power law for gamma inverse correction.'''
+    ''' Simple power law for gamma inverse correction. '''
     if x <= 0.0:
         return x
     else:
         return math.pow (x, 1.0 / gamma_exponent)
 
 def simple_gamma_correct (x, gamma_exponent):
-    '''Simple power law for gamma correction.'''
+    ''' Simple power law for gamma correction. '''
     if x <= 0.0:
         return x
     else:

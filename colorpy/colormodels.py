@@ -1016,7 +1016,7 @@ def init (
     gamma_value    = gamma.STANDARD_GAMMA,
     clip_method    = CLIP_ADD_WHITE,
     bit_depth      = 8,
-    verbose        = True):
+    verbose        = False):
     ''' Initialize. '''
     global color_converter
     color_converter = ColorConverter(
