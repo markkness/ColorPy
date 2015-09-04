@@ -98,14 +98,13 @@ class TestGammaCorrection(unittest.TestCase):
 
     def test_gamma_srgb(self, verbose=False):
         ''' Test sRGB gamma correction formula. '''
-        msg = 'Testing GammaConverterSrgb():'
-        if verbose:
-            print (msg)
+        if verbose: print ('test_gamma_rgb():')
         converter = gamma.GammaConverterSrgb()
         self.check_gamma_correction_num(converter, 10, verbose)
 
     def test_gamma_power(self, verbose=False):
         ''' Test simple power law gamma correction (can supply exponent). '''
+        if verbose: print ('test_gamma_power():')
         gamma_set = [0.17, 0.5, 1.0, 1.3, 2.5, 10.24]
         for gamma_value in gamma_set:
             msg = 'Testing GammaConverterPower(gamma=%g):' % (gamma_value)
@@ -116,9 +115,7 @@ class TestGammaCorrection(unittest.TestCase):
 
     def test_gamma_function(self, verbose=False):
         ''' Test gamma correction with arbitrary functions. '''
-        msg = 'Testing GammaConverterFunction():'
-        if verbose:
-            print (msg)
+        if verbose: print ('Testing GammaConverterFunction():')
         # Use convenient srgb standard functions.
         converter = gamma.GammaConverterFunction(
             display_from_linear_function=gamma.srgb_gamma_invert,
@@ -151,10 +148,10 @@ class TestGammaCorrection(unittest.TestCase):
 
     def test_srgb_vs_hybrid(self, verbose=False):
         ''' Test the explicit sRGB converter against a hybrid with the same parameters. '''
+        if verbose: print ('test_srgb_vs_hybrid():')
         srgb_converter1 = gamma.GammaConverterSrgb()
         srgb_converter2 = gamma.GammaConverterHybrid(
             gamma=2.4, a=0.055, K0=0.03928, Phi=12.92, improve=False)
-        if verbose: print ('test_srgb_vs_hybrid():')
         num = 5
         for i in range (num):
             x = 1.2 * random.random() - 0.2
@@ -178,9 +175,9 @@ class TestGammaCorrection(unittest.TestCase):
 
     def test_srgb_coverage(self, verbose=False):
         ''' Coverage test in both linear and exponential regions. '''
+        if verbose: print ('test_srgb_coverage():')
         srgb_converter = gamma.GammaConverterHybrid(
             gamma=2.4, a=0.055, K0=0.03928, Phi=12.92)
-        if verbose: print ('test_srgb_coverage():')
         x1 = 0.00005    # Linear range.
         self.check_gamma_correction(srgb_converter, x1, verbose)
         x2 = 0.5        # Pseudo-exponential range.
@@ -188,16 +185,16 @@ class TestGammaCorrection(unittest.TestCase):
 
     def test_color_gamma_converter(self, verbose=False):
         ''' Test that conversions via the ColorConverter and GammaConverter are the same. '''
+        if verbose: print ('test_color_gamma_converter():')
         # Srgb is a convenient test case.
         color_converter = colormodels.ColorConverter(
             gamma_method=gamma.GAMMA_CORRECT_SRGB)
         gamma_converter = gamma.GammaConverterSrgb()
         values = [-0.05, 0.00005, 0.0005, 0.005, 0.05, 0.5, 5.0]
         tolerance = 1.0e-14
-        if verbose: print ('test_color_gamma_converter():')
         for value in values:
             # Direction 1.
-            x1 = color_converter.gamma_display_from_linear_component(value)
+            x1 = color_converter.display_from_linear_component(value)
             x2 = gamma_converter.display_from_linear(value)
             error1 = math.fabs(x2 - x2)
             msg1 = 'y=%.8f    x1=%.8f  x2=%.8f    error=%.8f' % (value, x1, x2, error1)
@@ -205,8 +202,34 @@ class TestGammaCorrection(unittest.TestCase):
                 print (msg1)
             self.assertLessEqual(error1, tolerance)
             # Direction 2.
-            y1 = color_converter.gamma_linear_from_display_component(value)
+            y1 = color_converter.linear_from_display_component(value)
             y2 = gamma_converter.linear_from_display(value)
+            error2 = math.fabs(y2 - y2)
+            msg2 = 'x=%.8f    y1=%.8f  y2=%.8f    error=%.8f' % (value, y1, y2, error2)
+            if verbose:
+                print (msg2)
+            self.assertLessEqual(error2, tolerance)
+
+    def test_free_functions(self, verbose=False):
+        ''' Test the legacy api free functions for gamma conversions. '''
+        if verbose: print ('test_free_functions():')
+        # Use power-function gamma to test that as well.
+        color_converter = colormodels.ColorConverter(
+            gamma_method=gamma.GAMMA_CORRECT_POWER, gamma_value=2.2)
+        values = [-0.05, 0.00005, 0.0005, 0.005, 0.05, 0.5, 5.0]
+        tolerance = 1.0e-14
+        for value in values:
+            # Direction 1.
+            x1 = color_converter.display_from_linear_component(value)
+            x2 = colormodels.display_from_linear_component(value)
+            error1 = math.fabs(x2 - x2)
+            msg1 = 'y=%.8f    x1=%.8f  x2=%.8f    error=%.8f' % (value, x1, x2, error1)
+            if verbose:
+                print (msg1)
+            self.assertLessEqual(error1, tolerance)
+            # Direction 2.
+            y1 = color_converter.linear_from_display_component(value)
+            y2 = colormodels.linear_from_display_component(value)
             error2 = math.fabs(y2 - y2)
             msg2 = 'x=%.8f    y1=%.8f  y2=%.8f    error=%.8f' % (value, y1, y2, error2)
             if verbose:

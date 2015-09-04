@@ -546,6 +546,29 @@ def xyz_from_lab (Lab):
     return color_converter.xyz_from_lab(Lab)
 
 #
+# Gamma correction
+#
+# Non-gamma corrected rgb values, also called non-linear rgb values,
+# correspond to palette register entries [although here they are kept
+# in the range 0.0 to 1.0.]  The numerical values are not proportional
+# to the amount of light energy present.
+#
+# Gamma corrected rgb values, also called linear rgb values,
+# do not correspond to palette entries.  The numerical values are
+# proportional to the amount of light energy present.
+#
+
+def display_from_linear_component(x):
+    ''' Gamma invert a single value. '''
+    a = color_converter.gamma_converter.display_from_linear(x)
+    return a
+
+def linear_from_display_component(a):
+    ''' Gamma correct a single value. '''
+    x = color_converter.gamma_converter.linear_from_display(a)
+    return x
+
+#
 # Color clipping - Physical color values may exceed the what the display can show,
 #   either because the color is too pure (indicated by negative rgb values), or
 #   because the color is too bright (indicated by rgb values > 1.0).
@@ -712,10 +735,6 @@ class ColorConverter(object):
             Apply the sRGB correction formula.
             The gamma exponent is ignored. It is effectively 2.2.
         '''
-        if not gamma_method in [gamma.GAMMA_CORRECT_POWER, gamma.GAMMA_CORRECT_SRGB]:
-            raise ValueError('Invalid gamma correction method %s' % (str(gamma_method)))
-        self.gamma_method = gamma_method
-        self.gamma_value  = gamma_value
         if gamma_method == gamma.GAMMA_CORRECT_POWER:
             self.gamma_converter = gamma.GammaConverterPower(gamma=gamma_value)
         elif gamma_method == gamma.GAMMA_CORRECT_SRGB:
@@ -890,43 +909,33 @@ class ColorConverter(object):
     # Linear = Component value is proportional to physical light intensity.
     # Displayable = Component value is appropriate to display on monitor.
 
-    def gamma_display_from_linear_component(self, x):
+    def display_from_linear_component(self, x):
         ''' Gamma adjust an rgb component (range 0.0 - 1.0) to convert
         from linear to displayable values. '''
         # This is gamma inversion, not gamma correction.
-        if self.gamma_method == gamma.GAMMA_CORRECT_POWER:
-            y = gamma.simple_gamma_invert (x, self.gamma_value)
-        elif self.gamma_method == gamma.GAMMA_CORRECT_SRGB:
-            y = gamma.srgb_gamma_invert (x)
-        else:
-            raise ValueError('Invalid gamma correction method %s' % (str(self.gamma_method)))
+        y = self.gamma_converter.display_from_linear(x)
         return y
 
-    def gamma_linear_from_display_component(self, x):
+    def linear_from_display_component(self, x):
         ''' Gamma adjust an rgb component (range 0.0 - 1.0) to convert
         from displayable to linear values. '''
         # This is gamma correction.
-        if self.gamma_method == gamma.GAMMA_CORRECT_POWER:
-            y = gamma.simple_gamma_correct (x, self.gamma_value)
-        elif self.gamma_method == gamma.GAMMA_CORRECT_SRGB:
-            y = gamma.srgb_gamma_correct (x)
-        else:
-            raise ValueError('Invalid gamma correction method %s' % (str(self.gamma_method)))
+        y = self.gamma_converter.linear_from_display(x)
         return y
 
-    def gamma_display_from_linear(self, rgb):
+    def display_from_linear(self, rgb):
         ''' Gamma adjust an rgb color (range 0.0 - 1.0) to convert
         from linear to displayable values. '''
-        rgb[0] = self.gamma_display_from_linear_component(rgb[0])
-        rgb[1] = self.gamma_display_from_linear_component(rgb[1])
-        rgb[2] = self.gamma_display_from_linear_component(rgb[2])
+        rgb[0] = self.gamma_converter.display_from_linear(rgb[0])
+        rgb[1] = self.gamma_converter.display_from_linear(rgb[1])
+        rgb[2] = self.gamma_converter.display_from_linear(rgb[2])
 
-    def gamma_linear_from_display(self, rgb):
+    def linear_from_display(self, rgb):
         ''' Gamma adjust an rgb color (range 0.0 - 1.0) to convert
         from displayable to linear values. '''
-        rgb[0] = self.gamma_linear_from_display_component(rgb[0])
-        rgb[1] = self.gamma_linear_from_display_component(rgb[1])
-        rgb[2] = self.gamma_linear_from_display_component(rgb[2])
+        rgb[0] = self.gamma_converter.linear_from_display(rgb[0])
+        rgb[1] = self.gamma_converter.linear_from_display(rgb[1])
+        rgb[2] = self.gamma_converter.linear_from_display(rgb[2])
 
     # Scaling from 0.0 - 1.0 range to integer values 0 - 2^(bitdepth) - 1.
 
@@ -978,7 +987,7 @@ class ColorConverter(object):
         clipped_intensity = self.clip_color_intensity(rgb)
 
         # gamma correction
-        self.gamma_display_from_linear(rgb)
+        self.display_from_linear(rgb)
 
         # Scale to 0 - 2^B - 1.
         irgb = self.scale_int_from_float(rgb)
@@ -997,7 +1006,7 @@ class ColorConverter(object):
         '''Convert a displayable (gamma corrected) irgb value (range 0 - 2^B - 1) into a linear rgb value (range 0.0 - 1.0).'''
         # Scale to 0.0 - 1.0, and gamma correct.
         rgb = self.scale_float_from_int(irgb)
-        self.gamma_linear_from_display(rgb)
+        self.linear_from_display(rgb)
         return rgb
 
 #
