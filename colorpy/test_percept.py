@@ -33,6 +33,7 @@ import random
 import unittest
 
 import colormodels
+import percept
 
 # Functions to calculate the cutoff point between various algorithms.
 # These do not really belong here...
@@ -138,8 +139,8 @@ class TestPerceptualUniformSpaces(unittest.TestCase):
 
     def check_L_luminance_inverse_1(self, y0, verbose):
         ''' Check that L_luminance_inverse() is the inverse of L_luminance() for the given y0. '''
-        L0 = colormodels.L_luminance (y0)
-        y1 = colormodels.L_luminance_inverse (L0)
+        L0 = percept.L_luminance (y0)
+        y1 = percept.L_luminance_inverse (L0)
         # Check error.
         error = math.fabs (y1 - y0)
         tolerance = 1.0e-13
@@ -151,8 +152,8 @@ class TestPerceptualUniformSpaces(unittest.TestCase):
 
     def check_L_luminance_inverse_2(self, L0, verbose):
         ''' Check that L_luminance() is the inverse of L_luminance_inverse() for the given L0. '''
-        y0 = colormodels.L_luminance_inverse (L0)
-        L1 = colormodels.L_luminance (y0)
+        y0 = percept.L_luminance_inverse (L0)
+        L1 = percept.L_luminance (y0)
         # Check error.
         error = math.fabs (L1 - L0)
         tolerance = 1.0e-10
@@ -167,7 +168,7 @@ class TestPerceptualUniformSpaces(unittest.TestCase):
         # Test with specific values on both sides of cutoff value.
         vals = [0.1, 0.5, 0.9, 1.1, 2.0, 10.0]
         for val in vals:
-            y0 = val * colormodels.L_LUM_CUTOFF
+            y0 = val * percept.L_LUM_CUTOFF
             self.check_L_luminance_inverse_1(y0, verbose)
         # Test with random fairly small y values.
         for i in range (20):
@@ -183,7 +184,7 @@ class TestPerceptualUniformSpaces(unittest.TestCase):
         # Test with specific values on both sides of cutoff value.
         vals = [0.1, 0.5, 0.9, 1.1, 2.0, 10.0]
         for val in vals:
-            L0 = val * colormodels.L_LUM_C * colormodels.L_LUM_CUTOFF
+            L0 = val * percept.L_LUM_C * percept.L_LUM_CUTOFF
             self.check_L_luminance_inverse_2(L0, verbose)
         # Test with random fairly small L values.
         for i in range (20):
@@ -198,8 +199,8 @@ class TestPerceptualUniformSpaces(unittest.TestCase):
 
     def check_Lab_f_inverse_1(self, t0, verbose):
         ''' Check that Lab_f_inverse() is the inverse of Lab_f() for the given t0. '''
-        f0 = colormodels.Lab_f (t0)
-        t1 = colormodels.Lab_f_inverse (f0)
+        f0 = percept.Lab_f (t0)
+        t1 = percept.Lab_f_inverse (f0)
         # Check error.
         error = math.fabs (t1 - t0)
         tolerance = 1.0e-13
@@ -211,8 +212,8 @@ class TestPerceptualUniformSpaces(unittest.TestCase):
 
     def check_Lab_f_inverse_2(self, f0, verbose):
         ''' Check that Lab_f() is the inverse of Lab_f_inverse() for the given f0. '''
-        t0 = colormodels.Lab_f_inverse (f0)
-        f1 = colormodels.Lab_f (t0)
+        t0 = percept.Lab_f_inverse (f0)
+        f1 = percept.Lab_f (t0)
         # Check error.
         error = math.fabs (f1 - f0)
         tolerance = 1.0e-10
@@ -227,7 +228,7 @@ class TestPerceptualUniformSpaces(unittest.TestCase):
         # Test with specific values on both sides of cutoff value.
         vals = [0.1, 0.5, 0.9, 1.1, 2.0, 10.0]
         for val in vals:
-            y0 = val * colormodels.L_LUM_CUTOFF
+            y0 = val * percept.L_LUM_CUTOFF
             self.check_Lab_f_inverse_1(y0, verbose)
         # Test with fairly small random values.
         for i in range (20):
@@ -243,7 +244,7 @@ class TestPerceptualUniformSpaces(unittest.TestCase):
         # Test with specific values on both sides of cutoff value.
         vals = [0.1, 0.5, 0.9, 1.1, 2.0, 10.0]
         for val in vals:
-            L0 = val * (colormodels.LAB_F_A * colormodels.L_LUM_CUTOFF + colormodels.LAB_F_B)
+            L0 = val * (percept.LAB_F_A * percept.L_LUM_CUTOFF + percept.LAB_F_B)
             self.check_Lab_f_inverse_2(L0, verbose)
         # Test with fairly small random values.
         for i in range (20):
@@ -258,8 +259,8 @@ class TestPerceptualUniformSpaces(unittest.TestCase):
 
     def check_uv_primes_inverse_1(self, xyz0, verbose):
         ''' Check that uv_primes() and uv_primes_inverse() are inverses. '''
-        up0, vp0 = colormodels.uv_primes (xyz0)
-        xyz1 = colormodels.uv_primes_inverse (up0, vp0, xyz0[1])
+        up0, vp0 = percept.uv_primes (xyz0)
+        xyz1 = percept.uv_primes_inverse (up0, vp0, xyz0[1])
         # Check error.
         dxyz = (xyz1 - xyz0)
         error = math.sqrt (numpy.dot (dxyz, dxyz))
@@ -272,8 +273,8 @@ class TestPerceptualUniformSpaces(unittest.TestCase):
 
     def check_uv_primes_inverse_2(self, up0, vp0, y0, verbose):
         ''' Check that uv_primes() and uv_primes_inverse() are inverses. '''
-        xyz0 = colormodels.uv_primes_inverse (up0, vp0, y0)
-        up1, vp1 = colormodels.uv_primes (xyz0)
+        xyz0 = percept.uv_primes_inverse (up0, vp0, y0)
+        up1, vp1 = percept.uv_primes (xyz0)
         # Check error.
         error_up = up1 - up0
         error_vp = vp1 - vp0
