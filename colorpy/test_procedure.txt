@@ -4,7 +4,7 @@ Some of these need to run from a normal Windows shell, not GitBash.
 They are written as if run from ColorPy\colorpy.
 
 clean:
-    Basically, delete files that git considers untracked.
+delete all files that git considers untracked.
     rm *.pyc
     rm *.png
     rm pantone_references.html
@@ -31,7 +31,7 @@ Run data massage.
     python massage_CIEXYZ.py
     Manually examine the new text files.
     cd ..
-    
+
 cd ..
 pyflakes colorpy
 cd colorpy
@@ -39,9 +39,10 @@ cd colorpy
 
 activate py3
     Activate Python3 conda environment.
-    
+
 Repeat test suite with Python3.
 
 deactivate
     Return to normal Python 2.7 environment.
-    
+
+Repeat test suite on Ubuntu (Python 2.7 only).

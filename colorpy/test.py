@@ -34,10 +34,11 @@ from __future__ import unicode_literals
 
 import unittest
 
-import test_colormodels
-import test_ciexyz
-import test_illuminants
 import test_blackbody
+import test_ciexyz
+import test_colormodels
+import test_gamma
+import test_illuminants
 import test_plots
 import test_purecolors
 import test_rayleigh
@@ -53,6 +54,7 @@ def test ():
         test_blackbody,
         test_ciexyz,
         test_colormodels,
+        test_gamma,
         test_illuminants,
         test_rayleigh,
         test_plots,

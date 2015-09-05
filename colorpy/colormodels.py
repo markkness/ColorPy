@@ -251,6 +251,8 @@ from __future__ import unicode_literals
 import math
 import numpy
 
+import gamma
+
 # The xyz constructors have some special versions to handle some common situations.
 
 def xyz_color (x, y, z = None):
@@ -543,6 +545,7 @@ def xyz_from_lab (Lab):
     '''Convert color from Lab to CIE XYZ.  Inverse of lab_from_xyz().'''
     return color_converter.xyz_from_lab(Lab)
 
+#
 # Gamma correction
 #
 # Non-gamma corrected rgb values, also called non-linear rgb values,
@@ -554,243 +557,23 @@ def xyz_from_lab (Lab):
 # do not correspond to palette entries.  The numerical values are
 # proportional to the amount of light energy present.
 #
-# This effect is particularly significant with CRT displays.
-# With LCD displays, it is less clear (at least to me), what the genuinely
-# correct correction should be.
 
 # Available gamma correction methods.
-GAMMA_CORRECT_POWER = 0    # Simple power law, using supplied gamma exponent.
-GAMMA_CORRECT_SRGB  = 1    # sRGB correction formula.
+GAMMA_CORRECT_SRGB     = 0    # sRGB/HDTV correction formula.
+GAMMA_CORRECT_UHDTV10  = 1    # Rec 2020/UHDTV for 10 bits per component.
+GAMMA_CORRECT_UHDTV12  = 2    # Rec 2020/UHDTV for 12 bits per component.
+GAMMA_CORRECT_POWER    = 3    # Simple power law, using supplied gamma exponent.
+GAMMA_CORRECT_FUNCTION = 4    # Explicitly supplied conversion functions.
 
-# sRGB standard effective gamma.  This exponent is not applied explicitly.
-STANDARD_GAMMA = 2.2
+def display_from_linear_component(x):
+    ''' Gamma invert a single value. '''
+    y = color_converter.gamma_converter.display_from_linear(x)
+    return y
 
-# Although NTSC specifies a gamma of 2.2 as standard, this is designed
-# to account for the dim viewing environments typical of TV, but not
-# computers.  Well-adjusted CRT displays have a true gamma in the range
-# 2.35 through 2.55.  We use the physical gamma value here, not 2.2,
-# thus not correcting for a dim viewing environment.
-# [Poynton, Gamma FAQ p.5, p.9, Hall, p. 121]
-POYNTON_GAMMA = 2.45
-
-# Simple power laws for gamma correction
-
-def simple_gamma_invert (x, gamma_exponent):
-    '''Simple power law for gamma inverse correction.'''
-    if x <= 0.0:
-        return x
-    else:
-        return math.pow (x, 1.0 / gamma_exponent)
-
-def simple_gamma_correct (x, gamma_exponent):
-    '''Simple power law for gamma correction.'''
-    if x <= 0.0:
-        return x
-    else:
-        return math.pow (x, gamma_exponent)
-
-# sRGB gamma correction - http://www.color.org/sRGB.xalter
-# The effect of the equations is to closely fit a straightforward
-# gamma 2.2 curve with an slight offset to allow for invertability in
-# integer math. Therefore, we are maintaining consistency with the
-# gamma 2.2 legacy images and the video industry.
-
-def srgb_gamma_invert (x):
-    '''sRGB standard for gamma inverse correction.'''
-    if x <= 0.00304:
-        rtn = 12.92 * x
-    else:
-        rtn = 1.055 * math.pow (x, 1.0/2.4) - 0.055
-    return rtn
-
-def srgb_gamma_correct (x):
-    '''sRGB standard for gamma correction.'''
-    if x <= 0.03928:
-        rtn = x / 12.92
-    else:
-        rtn = math.pow ((x + 0.055) / 1.055, 2.4)
-    return rtn
-
-#
-# New gamma correction...
-# FIXME: Is this even used??? It is tested, but ColorConverter() may not use it!!!
-#
-
-class GammaCorrect(object):
-    ''' Gamma correction formulas as used in several standards.
-
-    'display' - Color values as would be used in display code.
-    'linear'  - Color values with numbers proportional to physical intensity.
-    Both are nominally in the range 0.0 - 1.0.
-
-    The curves have a linear region near black,
-    and approximately exponential for visibly bright colors.
-    The linear region avoids numerical trouble near zero.
-
-    Note that the effective gamma exponent that this model provides,
-    is not exactly the same value as the gamma that is nominally supplied.
-    For example, sRGB uses the number gamma=2.4, but its curve actually
-    better approximates an exponent of 2.2.
-
-    C_display = Phi * C_linear,                    C_linear <  K0 / Phi
-    C_display = (1+a) * C_linear^(1/gamma) - a,    C_linear >= K0 / Phi
-
-    C_linear = C_display / Phi,                    C_display <  K0
-    C_linear = ((C_display + a) / (1+a))^gamma,    C_display >= K0
-
-    The two regions (linear/exponential) ought to connect sensibly.
-    '''
-
-    def __init__(self,
-        gamma,    # gamma exponent.
-        a,        # offset.
-        K0,       # intensity cutoff.
-        Phi):     # linear scaling.
-        self.gamma = float(gamma)
-        self.a     = float(a)
-        self.K0    = float(K0)
-        self.Phi   = float(Phi)
-        # Precompute.
-        self.one_plus_a  = 1.0 + self.a
-        self.inv_gamma   = 1.0 / self.gamma
-        self.K0_over_Phi = self.K0 / self.Phi
-        # Enforce continuity at the 'edge of black'.
-        self.set_continuous_slope()
-
-    def display_from_linear(self, C_linear):
-        ''' Convert physical intensity to display values. '''
-        if C_linear < self.K0_over_Phi:
-            # Linear region.
-            C_display = self.Phi * C_linear
-        else:
-            # Pseudo-exponential region.
-            C_linear_inv_gamma = math.pow(C_linear, self.inv_gamma)
-            C_display = self.one_plus_a * C_linear_inv_gamma - self.a
-        return C_display
-
-    def linear_from_display(self, C_display):
-        ''' Convert display values to physical intensity. '''
-        if C_display < self.K0:
-            # Linear region.
-            C_linear = C_display / self.Phi
-        else:
-            # Pseudo-exponential region.
-            C_display_term = (C_display + self.a) / self.one_plus_a
-            C_linear = math.pow(C_display_term, self.gamma)
-        return C_linear
-
-    # The values of K0 and Phi really come naturally from gamma and a,
-    # if the two regions connect sensibly.
-    # Setting K0 and Phi to enforce value and slope continuity works well.
-    # Alternate methods to enforce only continuity seem less useful...
-    # See:
-    #     https://en.wikipedia.org/wiki/SRGB
-    #     https://en.wikipedia.org/wiki/Rec._2020
-
-    # Continuity of value and slope requires:
-    #     K0 = a / (gamma - 1)
-    #     Phi = ((1+a)^gamma * (gamma-1)^(gamma-1)) /
-    #           (a^(gamma-1) * gamma^gamma)
-    #
-    # This seems to make a lot of sense to enforce.
-    # The K0 and Phi values apply to the 'edge of black' and so
-    # it is unlikely they are really carefully chosen, while the
-    # continuity condition seems natural. And it also makes sense to
-    # enforce the 'edge of black' all at once.
-
-    def set_continuous_slope(self, verbose=False):
-        ''' Automatically set K0 and Phi to enforce slope continuity. '''
-        # Enforce continuity at the 'edge of black'.
-        # This discards the original K0 and Phi.
-        K0_start  = self.K0
-        Phi_start = self.Phi
-        K0_better = (self.a / (self.gamma - 1.0))
-        Phi_term_1 = math.pow(self.one_plus_a, self.gamma)
-        Phi_term_2 = math.pow(self.gamma - 1.0, self.gamma - 1.0)
-        Phi_term_3 = math.pow(self.a, self.gamma - 1.0)
-        Phi_term_4 = math.pow(self.gamma, self.gamma)
-        Phi_better = (Phi_term_1 * Phi_term_2) / (Phi_term_3 * Phi_term_4)
-        self.K0  = K0_better
-        self.Phi = Phi_better
-        self.K0_over_Phi = self.K0 / self.Phi
-        msg = 'K0_start=%g    Phi_start=%g    K0_better=%.12f    Phi_better=%.12f' % (
-            K0_start, Phi_start, K0_better, Phi_better)
-        if verbose:
-            print (msg)
-
-    # Continuity between the linear and pseudo-exponential regions requires:
-    #     ((K0 + a) / (1+a))^gamma = K0 / Phi
-    #
-    # This can be used to check a K0 estimate.
-    # At present it does not seem to be a useful iteration.
-    # Or you could calculate Phi.
-    # That works sometimes but not reliably.
-    # Generally these routines (improve_K0, improve_Phi) are experimental,
-    # and not really successful.
-
-    def set_continuous_only(self):
-        ''' Try and enforce continuity only, which does not work well. '''
-        # This is not currently useful.
-        # Try and improve K0, Phi values.
-        # This does nothing after set_continuous_slope().
-        # Before it does not seem to converge!
-        for i in range(4):
-            # improve_K0 is not useful...
-            #self.improve_K0()
-            # improve_Phi is inconsistent...
-            self.improve_Phi()
-
-    def improve_K0(self):
-        ''' Check K0 value. This converges poorly as an improvement attempt. '''
-        # This is not currently useful.
-        K0_start = self.K0
-        lhs_term = ((self.K0 + self.a) / (self.one_plus_a))
-        lhs = math.pow(lhs_term, self.gamma)
-        rhs = self.K0 / self.Phi
-        # New K0 value that was hoped better, but actually seems worse!
-        K0_better = self.Phi * lhs
-        self.K0 = K0_better
-        msg = 'K0_start=%g    lhs=%g    rhs=%g    K0_better=%g' % (
-            K0_start, lhs, rhs, K0_better)
-        print (msg)
-
-    def improve_Phi(self):
-        ''' Automatically set Phi to enforce continuity at the edge of black. '''
-        # This is not currently useful.
-        # This seems to work well for sRGB and poorly for UHDTV.
-        # Perhaps there are two solutions???
-        Phi_start = self.Phi
-        lhs_term = ((self.K0 + self.a) / (self.one_plus_a))
-        lhs = math.pow(lhs_term, self.gamma)
-        rhs = self.K0 / self.Phi
-        # New Phi value that is ideally better.
-        # Sometimes yes, sometimes no.
-        Phi_better = self.K0 / lhs
-        self.Phi = Phi_better
-        self.K0_over_Phi = self.K0 / self.Phi
-        msg = 'Phi_start=%.12f    lhs=%g    rhs=%g    Phi_better=%.12f' % (
-            Phi_start, lhs, rhs, Phi_better)
-        print (msg)
-
-
-# sRGB gamma correction, for HDTV.
-#   http://en.wikipedia.org/wiki/SRGB, accessed 1 Apr 2015
-# Note that, despite the nominal gamma=2.4, the function overall is designed
-# to approximate gamma=2.2.
-
-srgb_gamma_corrector = GammaCorrect(
-    gamma=2.4, a=0.055, K0=0.03928, Phi=12.92)
-
-# Rec 2020 gamma correction, for UHDTV.
-#   https://en.wikipedia.org/wiki/Rec._2020, accessed 1 Apr 2015.
-
-# Rec 2020/UHDTV for 10 bits per component.
-uhdtv_10_gamma_corrector = GammaCorrect(
-	gamma=(1.0/0.45), a=0.099, K0=0.01, Phi=4.5)	# FIXME: K0 is wrong.
-
-# Rec 2020/UHDTV for 12 bits per component.
-uhdtv_12_gamma_corrector = GammaCorrect(
-	gamma=(1.0/0.45), a=0.0993, K0=0.01, Phi=4.5)	# FIXME: K0 is wrong.
+def linear_from_display_component(x):
+    ''' Gamma correct a single value. '''
+    y = color_converter.gamma_converter.linear_from_display(x)
+    return y
 
 #
 # Color clipping - Physical color values may exceed the what the display can show,
@@ -870,27 +653,22 @@ def irgb_string_from_xyz (xyz):
 # Object to hold color conversion values.
 #
 
-# Note: In the previous version of this code, you could specify arbitrary
-# functions for the gamma conversions. This is now not directly possible,
-# instead you choose the method from the enumerated list. This should be
-# easier and more reliable for most all actual usage. If the arbitary
-# functions are needed, a new gamma method is needed.
-#
-# FIXME: Add this new gamma method.
 # FIXME: Should be able to specify maximum value rather than bit depth.
 
 class ColorConverter(object):
     ''' An object to keep track of how to convert between color spaces. '''
 
     def __init__ (self,
-        phosphor_red   = SRGB_Red,
-        phosphor_green = SRGB_Green,
-        phosphor_blue  = SRGB_Blue,
-        white_point    = SRGB_White,
-        gamma_method   = GAMMA_CORRECT_SRGB,
-        gamma_value    = STANDARD_GAMMA,
-        clip_method    = CLIP_ADD_WHITE,
-        bit_depth      = 8):
+        phosphor_red       = SRGB_Red,
+        phosphor_green     = SRGB_Green,
+        phosphor_blue      = SRGB_Blue,
+        white_point        = SRGB_White,
+        gamma_method       = GAMMA_CORRECT_SRGB,
+        gamma_value        = None,
+        gamma_correct_func = None,
+        gamma_invert_func  = None,
+        clip_method        = CLIP_ADD_WHITE,
+        bit_depth          = 8):
         ''' Initialize the color conversions. '''
         # xyz <-> rgb conversions need phosphor chromaticities and white point.
         self.init_rgb_xyz(
@@ -898,7 +676,8 @@ class ColorConverter(object):
         # xyz <-> Luv and Lab conversions need white point.
         self.init_Luv_Lab_white_point(white_point)
         # Gamma correction method.
-        self.init_gamma_correction(gamma_method, gamma_value)
+        self.init_gamma_correction(
+            gamma_method, gamma_value, gamma_correct_func, gamma_invert_func)
         # Clipping method.
         self.init_clipping(clip_method)
         # Bit depth for integer rgb values.
@@ -944,25 +723,49 @@ class ColorConverter(object):
         xyz_normalize_Y1 (self.reference_white)
         self.reference_u_prime, self.reference_v_prime = uv_primes (self.reference_white)
 
-    def init_gamma_correction(self, gamma_method, gamma_value):
+    def init_gamma_correction(self,
+        gamma_method,          # gamma conversion method.
+        gamma_value,           # gamma exponent value, for GAMMA_CORRECT_POWER.
+        gamma_correct_func,    # linear_from_display function, for GAMMA_CORRECT_FUNCTION.
+        gamma_invert_func):    # display_from_linear function, for GAMMA_CORRECT_FUNCTION.
         '''Specify the gamma correction method.
 
-        Gamma correction converts rgb components, in 0.0 - 1.0 range, between
-        linear values, proportional to light intensity, and
-        displayable values, proportional to palette values.
+        Gamma correction converts rgb components, in 0.0 - 1.0 range,
+        between linear values, proportional to light intensity,
+        and displayable values, proportional to palette values.
 
         The choices for the method:
+        GAMMA_CORRECT_SRGB:
+            Apply the sRGB correction formula, with improvements to K0, Phi.
+            The gamma exponent, and correction and inversion functions are ignored.
+            The effective gamma is about 2.2.
+        GAMMA_CORRECT_UHDTV10:
+            Apply the UHDTV/Rec-2020 correction formula, for 10-bit color depth.
+            The gamma exponent, and correction and inversion functions are ignored.
+        GAMMA_CORRECT_UHDTV12:
+            Apply the UHDTV/Rec-2020 correction formula, for 12-bit color depth.
+            The gamma exponent, and correction and inversion functions are ignored.
         GAMMA_CORRECT_POWER:
             Apply a simple exponent conversion.
-            The gamma value should be specified.
-        GAMMA_CORRECT_SRGB:
-            Apply the sRGB correction formula.
-            The gamma exponent is ignored. It is effectively 2.2.
+            The gamma exponent value must be specified.
+        GAMMA_CORRECT_FUNCTION:
+            Apply explicitly supplied correction and inversion functions.
+            The gamma exponent is ignored.
         '''
-        if not gamma_method in [GAMMA_CORRECT_POWER, GAMMA_CORRECT_SRGB]:
+        if gamma_method == GAMMA_CORRECT_SRGB:
+            self.gamma_converter = gamma.srgb_gamma_converter
+        elif gamma_method == GAMMA_CORRECT_UHDTV10:
+            self.gamma_converter = gamma.uhdtv10_gamma_converter
+        elif gamma_method == GAMMA_CORRECT_UHDTV12:
+            self.gamma_converter = gamma.uhdtv12_gamma_converter
+        elif gamma_method == GAMMA_CORRECT_POWER:
+            self.gamma_converter = gamma.GammaConverterPower(gamma=gamma_value)
+        elif gamma_method == GAMMA_CORRECT_FUNCTION:
+            self.gamma_converter = gamma.GammaConverterFunction(
+                display_from_linear_func=gamma_invert_func,
+                linear_from_display_func=gamma_correct_func)
+        else:
             raise ValueError('Invalid gamma correction method %s' % (str(gamma_method)))
-        self.gamma_method = gamma_method
-        self.gamma_value  = gamma_value
 
     def init_clipping(self, clip_method):
         '''Specify the color clipping method.'''
@@ -1128,46 +931,34 @@ class ColorConverter(object):
         return clipped
 
     # Gamma correction, to convert between linear and displayable values.
-    # Linear = Component value is proportional to physical light intensity.
-    # Displayable = Component value is appropriate to display on monitor.
+    # Linear  = Component value is proportional to physical light intensity.
+    # Display = Component value is appropriate to display on monitor.
 
-    def gamma_display_from_linear_component(self, x):
-        ''' Gamma adjust an rgb component (range 0.0 - 1.0) to convert
-        from linear to displayable values. '''
-        # This is gamma inversion, not gamma correction.
-        if self.gamma_method == GAMMA_CORRECT_POWER:
-            y = simple_gamma_invert (x, self.gamma_value)
-        elif self.gamma_method == GAMMA_CORRECT_SRGB:
-            y = srgb_gamma_invert (x)
-        else:
-            raise ValueError('Invalid gamma correction method %s' % (str(self.gamma_method)))
+    def display_from_linear_component(self, x):
+        ''' Gamma invert a value (nominal range 0.0 - 1.0)
+        to convert from linear to displayable values. '''
+        y = self.gamma_converter.display_from_linear(x)
         return y
 
-    def gamma_linear_from_display_component(self, x):
-        ''' Gamma adjust an rgb component (range 0.0 - 1.0) to convert
-        from displayable to linear values. '''
-        # This is gamma correction.
-        if self.gamma_method == GAMMA_CORRECT_POWER:
-            y = simple_gamma_correct (x, self.gamma_value)
-        elif self.gamma_method == GAMMA_CORRECT_SRGB:
-            y = srgb_gamma_correct (x)
-        else:
-            raise ValueError('Invalid gamma correction method %s' % (str(self.gamma_method)))
+    def linear_from_display_component(self, x):
+        ''' Gamma correct a value (nominal range 0.0 - 1.0)
+        to convert from displayable to linear values. '''
+        y = self.gamma_converter.linear_from_display(x)
         return y
 
-    def gamma_display_from_linear(self, rgb):
-        ''' Gamma adjust an rgb color (range 0.0 - 1.0) to convert
-        from linear to displayable values. '''
-        rgb[0] = self.gamma_display_from_linear_component(rgb[0])
-        rgb[1] = self.gamma_display_from_linear_component(rgb[1])
-        rgb[2] = self.gamma_display_from_linear_component(rgb[2])
+    def display_from_linear(self, rgb):
+        ''' Gamma invert an rgb color (nominal range 0.0 - 1.0)
+        to convert from linear to displayable values. '''
+        rgb[0] = self.gamma_converter.display_from_linear(rgb[0])
+        rgb[1] = self.gamma_converter.display_from_linear(rgb[1])
+        rgb[2] = self.gamma_converter.display_from_linear(rgb[2])
 
-    def gamma_linear_from_display(self, rgb):
-        ''' Gamma adjust an rgb color (range 0.0 - 1.0) to convert
-        from displayable to linear values. '''
-        rgb[0] = self.gamma_linear_from_display_component(rgb[0])
-        rgb[1] = self.gamma_linear_from_display_component(rgb[1])
-        rgb[2] = self.gamma_linear_from_display_component(rgb[2])
+    def linear_from_display(self, rgb):
+        ''' Gamma correct an rgb color (nominal range 0.0 - 1.0)
+        to convert from displayable to linear values. '''
+        rgb[0] = self.gamma_converter.linear_from_display(rgb[0])
+        rgb[1] = self.gamma_converter.linear_from_display(rgb[1])
+        rgb[2] = self.gamma_converter.linear_from_display(rgb[2])
 
     # Scaling from 0.0 - 1.0 range to integer values 0 - 2^(bitdepth) - 1.
 
@@ -1219,7 +1010,7 @@ class ColorConverter(object):
         clipped_intensity = self.clip_color_intensity(rgb)
 
         # gamma correction
-        self.gamma_display_from_linear(rgb)
+        self.display_from_linear(rgb)
 
         # Scale to 0 - 2^B - 1.
         irgb = self.scale_int_from_float(rgb)
@@ -1238,7 +1029,7 @@ class ColorConverter(object):
         '''Convert a displayable (gamma corrected) irgb value (range 0 - 2^B - 1) into a linear rgb value (range 0.0 - 1.0).'''
         # Scale to 0.0 - 1.0, and gamma correct.
         rgb = self.scale_float_from_int(irgb)
-        self.gamma_linear_from_display(rgb)
+        self.linear_from_display(rgb)
         return rgb
 
 #
@@ -1249,26 +1040,32 @@ class ColorConverter(object):
 color_converter = None
 
 def init (
-    phosphor_red   = SRGB_Red,
-    phosphor_green = SRGB_Green,
-    phosphor_blue  = SRGB_Blue,
-    white_point    = SRGB_White,
-    gamma_method   = GAMMA_CORRECT_SRGB,
-    gamma_value    = STANDARD_GAMMA,
-    clip_method    = CLIP_ADD_WHITE,
-    bit_depth      = 8):
+    phosphor_red       = SRGB_Red,
+    phosphor_green     = SRGB_Green,
+    phosphor_blue      = SRGB_Blue,
+    white_point        = SRGB_White,
+    gamma_method       = GAMMA_CORRECT_SRGB,
+    gamma_value        = None,
+    gamma_correct_func = None,
+    gamma_invert_func  = None,
+    clip_method        = CLIP_ADD_WHITE,
+    bit_depth          = 8,
+    verbose            = False):
     ''' Initialize. '''
     global color_converter
     color_converter = ColorConverter(
-        phosphor_red   = phosphor_red,
-        phosphor_green = phosphor_green,
-        phosphor_blue  = phosphor_blue,
-        white_point    = white_point,
-        gamma_method   = gamma_method,
-        gamma_value    = gamma_value,
-        clip_method    = clip_method,
-        bit_depth      = bit_depth)
-    #color_converter.dump()
+        phosphor_red       = phosphor_red,
+        phosphor_green     = phosphor_green,
+        phosphor_blue      = phosphor_blue,
+        white_point        = white_point,
+        gamma_method       = gamma_method,
+        gamma_value        = gamma_value,
+        gamma_correct_func = gamma_correct_func,
+        gamma_invert_func  = gamma_invert_func,
+        clip_method        = clip_method,
+        bit_depth          = bit_depth)
+    if verbose:
+        color_converter.dump()
 
 
 init()

@@ -103,7 +103,7 @@ class TestColormodels(unittest.TestCase):
 
     def test_xyz_rgb(self, verbose=False):
         ''' Test some color values via check_xyz_rgb(). '''
-        for i in range (100):
+        for i in range (20):
             x0 = 10.0 * random.random()
             y0 = 10.0 * random.random()
             z0 = 10.0 * random.random()
@@ -130,7 +130,7 @@ class TestColormodels(unittest.TestCase):
 
     def test_xyz_irgb(self, verbose=False):
         ''' Test the direct conversions from xyz to irgb. '''
-        for i in range (100):
+        for i in range (20):
             x0 = 10.0 * random.random()
             y0 = 10.0 * random.random()
             z0 = 10.0 * random.random()
@@ -165,7 +165,7 @@ class TestColormodels(unittest.TestCase):
 
     def test_rgb_irgb(self, verbose=False):
         ''' Test that conversions between rgb and irgb are invertible. '''
-        for i in range (100):
+        for i in range (20):
             ir = random.randrange (0, 256)
             ig = random.randrange (0, 256)
             ib = random.randrange (0, 256)
@@ -190,7 +190,7 @@ class TestColormodels(unittest.TestCase):
 
     def test_irgb_string(self, verbose=False):
         ''' Convert back and forth from irgb and irgb_string. '''
-        for i in range (100):
+        for i in range (20):
             ir = random.randrange (0, 256)
             ig = random.randrange (0, 256)
             ib = random.randrange (0, 256)
@@ -250,7 +250,7 @@ class TestColormodels(unittest.TestCase):
 
     def test_xyz_luv(self, verbose=False):
         ''' Test that luv_from_xyz() and xyz_from_luv() are inverses. '''
-        for i in range (100):
+        for i in range (20):
             x0 = 10.0 * random.random()
             y0 = 10.0 * random.random()
             z0 = 10.0 * random.random()
@@ -285,7 +285,7 @@ class TestColormodels(unittest.TestCase):
 
     def test_xyz_lab(self, verbose=False):
         '''Test that lab_from_xyz() and xyz_from_lab() are inverses.'''
-        for i in range (100):
+        for i in range (20):
             x0 = 10.0 * random.random()
             y0 = 10.0 * random.random()
             z0 = 10.0 * random.random()
@@ -466,70 +466,6 @@ class TestColormodels(unittest.TestCase):
             self.check_uv_primes_inverse_2(up0, vp0, y0, verbose)
         # Test black explicitly.
         self.check_uv_primes_inverse_2(0.0, 0.0, 0.0, verbose)
-
-
-class TestGammaCorrection(unittest.TestCase):
-    ''' Test cases for gamma correction functions. '''
-
-    def check_gamma_correction(self, verbose):
-        ''' Check if the current gamma correction is consistent. '''
-        for i in range (10):
-            x = 10.0 * (2.0 * random.random() - 1.0)
-            a = colormodels.color_converter.gamma_linear_from_display_component (x)
-            y = colormodels.color_converter.gamma_display_from_linear_component (a)
-            b = colormodels.color_converter.gamma_linear_from_display_component (y)
-            # Check errors.
-            abs_err1 = math.fabs (y - x)
-            rel_err1 = math.fabs (abs_err1 / (y + x))
-            abs_err2 = math.fabs (b - a)
-            rel_err2 = math.fabs (abs_err2 / (b + a))
-            msg1 = 'x = %g, y = %g, err = %g, rel = %g' % (x, y, abs_err1, rel_err1)
-            msg2 = 'a = %g, b = %g, err = %g, rel = %g' % (a, b, abs_err2, rel_err2)
-            if verbose:
-                print (msg1)
-                print (msg2)
-            tolerance = 1.0e-14
-            self.assertLessEqual(rel_err1, tolerance)
-            self.assertLessEqual(rel_err2, tolerance)
-
-    def test_gamma_srgb(self, verbose=False):
-        ''' Test default sRGB component (cannot supply exponent). '''
-        msg = 'Testing sRGB gamma:'
-        if verbose:
-            print (msg)
-        colormodels.color_converter.init_gamma_correction (
-            gamma_method=colormodels.GAMMA_CORRECT_SRGB, gamma_value=None)
-        self.check_gamma_correction(verbose)
-
-    def test_gamma_power(self, verbose=False):
-        ''' Test simple power law gamma (can supply exponent). '''
-        gamma_set = [0.1, 0.5, 1.0, 1.1, 1.5, 2.0, 2.2, 2.5, 10.0]
-        for gamma_value in gamma_set:
-            msg = 'Testing power-law gamma: %g' % (gamma_value)
-            if verbose:
-                print (msg)
-            colormodels.color_converter.init_gamma_correction (
-                gamma_method=colormodels.GAMMA_CORRECT_POWER, gamma_value=gamma_value)
-            self.check_gamma_correction(verbose)
-
-    def test_gamma_class(self):
-        # sRGB gamma correction.
-        # Note that, despite the nominal gamma=2.4, the function overall is designed
-        # to approximate gamma=2.2.
-        srgb_gamma_corrector = colormodels.GammaCorrect(
-            gamma=2.4, a=0.055, K0=0.03928, Phi=12.92)
-        # Coverage of values in pseudo-exponential range.
-        xyzzy_0 = srgb_gamma_corrector.display_from_linear (0.5)
-        xyzzy_1 = srgb_gamma_corrector.linear_from_display (0.5)
-        # Coverage of values in linear range.
-        xyzzy_2 = srgb_gamma_corrector.display_from_linear (0.00005)
-        xyzzy_3 = srgb_gamma_corrector.linear_from_display (0.00005)
-
-    # Tests to do:
-    # Functions are inverses.
-    # Sensible boundary conditions.
-    # Matches existing srgb and simple gamma corrections.
-    # Consistency of precomputed constants.
 
 
 if __name__ == '__main__':

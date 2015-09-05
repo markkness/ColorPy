@@ -23,7 +23,7 @@ Wanted for next release:
 	* Rec. 2020. New chromaticities and gamma correction, and variable bit depths.
 	* Complete sharkfin.
     * dwl as part of Spectrum metadata?
-	* Complete file rearrangements.
+	* Complete file rearrangements, including references.py.
     * Addition of BSD license.
     * Documentation improvements on GitHub.
 	* Packaging. Anaconda Binstar?
@@ -45,9 +45,11 @@ Added to alpha:
 	The new and old structures are closely related, and there are calls
 	to make it easy to convert between them.
 
-    * New ColorConverter() object.
-    There is now an object that keeps track of the chromaticities and
-    other parameters that define the color conversions.
+    * New ColorConverter() and GammaConverter() classes.
+    There is now a ColorConverter class that keeps track of the chromaticities
+    and other parameters that define the color conversions.
+    There is also a GammaConverter() interface and, as well as derived classes,
+    for various gamma correction formulae.
 
 	* New atomic line spectra for hydrogen, helium, and neon.
 
