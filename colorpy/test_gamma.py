@@ -117,10 +117,10 @@ class TestGammaCorrection(unittest.TestCase):
     def test_gamma_function(self, verbose=False):
         ''' Test gamma correction with arbitrary functions. '''
         if verbose: print ('Testing GammaConverterFunction():')
-        # Use convenient srgb standard functions.
+        # Use convenient srgb reference functions.
         converter = gamma.GammaConverterFunction(
-            display_from_linear_function=gamma.srgb_gamma_invert,
-            linear_from_display_function=gamma.srgb_gamma_correct)
+            display_from_linear_func=gamma.srgb_gamma_invert,
+            linear_from_display_func=gamma.srgb_gamma_correct)
         self.check_gamma_converter(converter, 10, verbose)
 
     # Test GammaConverterHybrid.
@@ -231,6 +231,31 @@ class TestGammaCorrection(unittest.TestCase):
 
     # Test api consistency.
 
+    def test_gamma_consistency(self, verbose=False):
+        ''' Test that the methods for GammaConverter() are consistent. '''
+        if verbose: print ('test_gamma_consistency():')
+        tolerance = 1.0e-14
+        # Any non-trivial converter will do.
+        converter = gamma.uhdtv12_gamma_converter
+        values = [-0.1, 0.3, 1.2]
+        for x in values:
+            # Gamma inversion.
+            y1 = converter.display_from_linear(x)
+            y2 = converter.gamma_invert(x)
+            error1 = math.fabs(y2 - y1)
+            msg1 = 'x=%.8f    y1=%.8f  y2=%.8f    error=%.8f' % (x, y1, y2, error1)
+            if verbose:
+                print (msg1)
+            self.assertLessEqual(error1, tolerance)
+            # Gamma correction.
+            y1 = converter.linear_from_display(x)
+            y2 = converter.gamma_correct(x)
+            error1 = math.fabs(y2 - y1)
+            msg1 = 'x=%.8f    y1=%.8f  y2=%.8f    error=%.8f' % (x, y1, y2, error1)
+            if verbose:
+                print (msg1)
+            self.assertLessEqual(error1, tolerance)
+
     def test_color_gamma_converter(self, verbose=False):
         ''' Test that conversions via the ColorConverter and GammaConverter are the same. '''
         if verbose: print ('test_color_gamma_converter():')
@@ -244,7 +269,7 @@ class TestGammaCorrection(unittest.TestCase):
             # Gamma inversion.
             x1 = color_converter.display_from_linear_component(value)
             x2 = gamma_converter.display_from_linear(value)
-            error1 = math.fabs(x2 - x2)
+            error1 = math.fabs(x2 - x1)
             msg1 = 'y=%.8f    x1=%.8f  x2=%.8f    error=%.8f' % (value, x1, x2, error1)
             if verbose:
                 print (msg1)
@@ -252,7 +277,7 @@ class TestGammaCorrection(unittest.TestCase):
             # Gamma correction.
             y1 = color_converter.linear_from_display_component(value)
             y2 = gamma_converter.linear_from_display(value)
-            error2 = math.fabs(y2 - y2)
+            error2 = math.fabs(y2 - y1)
             msg2 = 'x=%.8f    y1=%.8f  y2=%.8f    error=%.8f' % (value, y1, y2, error2)
             if verbose:
                 print (msg2)
@@ -287,24 +312,22 @@ class TestGammaCorrection(unittest.TestCase):
     def test_free_functions(self, verbose=False):
         ''' Test the legacy api free functions for gamma conversions. '''
         if verbose: print ('test_free_functions():')
-        # Use power-function gamma to test that as well.
-        color_converter = colormodels.ColorConverter(
-            gamma_method=colormodels.GAMMA_CORRECT_POWER, gamma_value=2.2)
+        color_converter = colormodels.color_converter
         values = [-0.05, 0.00005, 0.0005, 0.005, 0.05, 0.5, 5.0]
         tolerance = 1.0e-14
         for value in values:
-            # Direction 1.
+            # Gamma inversion.
             x1 = color_converter.display_from_linear_component(value)
             x2 = colormodels.display_from_linear_component(value)
-            error1 = math.fabs(x2 - x2)
+            error1 = math.fabs(x2 - x1)
             msg1 = 'y=%.8f    x1=%.8f  x2=%.8f    error=%.8f' % (value, x1, x2, error1)
             if verbose:
                 print (msg1)
             self.assertLessEqual(error1, tolerance)
-            # Direction 2.
+            # Gamma correction.
             y1 = color_converter.linear_from_display_component(value)
             y2 = colormodels.linear_from_display_component(value)
-            error2 = math.fabs(y2 - y2)
+            error2 = math.fabs(y2 - y1)
             msg2 = 'x=%.8f    y1=%.8f  y2=%.8f    error=%.8f' % (value, y1, y2, error2)
             if verbose:
                 print (msg2)

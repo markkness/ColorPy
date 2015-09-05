@@ -44,7 +44,7 @@ import math
 # With LCD displays, it is less clear (at least to me), what the genuinely
 # correct correction should be.
 
-# sRGB standard effective gamma.  This exponent is not applied explicitly.
+# Effective gamma for sRGB standard.  This exponent is not applied explicitly.
 STANDARD_GAMMA = 2.2
 
 # Although NTSC specifies a gamma of 2.2 as standard, this is designed
@@ -55,7 +55,7 @@ STANDARD_GAMMA = 2.2
 # [Poynton, Gamma FAQ p.5, p.9, Hall, p. 121]
 POYNTON_GAMMA = 2.45
 
-# Simple power laws for gamma correction.
+# Simple power law for gamma correction.
 
 def simple_gamma_invert (x, gamma_exponent):
     ''' Simple power law for gamma inverse correction. '''
@@ -72,13 +72,18 @@ def simple_gamma_correct (x, gamma_exponent):
         return math.pow (x, gamma_exponent)
 
 # sRGB gamma correction - http://www.color.org/sRGB.xalter
+#
 # The effect of the equations is to closely fit a straightforward
-# gamma 2.2 curve with an slight offset to allow for invertability in
+# gamma=2.2 curve with an slight offset to allow for invertability in
 # integer math. Therefore, we are maintaining consistency with the
-# gamma 2.2 legacy images and the video industry.
+# gamma=2.2 legacy images and the video industry.
+#
+# Although the parameters for the linear region are the 'official' ones,
+# they can actually be improved, so we do not usually use this specific
+# implementation, it is for reference only.
 
 def srgb_gamma_invert (x):
-    '''sRGB standard for gamma inverse correction.'''
+    ''' sRGB standard for gamma inverse correction. '''
     if x <= 0.00304:
         rtn = 12.92 * x
     else:
@@ -86,7 +91,7 @@ def srgb_gamma_invert (x):
     return rtn
 
 def srgb_gamma_correct (x):
-    '''sRGB standard for gamma correction.'''
+    ''' sRGB standard for gamma correction. '''
     if x <= 0.03928:
         rtn = x / 12.92
     else:
@@ -94,29 +99,40 @@ def srgb_gamma_correct (x):
     return rtn
 
 #
-# Gamma converter objects.
+# Gamma converter classes.
 #
 
 class GammaConverter(object):
     ''' Interface for gamma correction objects.
 
-     There should be two methods. Both take a float argument and return a float.
-     They should be inverses.
+     Each derived class must implement two methods,
+     display_from_linear() and linear_from_display().
+     These convert a float between nonlinear display values,
+     and linear physical intensity values.
+     The two functions should be inverses.
 
-    'display' - Color values as would be used in display code.
-    'linear'  - Color values with numbers proportional to physical intensity.
+    'display' - Color values, nonlinear, to use in display code.
+    'linear'  - Color values proportional to physical intensity.
      Both are nominally in the range 0.0 - 1.0.
      '''
 
-    def display_from_linear(self, C_linear):
+    def display_from_linear(self, linear):
         ''' Convert linear physical intensity to nonlinear display values. '''
         # This is gamma inversion.
         raise NotImplementedError
 
-    def linear_from_display(self, C_display):
+    def linear_from_display(self, display):
         ''' Convert nonlinear display values to linear physical intensity. '''
         # This is gamma correction.
         raise NotImplementedError
+
+    def gamma_invert(self, linear):
+        ''' Gamma inversion is display_from_linear. '''
+        return self.display_from_linear(linear)
+
+    def gamma_correct(self, display):
+        ''' Gamma correction is linear_from_display. '''
+        return self.linear_from_display(display)
 
 
 class GammaConverterPower(GammaConverter):
@@ -126,17 +142,17 @@ class GammaConverterPower(GammaConverter):
         ''' Constructor. '''
         self.gamma = gamma    # Gamma exponent.
 
-    def display_from_linear(self, C_linear):
+    def display_from_linear(self, linear):
         ''' Convert linear physical intensity to nonlinear display values. '''
         # This is gamma inversion.
-        C_display = simple_gamma_invert (C_linear, self.gamma)
-        return C_display
+        display = simple_gamma_invert(linear, self.gamma)
+        return display
 
-    def linear_from_display(self, C_display):
+    def linear_from_display(self, display):
         ''' Convert nonlinear display values to linear physical intensity. '''
         # This is gamma correction.
-        C_linear = simple_gamma_correct (C_display, self.gamma)
-        return C_linear
+        linear = simple_gamma_correct(display, self.gamma)
+        return linear
 
 
 class GammaConverterSrgbReference(GammaConverter):
@@ -144,40 +160,40 @@ class GammaConverterSrgbReference(GammaConverter):
 
     This is a reference implementation only, and not normally used. '''
 
-    def display_from_linear(self, C_linear):
+    def display_from_linear(self, linear):
         ''' Convert linear physical intensity to nonlinear display values. '''
         # This is gamma inversion.
-        C_display = srgb_gamma_invert (C_linear)
-        return C_display
+        display = srgb_gamma_invert (linear)
+        return display
 
-    def linear_from_display(self, C_display):
+    def linear_from_display(self, display):
         ''' Convert nonlinear display values to linear physical intensity. '''
         # This is gamma correction.
-        C_linear = srgb_gamma_correct (C_display)
-        return C_linear
+        linear = srgb_gamma_correct (display)
+        return linear
 
 
 class GammaConverterFunction(GammaConverter):
     ''' Gamma correction with arbitrary conversion functions. '''
 
     def __init__(self,
-        display_from_linear_function,    # Gamma invert function.
-        linear_from_display_function):   # Gamma correction function.
+        display_from_linear_func,    # Gamma invert function.
+        linear_from_display_func):   # Gamma correction function.
         ''' Constructor. '''
-        self.display_from_linear_function = display_from_linear_function
-        self.linear_from_display_function = linear_from_display_function
+        self.display_from_linear_func = display_from_linear_func
+        self.linear_from_display_func = linear_from_display_func
 
-    def display_from_linear(self, C_linear):
+    def display_from_linear(self, linear):
         ''' Convert linear physical intensity to nonlinear display values. '''
         # This is gamma inversion.
-        C_display = self.display_from_linear_function (C_linear)
-        return C_display
+        display = self.display_from_linear_func (linear)
+        return display
 
-    def linear_from_display(self, C_display):
+    def linear_from_display(self, display):
         ''' Convert nonlinear display values to linear physical intensity. '''
         # This is gamma correction.
-        C_linear = self.linear_from_display_function (C_display)
-        return C_linear
+        linear = self.linear_from_display_func (display)
+        return linear
 
 
 class GammaConverterHybrid(GammaConverter):
@@ -196,11 +212,11 @@ class GammaConverterHybrid(GammaConverter):
     For example, sRGB uses the number gamma=2.4, but its curve actually
     better approximates an exponent of 2.2.
 
-    C_display = Phi * C_linear,                    C_linear <  K0 / Phi
-    C_display = (1+a) * C_linear^(1/gamma) - a,    C_linear >= K0 / Phi
+    display = Phi * linear,                    linear <  K0 / Phi
+    display = (1+a) * linear^(1/gamma) - a,    linear >= K0 / Phi
 
-    C_linear = C_display / Phi,                    C_display <  K0
-    C_linear = ((C_display + a) / (1+a))^gamma,    C_display >= K0
+    linear = display / Phi,                    display <  K0
+    linear = ((display + a) / (1+a))^gamma,    display >= K0
 
     The two regions (linear/exponential) ought to connect sensibly.
     '''
@@ -224,27 +240,27 @@ class GammaConverterHybrid(GammaConverter):
             # Enforce continuity at the 'edge of black' and derive K0 and Phi.
             self.set_continuous_slope()
 
-    def display_from_linear(self, C_linear):
+    def display_from_linear(self, linear):
         ''' Convert physical intensity to display values. '''
-        if C_linear < self.K0_over_Phi:
+        if linear < self.K0_over_Phi:
             # Linear region.
-            C_display = self.Phi * C_linear
+            display = self.Phi * linear
         else:
             # Pseudo-exponential region.
-            C_linear_inv_gamma = math.pow(C_linear, self.inv_gamma)
-            C_display = self.one_plus_a * C_linear_inv_gamma - self.a
-        return C_display
+            linear_inv_gamma = math.pow(linear, self.inv_gamma)
+            display = self.one_plus_a * linear_inv_gamma - self.a
+        return display
 
-    def linear_from_display(self, C_display):
+    def linear_from_display(self, display):
         ''' Convert display values to physical intensity. '''
-        if C_display < self.K0:
+        if display < self.K0:
             # Linear region.
-            C_linear = C_display / self.Phi
+            linear = display / self.Phi
         else:
             # Pseudo-exponential region.
-            C_display_term = (C_display + self.a) / self.one_plus_a
-            C_linear = math.pow(C_display_term, self.gamma)
-        return C_linear
+            display_term = (display + self.a) / self.one_plus_a
+            linear = math.pow(display_term, self.gamma)
+        return linear
 
     # The values of K0 and Phi really come naturally from gamma and a,
     # if the two regions connect sensibly.

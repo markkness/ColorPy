@@ -747,7 +747,7 @@ class ColorConverter(object):
             The gamma exponent, and correction and inversion functions are ignored.
         GAMMA_CORRECT_POWER:
             Apply a simple exponent conversion.
-            The gamma exponent value should be specified.
+            The gamma exponent value must be specified.
         GAMMA_CORRECT_FUNCTION:
             Apply explicitly supplied correction and inversion functions.
             The gamma exponent is ignored.
@@ -762,8 +762,8 @@ class ColorConverter(object):
             self.gamma_converter = gamma.GammaConverterPower(gamma=gamma_value)
         elif gamma_method == GAMMA_CORRECT_FUNCTION:
             self.gamma_converter = gamma.GammaConverterFunction(
-                display_from_linear_function=gamma_invert_func,
-                linear_from_display_function=gamma_correct_func)
+                display_from_linear_func=gamma_invert_func,
+                linear_from_display_func=gamma_correct_func)
         else:
             raise ValueError('Invalid gamma correction method %s' % (str(gamma_method)))
 
