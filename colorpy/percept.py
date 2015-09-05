@@ -45,7 +45,8 @@ from __future__ import unicode_literals
 
 import math
 
-import colormodels
+# Want to avoid 'import colormodels' as that makes a circular reference.
+import colortypes
 
 #
 # Color model conversions to (nearly) perceptually uniform spaces Luv and Lab.
@@ -108,7 +109,7 @@ def uv_primes_inverse (u_prime, v_prime, y):
         x = 0.0
         y = 0.0
         z = 0.0
-    xyz = colormodels.xyz_color (x, y, z)
+    xyz = colortypes.xyz_color (x, y, z)
     return xyz
 
 # Utility function for Lab
@@ -152,7 +153,7 @@ def luv_from_xyz(xyz, reference_white, reference_u_prime, reference_v_prime):
     L = L_luminance (y_p)
     u = 13.0 * L * (u_prime - reference_u_prime)
     v = 13.0 * L * (v_prime - reference_v_prime)
-    luv = colormodels.luv_color (L, u, v)
+    luv = colortypes.luv_color (L, u, v)
     return luv
 
 def xyz_from_luv(luv, XXreference_white, reference_u_prime, reference_v_prime):
@@ -172,7 +173,7 @@ def xyz_from_luv(luv, XXreference_white, reference_u_prime, reference_v_prime):
         xyz = uv_primes_inverse (u_prime, v_prime, y)
     else:
         # Color is black.
-        xyz = colormodels.xyz_color (0.0, 0.0, 0.0)
+        xyz = colortypes.xyz_color (0.0, 0.0, 0.0)
     return xyz
 
 # Conversions between standard device independent color space (CIE XYZ)
@@ -195,7 +196,7 @@ def lab_from_xyz(xyz, reference_white):
     L = L_luminance (y_p)
     a = 500.0 * (f_x - f_y)
     b = 200.0 * (f_y - f_z)
-    Lab = colormodels.lab_color (L, a, b)
+    Lab = colortypes.lab_color (L, a, b)
     return Lab
 
 def xyz_from_lab(Lab, reference_white):
@@ -217,59 +218,59 @@ def xyz_from_lab(Lab, reference_white):
     x = x_p * reference_white [0]
     y = y_p * reference_white [1]
     z = z_p * reference_white [2]
-    xyz = colormodels.xyz_color (x, y, z)
+    xyz = colortypes.xyz_color (x, y, z)
     return xyz
 
-#
-# Class to hold color conversion values.
-#
-
-class PerceptualConverter(object):
-    ''' An object to convert between (almost) perceptually uniform color spaces. '''
-
-    def __init__ (self,
-        #white_point = colormodels.SRGB_White):
-        white_point):
-        ''' Initialize the color conversions. '''
-        # xyz <-> Luv and Lab conversions need white point.
-        self.init_Luv_Lab_white_point(white_point)
-
-    def init_Luv_Lab_white_point(self, white_point):
-        ''' Specify the white point to use for Luv/Lab conversions. '''
-        self.reference_white = white_point.copy()
-        colormodels.xyz_normalize_Y1 (self.reference_white)
-        self.reference_u_prime, self.reference_v_prime = uv_primes (self.reference_white)
-
-    # Conversions between standard device independent color space (CIE XYZ)
-    # and the almost perceptually uniform space Luv.
-
-    def luv_from_xyz(self, xyz):
-        '''Convert CIE XYZ to Luv.'''
-        luv = luv_from_xyz(
-            xyz,
-            self.reference_white,
-            self.reference_u_prime,
-            self.reference_v_prime)
-        return luv
-
-    def xyz_from_luv(self, luv):
-        '''Convert Luv to CIE XYZ.  Inverse of luv_from_xyz().'''
-        xyz = xyz_from_luv(
-            luv,
-            self.reference_white,
-            self.reference_u_prime,
-            self.reference_v_prime)
-        return xyz
-
-    # Conversions between standard device independent color space (CIE XYZ)
-    # and the almost perceptually uniform space Lab.
-
-    def lab_from_xyz(self, xyz):
-        '''Convert color from CIE XYZ to Lab.'''
-        lab = lab_from_xyz(xyz, self.reference_white)
-        return lab
-
-    def xyz_from_lab(self, Lab):
-        '''Convert color from Lab to CIE XYZ.  Inverse of lab_from_xyz().'''
-        xyz = xyz_from_lab(Lab, self.reference_white)
-        return xyz
+###
+### Class to hold color conversion values.
+###
+##
+##class PerceptualConverter(object):
+##    ''' An object to convert between (almost) perceptually uniform color spaces. '''
+##
+##    def __init__ (self,
+##        #white_point = colormodels.SRGB_White):
+##        white_point):
+##        ''' Initialize the color conversions. '''
+##        # xyz <-> Luv and Lab conversions need white point.
+##        self.init_Luv_Lab_white_point(white_point)
+##
+##    def init_Luv_Lab_white_point(self, white_point):
+##        ''' Specify the white point to use for Luv/Lab conversions. '''
+##        self.reference_white = white_point.copy()
+##        colormodels.xyz_normalize_Y1 (self.reference_white)
+##        self.reference_u_prime, self.reference_v_prime = uv_primes (self.reference_white)
+##
+##    # Conversions between standard device independent color space (CIE XYZ)
+##    # and the almost perceptually uniform space Luv.
+##
+##    def luv_from_xyz(self, xyz):
+##        '''Convert CIE XYZ to Luv.'''
+##        luv = luv_from_xyz(
+##            xyz,
+##            self.reference_white,
+##            self.reference_u_prime,
+##            self.reference_v_prime)
+##        return luv
+##
+##    def xyz_from_luv(self, luv):
+##        '''Convert Luv to CIE XYZ.  Inverse of luv_from_xyz().'''
+##        xyz = xyz_from_luv(
+##            luv,
+##            self.reference_white,
+##            self.reference_u_prime,
+##            self.reference_v_prime)
+##        return xyz
+##
+##    # Conversions between standard device independent color space (CIE XYZ)
+##    # and the almost perceptually uniform space Lab.
+##
+##    def lab_from_xyz(self, xyz):
+##        '''Convert color from CIE XYZ to Lab.'''
+##        lab = lab_from_xyz(xyz, self.reference_white)
+##        return lab
+##
+##    def xyz_from_lab(self, Lab):
+##        '''Convert color from Lab to CIE XYZ.  Inverse of lab_from_xyz().'''
+##        xyz = xyz_from_lab(Lab, self.reference_white)
+##        return xyz

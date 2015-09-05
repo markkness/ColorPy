@@ -226,69 +226,14 @@ from __future__ import unicode_literals
 
 import numpy
 
+# FIXME: The following import causes pyflakes warnings.
+from colortypes import (
+    xyz_color, xyz_normalize, xyz_normalize_Y1, xyz_color_from_xyY,
+    rgb_color, irgb_color,
+    luv_color, lab_color,
+)
 import gamma
-#import percept
-
-# The xyz constructors have some special versions to handle some common situations.
-
-def xyz_color (x, y, z = None):
-    '''Construct an xyz color.  If z is omitted, set it so that x+y+z = 1.0.'''
-    if z == None:
-        # choose z so that x+y+z = 1.0
-        z = 1.0 - (x + y)
-    rtn = numpy.array ([x, y, z])
-    return rtn
-
-def xyz_normalize (xyz):
-    '''Scale so that all values add to 1.0.
-    This both modifies the passed argument and returns the normalized result.'''
-    sum_xyz = xyz[0] + xyz[1] + xyz[2]
-    if sum_xyz != 0.0:
-        scale = 1.0 / sum_xyz
-        xyz [0] *= scale
-        xyz [1] *= scale
-        xyz [2] *= scale
-    return xyz
-
-def xyz_normalize_Y1 (xyz):
-    '''Scale so that the y component is 1.0.
-    This both modifies the passed argument and returns the normalized result.'''
-    if xyz [1] != 0.0:
-        scale = 1.0 / xyz [1]
-        xyz [0] *= scale
-        xyz [1] *= scale
-        xyz [2] *= scale
-    return xyz
-
-def xyz_color_from_xyY (x, y, Y):
-    '''Given the 'little' x,y chromaticity, and the intensity Y,
-    construct an xyz color.  See Foley/Van Dam p. 581, eq. 13.21.'''
-    return xyz_color (
-        (x/y)* Y,
-        Y,
-        (1.0-x-y)/(y) * Y)
-
-# Simple constructors for the remaining models.
-
-def rgb_color (r, g, b):
-    '''Construct a linear rgb color from components.'''
-    rtn = numpy.array ([r, g, b])
-    return rtn
-
-def irgb_color (ir, ig, ib):
-    '''Construct a displayable integer irgb color from components.'''
-    rtn = numpy.array ([ir, ig, ib], int)
-    return rtn
-
-def luv_color (L, u, v):
-    '''Construct a Luv color from components.'''
-    rtn = numpy.array ([L, u, v])
-    return rtn
-
-def lab_color (L, a, b):
-    '''Construct a Lab color from components.'''
-    rtn = numpy.array ([L, a, b])
-    return rtn
+import percept
 
 #
 # Chromaticities of standard phosphors and white points.
@@ -454,23 +399,6 @@ def irgb_string_from_xyz (xyz):
 # Class to hold color conversion values.
 #
 
-# FIXME: Should not need this again. Utility function for Luv
-
-def uv_primes (xyz):
-    '''Luv utility.'''
-    x = xyz [0]
-    y = xyz [1]
-    z = xyz [2]
-    w_denom = x + 15.0 * y + 3.0 * z
-    if w_denom != 0.0:
-        u_prime = 4.0 * x / w_denom
-        v_prime = 9.0 * y / w_denom
-    else:
-        # this should only happen when x=y=z=0 [i.e. black] since xyz values are positive
-        u_prime = 0.0
-        v_prime = 0.0
-    return (u_prime, v_prime)
-
 # FIXME: Should be able to specify maximum value rather than bit depth.
 
 class ColorConverter(object):
@@ -537,11 +465,9 @@ class ColorConverter(object):
 
     def init_Luv_Lab_white_point(self, white_point):
         ''' Specify the white point to use for Luv/Lab conversions. '''
-        #import percept            # Avoid circular import.
         self.reference_white = white_point.copy()
         xyz_normalize_Y1 (self.reference_white)
-        self.reference_u_prime, self.reference_v_prime = uv_primes (self.reference_white)
-        #self.percept_converter = percept.PerceptualConverter(self.reference_white)
+        self.reference_u_prime, self.reference_v_prime = percept.uv_primes (self.reference_white)
 
     def init_gamma_correction(self,
         gamma_method,          # gamma conversion method.
@@ -622,7 +548,6 @@ class ColorConverter(object):
 
     def luv_from_xyz(self, xyz):
         '''Convert CIE XYZ to Luv.'''
-        import percept            # Avoid circular import.
         luv = percept.luv_from_xyz(
             xyz,
             self.reference_white,
@@ -632,7 +557,6 @@ class ColorConverter(object):
 
     def xyz_from_luv(self, luv):
         '''Convert Luv to CIE XYZ.  Inverse of luv_from_xyz().'''
-        import percept            # Avoid circular import.
         xyz = percept.xyz_from_luv(
             luv,
             self.reference_white,
@@ -645,13 +569,11 @@ class ColorConverter(object):
 
     def lab_from_xyz(self, xyz):
         '''Convert color from CIE XYZ to Lab.'''
-        import percept            # Avoid circular import.
         lab = percept.lab_from_xyz(xyz, self.reference_white)
         return lab
 
     def xyz_from_lab(self, Lab):
         '''Convert color from Lab to CIE XYZ.  Inverse of lab_from_xyz().'''
-        import percept            # Avoid circular import.
         xyz = percept.xyz_from_lab(Lab, self.reference_white)
         return xyz
 
