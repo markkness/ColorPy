@@ -541,6 +541,7 @@ class ColorConverter(object):
         self.reference_white = white_point.copy()
         xyz_normalize_Y1 (self.reference_white)
         self.reference_u_prime, self.reference_v_prime = uv_primes (self.reference_white)
+        #self.percept_converter = percept.PerceptualConverter(self.reference_white)
 
     def init_gamma_correction(self,
         gamma_method,          # gamma conversion method.
@@ -622,34 +623,21 @@ class ColorConverter(object):
     def luv_from_xyz(self, xyz):
         '''Convert CIE XYZ to Luv.'''
         import percept            # Avoid circular import.
-        y = xyz [1]
-        y_p = y / self.reference_white [1]       # reference_white [1] is probably always 1.0.
-        u_prime, v_prime = percept.uv_primes (xyz)
-        L = percept.L_luminance (y_p)
-        u = 13.0 * L * (u_prime - self.reference_u_prime)
-        v = 13.0 * L * (v_prime - self.reference_v_prime)
-        luv = luv_color (L, u, v)
+        luv = percept.luv_from_xyz(
+            xyz,
+            self.reference_white,
+            self.reference_u_prime,
+            self.reference_v_prime)
         return luv
 
     def xyz_from_luv(self, luv):
         '''Convert Luv to CIE XYZ.  Inverse of luv_from_xyz().'''
         import percept            # Avoid circular import.
-        L = luv [0]
-        u = luv [1]
-        v = luv [2]
-        # Invert L_luminance() to get y.
-        y = percept.L_luminance_inverse (L)
-        if L != 0.0:
-            # Color is not totally black.
-            # Get u_prime, v_prime.
-            L13 = 13.0 * L
-            u_prime = self.reference_u_prime + (u / L13)
-            v_prime = self.reference_v_prime + (v / L13)
-            # Get xyz color.
-            xyz = percept.uv_primes_inverse (u_prime, v_prime, y)
-        else:
-            # Color is black.
-            xyz = xyz_color (0.0, 0.0, 0.0)
+        xyz = percept.xyz_from_luv(
+            luv,
+            self.reference_white,
+            self.reference_u_prime,
+            self.reference_v_prime)
         return xyz
 
     # Conversions between standard device independent color space (CIE XYZ)
@@ -658,45 +646,13 @@ class ColorConverter(object):
     def lab_from_xyz(self, xyz):
         '''Convert color from CIE XYZ to Lab.'''
         import percept            # Avoid circular import.
-        x = xyz [0]
-        y = xyz [1]
-        z = xyz [2]
-
-        x_p = x / self.reference_white [0]
-        y_p = y / self.reference_white [1]
-        z_p = z / self.reference_white [2]
-
-        f_x = percept.Lab_f (x_p)
-        f_y = percept.Lab_f (y_p)
-        f_z = percept.Lab_f (z_p)
-
-        L = percept.L_luminance (y_p)
-        a = 500.0 * (f_x - f_y)
-        b = 200.0 * (f_y - f_z)
-        Lab = lab_color (L, a, b)
-        return Lab
+        lab = percept.lab_from_xyz(xyz, self.reference_white)
+        return lab
 
     def xyz_from_lab(self, Lab):
         '''Convert color from Lab to CIE XYZ.  Inverse of lab_from_xyz().'''
         import percept            # Avoid circular import.
-        L = Lab [0]
-        a = Lab [1]
-        b = Lab [2]
-        # invert L_luminance() to get y_p
-        y_p = percept.L_luminance_inverse (L)
-        # calculate f_y
-        f_y = percept.Lab_f (y_p)
-        # solve for f_x and f_z
-        f_x = f_y + (a / 500.0)
-        f_z = f_y - (b / 200.0)
-        # invert Lab_f() to get x_p and z_p
-        x_p = percept.Lab_f_inverse (f_x)
-        z_p = percept.Lab_f_inverse (f_z)
-        # multiply by reference white to get xyz
-        x = x_p * self.reference_white [0]
-        y = y_p * self.reference_white [1]
-        z = z_p * self.reference_white [2]
-        xyz = xyz_color (x, y, z)
+        xyz = percept.xyz_from_lab(Lab, self.reference_white)
         return xyz
 
     # Conversion of linear rgb color (range 0.0 - 1.0) to displayable values (range 0 - 255).

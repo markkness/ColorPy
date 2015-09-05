@@ -44,10 +44,8 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import math
-#import numpy
 
 import colormodels
-#import gamma
 
 #
 # Color model conversions to (nearly) perceptually uniform spaces Luv and Lab.
@@ -97,8 +95,6 @@ def uv_primes (xyz):
         v_prime = 0.0
     return (u_prime, v_prime)
 
-#import colormodels
-
 def uv_primes_inverse (u_prime, v_prime, y):
     '''Inverse of uv_primes(). We will always have y known when this is called.'''
     if v_prime != 0.0:
@@ -142,6 +138,89 @@ def Lab_f_inverse (F):
     return t
 
 #
+# Color model conversions to (nearly) perceptually uniform spaces Luv and Lab.
+#
+
+# Conversions between standard device independent color space (CIE XYZ)
+# and the almost perceptually uniform space Luv.
+
+def luv_from_xyz(xyz, reference_white, reference_u_prime, reference_v_prime):
+    ''' Convert CIE XYZ to Luv. '''
+    y = xyz [1]
+    y_p = y / reference_white [1]       # reference_white [1] is normally 1.0.
+    u_prime, v_prime = uv_primes (xyz)
+    L = L_luminance (y_p)
+    u = 13.0 * L * (u_prime - reference_u_prime)
+    v = 13.0 * L * (v_prime - reference_v_prime)
+    luv = colormodels.luv_color (L, u, v)
+    return luv
+
+def xyz_from_luv(luv, XXreference_white, reference_u_prime, reference_v_prime):
+    '''Convert Luv to CIE XYZ.  Inverse of luv_from_xyz().'''
+    L = luv [0]
+    u = luv [1]
+    v = luv [2]
+    # Invert L_luminance() to get y.
+    y = L_luminance_inverse (L)
+    if L != 0.0:
+        # Color is not totally black.
+        # Get u_prime, v_prime.
+        L13 = 13.0 * L
+        u_prime = reference_u_prime + (u / L13)
+        v_prime = reference_v_prime + (v / L13)
+        # Get xyz color.
+        xyz = uv_primes_inverse (u_prime, v_prime, y)
+    else:
+        # Color is black.
+        xyz = colormodels.xyz_color (0.0, 0.0, 0.0)
+    return xyz
+
+# Conversions between standard device independent color space (CIE XYZ)
+# and the almost perceptually uniform space Lab.
+
+def lab_from_xyz(xyz, reference_white):
+    '''Convert color from CIE XYZ to Lab.'''
+    x = xyz [0]
+    y = xyz [1]
+    z = xyz [2]
+
+    x_p = x / reference_white [0]
+    y_p = y / reference_white [1]
+    z_p = z / reference_white [2]
+
+    f_x = Lab_f (x_p)
+    f_y = Lab_f (y_p)
+    f_z = Lab_f (z_p)
+
+    L = L_luminance (y_p)
+    a = 500.0 * (f_x - f_y)
+    b = 200.0 * (f_y - f_z)
+    Lab = colormodels.lab_color (L, a, b)
+    return Lab
+
+def xyz_from_lab(Lab, reference_white):
+    '''Convert color from Lab to CIE XYZ.  Inverse of lab_from_xyz().'''
+    L = Lab [0]
+    a = Lab [1]
+    b = Lab [2]
+    # invert L_luminance() to get y_p
+    y_p = L_luminance_inverse (L)
+    # calculate f_y
+    f_y = Lab_f (y_p)
+    # solve for f_x and f_z
+    f_x = f_y + (a / 500.0)
+    f_z = f_y - (b / 200.0)
+    # invert Lab_f() to get x_p and z_p
+    x_p = Lab_f_inverse (f_x)
+    z_p = Lab_f_inverse (f_z)
+    # multiply by reference white to get xyz
+    x = x_p * reference_white [0]
+    y = y_p * reference_white [1]
+    z = z_p * reference_white [2]
+    xyz = colormodels.xyz_color (x, y, z)
+    return xyz
+
+#
 # Class to hold color conversion values.
 #
 
@@ -166,33 +245,20 @@ class PerceptualConverter(object):
 
     def luv_from_xyz(self, xyz):
         '''Convert CIE XYZ to Luv.'''
-        y = xyz [1]
-        y_p = y / self.reference_white [1]       # reference_white [1] is probably always 1.0.
-        u_prime, v_prime = uv_primes (xyz)
-        L = L_luminance (y_p)
-        u = 13.0 * L * (u_prime - self.reference_u_prime)
-        v = 13.0 * L * (v_prime - self.reference_v_prime)
-        luv = colormodels.luv_color (L, u, v)
+        luv = luv_from_xyz(
+            xyz,
+            self.reference_white,
+            self.reference_u_prime,
+            self.reference_v_prime)
         return luv
 
     def xyz_from_luv(self, luv):
         '''Convert Luv to CIE XYZ.  Inverse of luv_from_xyz().'''
-        L = luv [0]
-        u = luv [1]
-        v = luv [2]
-        # Invert L_luminance() to get y.
-        y = L_luminance_inverse (L)
-        if L != 0.0:
-            # Color is not totally black.
-            # Get u_prime, v_prime.
-            L13 = 13.0 * L
-            u_prime = self.reference_u_prime + (u / L13)
-            v_prime = self.reference_v_prime + (v / L13)
-            # Get xyz color.
-            xyz = uv_primes_inverse (u_prime, v_prime, y)
-        else:
-            # Color is black.
-            xyz = colormodels.xyz_color (0.0, 0.0, 0.0)
+        xyz = xyz_from_luv(
+            luv,
+            self.reference_white,
+            self.reference_u_prime,
+            self.reference_v_prime)
         return xyz
 
     # Conversions between standard device independent color space (CIE XYZ)
@@ -200,42 +266,10 @@ class PerceptualConverter(object):
 
     def lab_from_xyz(self, xyz):
         '''Convert color from CIE XYZ to Lab.'''
-        x = xyz [0]
-        y = xyz [1]
-        z = xyz [2]
-
-        x_p = x / self.reference_white [0]
-        y_p = y / self.reference_white [1]
-        z_p = z / self.reference_white [2]
-
-        f_x = Lab_f (x_p)
-        f_y = Lab_f (y_p)
-        f_z = Lab_f (z_p)
-
-        L = L_luminance (y_p)
-        a = 500.0 * (f_x - f_y)
-        b = 200.0 * (f_y - f_z)
-        Lab = colormodels.lab_color (L, a, b)
-        return Lab
+        lab = lab_from_xyz(xyz, self.reference_white)
+        return lab
 
     def xyz_from_lab(self, Lab):
         '''Convert color from Lab to CIE XYZ.  Inverse of lab_from_xyz().'''
-        L = Lab [0]
-        a = Lab [1]
-        b = Lab [2]
-        # invert L_luminance() to get y_p
-        y_p = L_luminance_inverse (L)
-        # calculate f_y
-        f_y = Lab_f (y_p)
-        # solve for f_x and f_z
-        f_x = f_y + (a / 500.0)
-        f_z = f_y - (b / 200.0)
-        # invert Lab_f() to get x_p and z_p
-        x_p = Lab_f_inverse (f_x)
-        z_p = Lab_f_inverse (f_z)
-        # multiply by reference white to get xyz
-        x = x_p * self.reference_white [0]
-        y = y_p * self.reference_white [1]
-        z = z_p * self.reference_white [2]
-        xyz = colormodels.xyz_color (x, y, z)
+        xyz = xyz_from_lab(Lab, self.reference_white)
         return xyz
