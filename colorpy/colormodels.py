@@ -226,12 +226,7 @@ from __future__ import unicode_literals
 
 import numpy
 
-# FIXME: The following import causes pyflakes warnings.
-from colortypes import (
-    xyz_color, xyz_normalize, xyz_normalize_Y1, xyz_color_from_xyY,
-    rgb_color, irgb_color,
-    luv_color, lab_color,
-)
+import colortypes
 import gamma
 import percept
 
@@ -240,10 +235,35 @@ import percept
 #
 # sRGB (ITU-R BT.709) standard phosphor chromaticities
 #
-SRGB_Red   = xyz_color (0.640,  0.330)
-SRGB_Green = xyz_color (0.300,  0.600)
-SRGB_Blue  = xyz_color (0.150,  0.060)
-SRGB_White = xyz_color (0.3127, 0.3290)    # Illuminant D65
+SRGB_Red   = colortypes.xyz_color (0.640,  0.330)
+SRGB_Green = colortypes.xyz_color (0.300,  0.600)
+SRGB_Blue  = colortypes.xyz_color (0.150,  0.060)
+SRGB_White = colortypes.xyz_color (0.3127, 0.3290)    # Illuminant D65
+
+#
+# XYZ normalization functions.
+#
+
+def xyz_normalize (xyz):
+    '''Scale so that all values add to 1.0.
+    This both modifies the passed argument and returns the normalized result.'''
+    sum_xyz = xyz[0] + xyz[1] + xyz[2]
+    if sum_xyz != 0.0:
+        scale = 1.0 / sum_xyz
+        xyz [0] *= scale
+        xyz [1] *= scale
+        xyz [2] *= scale
+    return xyz
+
+def xyz_normalize_Y1 (xyz):
+    '''Scale so that the y component is 1.0.
+    This both modifies the passed argument and returns the normalized result.'''
+    if xyz [1] != 0.0:
+        scale = 1.0 / xyz [1]
+        xyz [0] *= scale
+        xyz [1] *= scale
+        xyz [2] *= scale
+    return xyz
 
 #
 # Conversions between CIE XYZ and RGB colors.
@@ -321,6 +341,16 @@ def linear_from_display_component(x):
     y = color_converter.gamma_converter.linear_from_display(x)
     return y
 
+def gamma_invert(x):
+    ''' Gamma invert a single value. '''
+    y = color_converter.gamma_converter.display_from_linear(x)
+    return y
+
+def gamma_correct(x):
+    ''' Gamma correct a single value. '''
+    y = color_converter.gamma_converter.linear_from_display(x)
+    return y
+
 #
 # Color clipping - Physical color values may exceed the what the display can show,
 #   either because the color is too pure (indicated by negative rgb values), or
@@ -370,7 +400,7 @@ def irgb_from_irgb_string (irgb_string):
     ir = int (irs, 16)
     ig = int (igs, 16)
     ib = int (ibs, 16)
-    irgb = irgb_color (ir, ig, ib)
+    irgb = colortypes.irgb_color (ir, ig, ib)
     return irgb
 
 def irgb_from_rgb (rgb):
@@ -559,7 +589,6 @@ class ColorConverter(object):
         '''Convert Luv to CIE XYZ.  Inverse of luv_from_xyz().'''
         xyz = percept.xyz_from_luv(
             luv,
-            self.reference_white,
             self.reference_u_prime,
             self.reference_v_prime)
         return xyz
@@ -674,7 +703,7 @@ class ColorConverter(object):
         ir = min (self.max_value, max (0, ir))
         ig = min (self.max_value, max (0, ig))
         ib = min (self.max_value, max (0, ib))
-        irgb = irgb_color (ir, ig, ib)
+        irgb = colortypes.irgb_color (ir, ig, ib)
         return irgb
 
     def scale_float_from_int(self, irgb):
@@ -684,7 +713,7 @@ class ColorConverter(object):
         r = float (irgb [0]) / self.max_value
         g = float (irgb [1]) / self.max_value
         b = float (irgb [2]) / self.max_value
-        rgb = rgb_color (r, g, b)
+        rgb = colortypes.rgb_color (r, g, b)
         return rgb
 
     def clip_rgb_color(self, rgb_color):

@@ -29,7 +29,7 @@ from __future__ import unicode_literals
 
 import numpy
 
-from colormodels import xyz_color
+from colortypes import xyz_color
 
 #
 # Various reference data that is (mostly) not used elsewhere.

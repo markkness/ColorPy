@@ -80,27 +80,6 @@ def xyz_color (x, y, z = None):
     rtn = numpy.array ([x, y, z])
     return rtn
 
-def xyz_normalize (xyz):
-    '''Scale so that all values add to 1.0.
-    This both modifies the passed argument and returns the normalized result.'''
-    sum_xyz = xyz[0] + xyz[1] + xyz[2]
-    if sum_xyz != 0.0:
-        scale = 1.0 / sum_xyz
-        xyz [0] *= scale
-        xyz [1] *= scale
-        xyz [2] *= scale
-    return xyz
-
-def xyz_normalize_Y1 (xyz):
-    '''Scale so that the y component is 1.0.
-    This both modifies the passed argument and returns the normalized result.'''
-    if xyz [1] != 0.0:
-        scale = 1.0 / xyz [1]
-        xyz [0] *= scale
-        xyz [1] *= scale
-        xyz [2] *= scale
-    return xyz
-
 def xyz_color_from_xyY (x, y, Y):
     '''Given the 'little' x,y chromaticity, and the intensity Y,
     construct an xyz color.  See Foley/Van Dam p. 581, eq. 13.21.'''

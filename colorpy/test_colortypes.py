@@ -35,17 +35,11 @@ import colortypes
 class TestColorpyConstructors(unittest.TestCase):
     ''' Test cases for colortypes constructors. '''
 
-    def test_construct_xyz(self, verbose=True):
-        ''' Test of xyz color constructors. '''
+    def test_coverage_xyz(self, verbose=True):
+        ''' Coverage test of xyz color constructors. '''
         xyz1 = colortypes.xyz_color(0.1, 0.2, 0.3)
         xyz2 = colortypes.xyz_color_from_xyY(0.33, 0.55, 0.8)
-        # Test sum normalization.
-        colortypes.xyz_normalize(xyz1)
-        sum_xyz = xyz1[0] + xyz1[1] + xyz1[2]
-        self.assertAlmostEqual(sum_xyz, 1.0)
-        # Test Y normalization.
-        colortypes.xyz_normalize_Y1(xyz2)
-        self.assertAlmostEqual(xyz2[1], 1.0)
+        del xyz1, xyz2
 
     def test_coverage_rgb(self, verbose=True):
         ''' Coverage test of rgb color constructors. '''

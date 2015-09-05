@@ -33,11 +33,24 @@ import random
 import unittest
 
 import colormodels
+import colortypes
 import purecolors
 
 
 class TestColormodels(unittest.TestCase):
     ''' Test cases for colormodel conversions. '''
+
+    def test_xyz_normalization(self, verbose=True):
+        ''' Test of xyz color constructors. '''
+        # Test sum normalization.
+        xyz1 = colortypes.xyz_color(0.1, 0.2, 0.3)
+        colormodels.xyz_normalize(xyz1)
+        sum_xyz = xyz1[0] + xyz1[1] + xyz1[2]
+        self.assertAlmostEqual(sum_xyz, 1.0)
+        # Test Y normalization.
+        xyz2 = colortypes.xyz_color_from_xyY(0.33, 0.55, 0.8)
+        colormodels.xyz_normalize_Y1(xyz2)
+        self.assertAlmostEqual(xyz2[1], 1.0)
 
     def test_rgb_xyz_matrices_inverses(self, verbose=False):
         ''' Test that the rgb<--->xyz conversion matrices are inverses of each other. '''
@@ -82,7 +95,7 @@ class TestColormodels(unittest.TestCase):
             x0 = 10.0 * random.random()
             y0 = 10.0 * random.random()
             z0 = 10.0 * random.random()
-            xyz0 = colormodels.xyz_color (x0, y0, z0)
+            xyz0 = colortypes.xyz_color (x0, y0, z0)
             self.check_xyz_rgb (xyz0, verbose)
 
     def check_xyz_irgb(self, xyz0, verbose):
@@ -109,7 +122,7 @@ class TestColormodels(unittest.TestCase):
             x0 = 10.0 * random.random()
             y0 = 10.0 * random.random()
             z0 = 10.0 * random.random()
-            xyz0 = colormodels.xyz_color (x0,y0,z0)
+            xyz0 = colortypes.xyz_color (x0,y0,z0)
             self.check_xyz_irgb(xyz0, verbose)
 
     def check_rgb_irgb(self, irgb0, verbose):
@@ -144,7 +157,7 @@ class TestColormodels(unittest.TestCase):
             ir = random.randrange (0, 256)
             ig = random.randrange (0, 256)
             ib = random.randrange (0, 256)
-            irgb0 = colormodels.irgb_color (ir, ig, ib)
+            irgb0 = colortypes.irgb_color (ir, ig, ib)
             self.check_rgb_irgb(irgb0, verbose)
 
     def check_irgb_string(self, irgb, verbose):
@@ -169,7 +182,7 @@ class TestColormodels(unittest.TestCase):
             ir = random.randrange (0, 256)
             ig = random.randrange (0, 256)
             ib = random.randrange (0, 256)
-            irgb = colormodels.irgb_color (ir, ig, ib)
+            irgb = colortypes.irgb_color (ir, ig, ib)
             self.check_irgb_string(irgb, verbose)
 
     # Clipping.
@@ -220,7 +233,7 @@ class TestColormodels(unittest.TestCase):
 
     def test_xyz_luv_black(self, verbose=False):
         ''' Test Luv conversions on black. '''
-        xyz0 = colormodels.xyz_color (0.0, 0.0, 0.0)
+        xyz0 = colortypes.xyz_color (0.0, 0.0, 0.0)
         self.check_xyz_luv(xyz0, verbose)
 
     def test_xyz_luv(self, verbose=False):
@@ -229,7 +242,7 @@ class TestColormodels(unittest.TestCase):
             x0 = 10.0 * random.random()
             y0 = 10.0 * random.random()
             z0 = 10.0 * random.random()
-            xyz0 = colormodels.xyz_color (x0, y0, z0)
+            xyz0 = colortypes.xyz_color (x0, y0, z0)
             self.check_xyz_luv(xyz0, verbose)
 
     # Conversions between standard device independent color space (CIE XYZ)
@@ -255,7 +268,7 @@ class TestColormodels(unittest.TestCase):
 
     def test_xyz_lab_black(self, verbose=False):
         ''' Test Lab conversions on black. '''
-        xyz0 = colormodels.xyz_color (0.0, 0.0, 0.0)
+        xyz0 = colortypes.xyz_color (0.0, 0.0, 0.0)
         self.check_xyz_lab(xyz0, verbose)
 
     def test_xyz_lab(self, verbose=False):
@@ -264,7 +277,7 @@ class TestColormodels(unittest.TestCase):
             x0 = 10.0 * random.random()
             y0 = 10.0 * random.random()
             z0 = 10.0 * random.random()
-            xyz0 = colormodels.xyz_color (x0, y0, z0)
+            xyz0 = colortypes.xyz_color (x0, y0, z0)
             self.check_xyz_lab(xyz0, verbose)
 
 

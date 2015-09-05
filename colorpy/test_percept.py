@@ -33,6 +33,7 @@ import random
 import unittest
 
 import colormodels
+import colortypes
 import percept
 
 # Functions to calculate the cutoff point between various algorithms.
@@ -222,10 +223,10 @@ class TestPerceptualUniformSpaces(unittest.TestCase):
             x0 = 10.0 * random.random()
             y0 = 10.0 * random.random()
             z0 = 10.0 * random.random()
-            xyz0 = colormodels.xyz_color (x0, y0, z0)
+            xyz0 = colortypes.xyz_color (x0, y0, z0)
             self.check_uv_primes_inverse_1(xyz0, verbose)
         # Test black explicitly.
-        xyz0 = colormodels.xyz_color (0.0, 0.0, 0.0)
+        xyz0 = colortypes.xyz_color (0.0, 0.0, 0.0)
         self.check_uv_primes_inverse_1(xyz0, verbose)
 
     def test_uv_primes_inverse_2(self, verbose=False):

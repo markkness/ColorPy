@@ -124,7 +124,7 @@ from __future__ import unicode_literals
 import math
 import numpy
 
-import colormodels
+import colortypes
 
 # Assumed physical brightness of the monitor [W/m^2]
 #   80 cd/m^2 * 20.3 mW/cd (assuming light at 556 nm)
@@ -659,15 +659,15 @@ def init (display_intensity = DEFAULT_DISPLAY_INTENSITY):
     _xyz_deltas = numpy.empty ((create_table_size, 3))
     # fill in first row as 359 nm with zero color
     _wavelengths [0] = start_wl_nm - 1
-    _xyz_colors  [0] = colormodels.xyz_color (0.0, 0.0, 0.0)
+    _xyz_colors  [0] = colortypes.xyz_color (0.0, 0.0, 0.0)
     # fill in last row as 831 nm with zero color
     _wavelengths [create_table_size-1] = end_wl_nm + 1
-    _xyz_colors  [create_table_size-1] = colormodels.xyz_color (0.0, 0.0, 0.0)
+    _xyz_colors  [create_table_size-1] = colortypes.xyz_color (0.0, 0.0, 0.0)
     # fill in the middle rows from the source data
     for i in range (0, len (_CIEXYZ_1931_table)):
         (wl,x,y,z) = _CIEXYZ_1931_table [i]
         _wavelengths [i+1] = wl
-        _xyz_colors  [i+1] = colormodels.xyz_color (x,y,z)
+        _xyz_colors  [i+1] = colortypes.xyz_color (x,y,z)
     # get the integrals of each curve
     integral = numpy.zeros (3)
     for i in range (0, create_table_size-1):
@@ -685,7 +685,7 @@ def init (display_intensity = DEFAULT_DISPLAY_INTENSITY):
     # now calculate all the deltas
     for i in range (0, create_table_size-1):
         _xyz_deltas [i] = _xyz_colors [i+1] - _xyz_colors [i]
-    _xyz_deltas [create_table_size-1] = colormodels.xyz_color (0.0, 0.0, 0.0)
+    _xyz_deltas [create_table_size-1] = colortypes.xyz_color (0.0, 0.0, 0.0)
 
 #
 # CIE XYZ color for an arbitrary wavelength.
@@ -698,7 +698,7 @@ def xyz_from_wavelength (wl_nm):
     frac_wl_nm = wl_nm - float (int_wl_nm)
     # skip out of range (invisible) wavelengths
     if (int_wl_nm < start_wl_nm - 1) or (int_wl_nm > end_wl_nm + 1):
-        return colormodels.xyz_color (0.0, 0.0, 0.0)
+        return colortypes.xyz_color (0.0, 0.0, 0.0)
     # get index into main table
     index = int_wl_nm - start_wl_nm + 1
     # apply linear interpolation to get the color
@@ -806,7 +806,7 @@ class Spectrum(object):
     def get_xyz_color_any(self):
         ''' Get the xyz color of the spectrum. '''
         # Integrate color, for any list of wavelengths.
-        rtn = colormodels.xyz_color (0.0, 0.0, 0.0)
+        rtn = colortypes.xyz_color (0.0, 0.0, 0.0)
         for i in range (self.num_wl):
             wavelength = self.wavelength [i]
             intensity  = self.intensity  [i]
@@ -821,7 +821,7 @@ class Spectrum(object):
         X = (self.intensity * _xyz_colors[1:-1, 0]).sum()
         Y = (self.intensity * _xyz_colors[1:-1, 1]).sum()
         Z = (self.intensity * _xyz_colors[1:-1, 2]).sum()
-        rtn = colormodels.xyz_color(X, Y, Z)
+        rtn = colortypes.xyz_color(X, Y, Z)
         return rtn
 
     def get_xyz(self):
