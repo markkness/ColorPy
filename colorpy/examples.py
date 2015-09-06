@@ -1,5 +1,5 @@
 '''
-misc.py - Miscellaneous color plots.
+examples.py - Miscellaneous color plots.
 
 Description:
 
@@ -42,10 +42,9 @@ import matplotlib.pyplot as pyplot
 
 import ciexyz
 import colormodels
+import colortypes
 import plots
 import rayleigh
-
-# FIXME: Rename to examples?
 
 #
 # Some specialized figures.
@@ -177,7 +176,7 @@ def named_xyz_patch_plot (named_xyz_colors, title, filename, num_across=6):
     for named_xyz_color in named_xyz_colors:
         # Unpack x, y, z, name.
         x, y, z, name = named_xyz_color
-        xyz = colormodels.xyz_color(x, y, z)
+        xyz = colortypes.xyz_color(x, y, z)
         xyzs.append (xyz)
         names.append (name)
     plots.xyz_patch_plot (xyzs, names, None, title, filename, num_across=num_across)
@@ -191,7 +190,7 @@ def named_xy1_patch_plot (named_colors, title, filename, num_across=6):
     for named_color in named_colors:
         # Unpack x, y, name.
         x, y, name = named_color
-        xyz = colormodels.xyz_color_from_xyY (x, y, 1.0)
+        xyz = colortypes.xyz_color_from_xyY (x, y, 1.0)
         xyzs.append (xyz)
         names.append (name)
     plots.xyz_patch_plot (xyzs, names, None, title, filename, num_across=num_across)

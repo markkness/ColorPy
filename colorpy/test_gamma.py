@@ -312,6 +312,7 @@ class TestGammaCorrection(unittest.TestCase):
     def test_free_functions(self, verbose=False):
         ''' Test the legacy api free functions for gamma conversions. '''
         if verbose: print ('test_free_functions():')
+        # Use global object to match free functions.
         color_converter = colormodels.color_converter
         values = [-0.05, 0.00005, 0.0005, 0.005, 0.05, 0.5, 5.0]
         tolerance = 1.0e-14
@@ -327,6 +328,31 @@ class TestGammaCorrection(unittest.TestCase):
             # Gamma correction.
             y1 = color_converter.linear_from_display_component(value)
             y2 = colormodels.linear_from_display_component(value)
+            error2 = math.fabs(y2 - y1)
+            msg2 = 'x=%.8f    y1=%.8f  y2=%.8f    error=%.8f' % (value, y1, y2, error2)
+            if verbose:
+                print (msg2)
+            self.assertLessEqual(error2, tolerance)
+
+    def test_free_gamma_functions(self, verbose=False):
+        ''' Test the free functions gamma_correct, gamma_invert. '''
+        if verbose: print ('test_free_functions():')
+        # Use global object to match free functions.
+        color_converter = colormodels.color_converter
+        values = [-0.05, 0.00005, 0.0005, 0.005, 0.05, 0.5, 5.0]
+        tolerance = 1.0e-14
+        for value in values:
+            # Gamma inversion.
+            x1 = color_converter.display_from_linear_component(value)
+            x2 = colormodels.gamma_invert(value)
+            error1 = math.fabs(x2 - x1)
+            msg1 = 'y=%.8f    x1=%.8f  x2=%.8f    error=%.8f' % (value, x1, x2, error1)
+            if verbose:
+                print (msg1)
+            self.assertLessEqual(error1, tolerance)
+            # Gamma correction.
+            y1 = color_converter.linear_from_display_component(value)
+            y2 = colormodels.gamma_correct(value)
             error2 = math.fabs(y2 - y1)
             msg2 = 'x=%.8f    y1=%.8f  y2=%.8f    error=%.8f' % (value, y1, y2, error2)
             if verbose:

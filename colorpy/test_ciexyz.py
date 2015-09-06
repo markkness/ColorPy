@@ -31,7 +31,7 @@ import random
 import unittest
 
 import ciexyz
-import colormodels
+import colortypes
 import illuminants
 
 
@@ -59,7 +59,7 @@ class TestCiexyz(unittest.TestCase):
 
     def test_black(self, verbose=False):
         ''' Test that empty spectra are black. '''
-        black = colormodels.xyz_color (0.0, 0.0, 0.0)
+        black = colortypes.xyz_color (0.0, 0.0, 0.0)
         spect = ciexyz.Spectrum()
         xyz1 = spect.get_xyz()
         tolerance = 1.0e-12

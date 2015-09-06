@@ -14,6 +14,7 @@ import unittest
 
 import ciexyz
 import colormodels
+import colortypes
 import purecolors
 
 
@@ -42,7 +43,7 @@ class TestPureColors(unittest.TestCase):
     def check_colors_not_white(self, xyzs, distance, verbose):
         ''' Check that the colors are (in xy space) at least the distance from white. '''
         # In practice distance should always be about 0.23 or more.
-        white_rgb = colormodels.rgb_color (1.0, 1.0, 1.0)
+        white_rgb = colortypes.rgb_color (1.0, 1.0, 1.0)
         white_xyz = colormodels.xyz_from_rgb (white_rgb)
         white_xyz = colormodels.xyz_normalize (white_xyz)
         for xyz in xyzs:

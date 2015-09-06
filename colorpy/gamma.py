@@ -29,31 +29,55 @@ from __future__ import unicode_literals
 
 import math
 
-# Gamma correction
-#
-# Non-gamma corrected rgb values, also called non-linear rgb values,
-# correspond to palette register entries [although here they are kept
-# in the range 0.0 to 1.0.]  The numerical values are not proportional
-# to the amount of light energy present.
-#
-# Gamma corrected rgb values, also called linear rgb values,
-# do not correspond to palette entries.  The numerical values are
-# proportional to the amount of light energy present.
-#
-# This effect is particularly significant with CRT displays.
-# With LCD displays, it is less clear (at least to me), what the genuinely
-# correct correction should be.
+'''
+Gamma correction:
 
-# Effective gamma for sRGB standard.  This exponent is not applied explicitly.
-STANDARD_GAMMA = 2.2
+Gamma correction converts between displayable nonlinear color values,
+and physical linear color values.
 
-# Although NTSC specifies a gamma of 2.2 as standard, this is designed
-# to account for the dim viewing environments typical of TV, but not
-# computers.  Well-adjusted CRT displays have a true gamma in the range
-# 2.35 through 2.55.  We use the physical gamma value here, not 2.2,
-# thus not correcting for a dim viewing environment.
-# [Poynton, Gamma FAQ p.5, p.9, Hall, p. 121]
-POYNTON_GAMMA = 2.45
+Linear color values are proportional to physical light intensity.
+They do not directly correspond to palette entries used to draw the color
+on the display monitor.
+
+Display color values are the values specified on the computer to draw
+the desired color. They are not proportional to physical light intensity.
+They correspond to color palette register entries, although here they are
+kept in the nominal range 0.0 to 1.0.
+
+The mapping between the two is approximately a power law, with the
+exponent called gamma. The mapping that gives linear values from display
+values is called gamma correction, and the mapping that gives display values
+from linear values is called gamma inversion. The two functions should be
+inverses, and the nominal range of the component values is 0.0 to 1.0.
+
+                   Gamma Correct
+               <--------------------
+               linear_from_display()
+    L                                         D
+ [linear]                                 [display]
+[physical]                               [nonlinear]
+                   Gamma Invert
+               -------------------->
+               display_from_linear()
+
+In practice, one often uses mappings that have a linear region near black,
+and a pseudo-exponential region for brighter colors. One commonly used mapping,
+the sRGB standard, has an effective overall gamma exponent of about 2.2.
+
+The original reason for the nonlinear display values, is in the physics of
+CRT video monitors. The display value was used to set a voltage on the
+electron gun in the CRT, this voltage was proportional to the display value.
+But due to the vagaries of the electron gun physics, the intensity of the
+resulting beam was not proportional to this voltage, rather it was nearly
+an exponential function of it. Therefore the correction was needed.
+
+Also, the nonlinear conversion makes reasonably efficient use of
+integer values to display human-discernible light levels.
+
+With LCD and other modern displays, the physics is not the same. However,
+the modern devices are designed to have the same kind of color response as
+the legacy CRT displays, and so this gamma correction still applies.
+'''
 
 # Simple power law for gamma correction.
 

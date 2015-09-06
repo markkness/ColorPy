@@ -198,30 +198,6 @@ init_gamma_correction (
 init_clipping (clip_method = CLIP_ADD_WHITE) -
     Specify the color clipping method.
 
-References:
-
-Foley, van Dam, Feiner and Hughes. Computer Graphics: Principles and Practice, 2nd edition,
-    Addison Wesley Systems Programming Series, 1990. ISBN 0-201-12110-7.
-
-Roy Hall, Illumination and Color in Computer Generated Imagery. Monographs in Visual Communication,
-    Springer-Verlag, New York, 1989. ISBN 0-387-96774-5.
-
-Wyszecki and Stiles, Color Science: Concepts and Methods, Quantitative Data and Formulae, 2nd edition,
-    John Wiley, 1982. Wiley Classics Library Edition 2000. ISBN 0-471-39918-3.
-
-Judd and Wyszecki, Color in Business, Science and Industry, 1975.
-
-Kasson and Plouffe, An Analysis of Selected Computer Interchange Color Spaces,
-    ACM Transactions on Graphics, Vol. 11, No. 4, October 1992.
-
-Charles Poynton - Frequently asked questions about Gamma and Color,
-    posted to comp.graphics.algorithms, 25 Jan 1995.
-
-sRGB - http://www.color.org/sRGB.xalter - (accessed 15 Sep 2008)
-    A Standard Default Color Space for the Internet: sRGB,
-    Michael Stokes (Hewlett-Packard), Matthew Anderson (Microsoft), Srinivasan Chandrasekar (Microsoft),
-    Ricardo Motta (Hewlett-Packard), Version 1.10, November 5, 1996.
-
 License:
 
 Copyright (C) 2008 Mark Kness
@@ -248,20 +224,25 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import math
 import numpy
 
+import colortypes
 import gamma
+import percept
 
-# The xyz constructors have some special versions to handle some common situations.
+#
+# Chromaticities of standard phosphors and white points.
+#
+# sRGB (ITU-R BT.709) standard phosphor chromaticities
+#
+SRGB_Red   = colortypes.xyz_color (0.640,  0.330)
+SRGB_Green = colortypes.xyz_color (0.300,  0.600)
+SRGB_Blue  = colortypes.xyz_color (0.150,  0.060)
+SRGB_White = colortypes.xyz_color (0.3127, 0.3290)    # Illuminant D65
 
-def xyz_color (x, y, z = None):
-    '''Construct an xyz color.  If z is omitted, set it so that x+y+z = 1.0.'''
-    if z == None:
-        # choose z so that x+y+z = 1.0
-        z = 1.0 - (x + y)
-    rtn = numpy.array ([x, y, z])
-    return rtn
+#
+# XYZ normalization functions.
+#
 
 def xyz_normalize (xyz):
     '''Scale so that all values add to 1.0.
@@ -269,9 +250,7 @@ def xyz_normalize (xyz):
     sum_xyz = xyz[0] + xyz[1] + xyz[2]
     if sum_xyz != 0.0:
         scale = 1.0 / sum_xyz
-        xyz [0] *= scale
-        xyz [1] *= scale
-        xyz [2] *= scale
+        xyz *= scale
     return xyz
 
 def xyz_normalize_Y1 (xyz):
@@ -279,135 +258,8 @@ def xyz_normalize_Y1 (xyz):
     This both modifies the passed argument and returns the normalized result.'''
     if xyz [1] != 0.0:
         scale = 1.0 / xyz [1]
-        xyz [0] *= scale
-        xyz [1] *= scale
-        xyz [2] *= scale
+        xyz *= scale
     return xyz
-
-def xyz_color_from_xyY (x, y, Y):
-    '''Given the 'little' x,y chromaticity, and the intensity Y,
-    construct an xyz color.  See Foley/Van Dam p. 581, eq. 13.21.'''
-    return xyz_color (
-        (x/y)* Y,
-        Y,
-        (1.0-x-y)/(y) * Y)
-
-# Simple constructors for the remaining models.
-
-def rgb_color (r, g, b):
-    '''Construct a linear rgb color from components.'''
-    rtn = numpy.array ([r, g, b])
-    return rtn
-
-def irgb_color (ir, ig, ib):
-    '''Construct a displayable integer irgb color from components.'''
-    rtn = numpy.array ([ir, ig, ib], int)
-    return rtn
-
-def luv_color (L, u, v):
-    '''Construct a Luv color from components.'''
-    rtn = numpy.array ([L, u, v])
-    return rtn
-
-def lab_color (L, a, b):
-    '''Construct a Lab color from components.'''
-    rtn = numpy.array ([L, a, b])
-    return rtn
-
-#
-# Definitions of some standard values for colors and conversions
-#
-
-# Chromaticities of various standard phosphors and white points.
-
-# sRGB (ITU-R BT.709) standard phosphor chromaticities
-SRGB_Red   = xyz_color (0.640, 0.330)
-SRGB_Green = xyz_color (0.300, 0.600)
-SRGB_Blue  = xyz_color (0.150, 0.060)
-SRGB_White = xyz_color (0.3127, 0.3290)  # D65
-
-# HDTV standard phosphors, from Poynton [Color FAQ] p. 9
-#   These are claimed to be similar to typical computer monitors
-HDTV_Red   = xyz_color (0.640, 0.330)
-HDTV_Green = xyz_color (0.300, 0.600)
-HDTV_Blue  = xyz_color (0.150, 0.060)
-# use D65 as white point for HDTV
-
-# SMPTE phosphors
-#   However, Hall [p. 188] notes that TV expects values calibrated for NTSC
-#   even though actual phosphors are as below.
-# From Hall p. 118, and Kasson p. 400
-SMPTE_Red   = xyz_color (0.630, 0.340)
-SMPTE_Green = xyz_color (0.310, 0.595)
-SMPTE_Blue  = xyz_color (0.155, 0.070)
-# use D65 as white point for SMPTE
-
-# NTSC phosphors [original standard for TV, but no longer used in TV sets]
-# From Hall p. 119 and Foley/Van Dam p. 589
-NTSC_Red   = xyz_color (0.670, 0.330)
-NTSC_Green = xyz_color (0.210, 0.710)
-NTSC_Blue  = xyz_color (0.140, 0.080)
-# use D65 as white point for NTSC
-
-# Typical short persistence phosphors from Foley/Van Dam p. 583
-FoleyShort_Red   = xyz_color (0.61, 0.35)
-FoleyShort_Green = xyz_color (0.29, 0.59)
-FoleyShort_Blue  = xyz_color (0.15, 0.063)
-
-# Typical long persistence phosphors from Foley/Van Dam p. 583
-FoleyLong_Red   = xyz_color (0.62, 0.33)
-FoleyLong_Green = xyz_color (0.21, 0.685)
-FoleyLong_Blue  = xyz_color (0.15, 0.063)
-
-# Typical TV phosphors from Judd/Wyszecki p. 239
-Judd_Red   = xyz_color (0.68, 0.32)       # Europium Yttrium Vanadate
-Judd_Green = xyz_color (0.28, 0.60)       # Zinc Cadmium Sulfide
-Judd_Blue  = xyz_color (0.15, 0.07)       # Zinc Sulfide
-
-# White points [all are for CIE 1931 for small field of view]
-#   These are from Judd/Wyszecki
-WhiteA   = xyz_color (0.4476, 0.4074)      # approx 2856 K
-WhiteB   = xyz_color (0.3484, 0.3516)      # approx 4874 K
-WhiteC   = xyz_color (0.3101, 0.3162)      # approx 6774 K
-WhiteD55 = xyz_color (0.3324, 0.3475)      # approx 5500 K
-WhiteD65 = xyz_color (0.3127, 0.3290)      # approx 6500 K
-WhiteD75 = xyz_color (0.2990, 0.3150)      # approx 7500 K
-
-# Blackbody white points [this empirically gave good results]
-Blackbody6500K = xyz_color (0.3135, 0.3237)
-Blackbody6600K = xyz_color (0.3121, 0.3223)
-Blackbody6700K = xyz_color (0.3107, 0.3209)
-Blackbody6800K = xyz_color (0.3092, 0.3194)
-Blackbody6900K = xyz_color (0.3078, 0.3180)
-Blackbody7000K = xyz_color (0.3064, 0.3166)
-
-# MacBeth Color Checker white patch
-#   Using this as white point will force MacBeth chart entry to equal machine RGB
-MacBethWhite = xyz_color (0.30995, 0.31596, 0.37409)
-
-# Also see Judd/Wyszecki p.164 for colors of Planck Blackbodies
-
-# Some standard xyz/rgb conversion matricies, which assume particular phosphors.
-# These are useful for testing.
-
-# sRGB, from http://www.color.org/sRGB.xalter
-srgb_rgb_from_xyz_matrix = numpy.array ([
-    [ 3.2410, -1.5374, -0.4986],
-    [-0.9692,  1.8760,  0.0416],
-    [ 0.0556, -0.2040,  1.0570]
-])
-
-# SMPTE conversions, from Kasson p. 400
-smpte_xyz_from_rgb_matrix = numpy.array ([
-    [0.3935, 0.3653, 0.1916],
-    [0.2124, 0.7011, 0.0865],
-    [0.0187, 0.1119, 0.9582]
-])
-smpte_rgb_from_xyz_matrix = numpy.array ([
-    [ 3.5064, -1.7400, -0.5441],
-    [-1.0690,  1.9777,  0.0352],
-    [ 0.0563, -0.1970,  1.0501]
-])
 
 #
 # Conversions between CIE XYZ and RGB colors.
@@ -432,96 +284,6 @@ def brightest_rgb_from_xyz (xyz, max_component=1.0):
         scale = max_component / max_rgb
         rgb *= scale
     return rgb
-
-#
-# Color model conversions to (nearly) perceptually uniform spaces Luv and Lab.
-#
-
-# Luminance function [of Y value of an XYZ color] used in Luv and Lab. See [Kasson p.399] for details.
-# The linear range coefficient L_LUM_C has more digits than in the paper,
-# this makes the function more continuous over the boundary.
-
-L_LUM_A      = 116.0
-L_LUM_B      = 16.0
-L_LUM_C      = 903.29629551307664
-L_LUM_CUTOFF = 0.008856
-
-def L_luminance (y):
-    '''L coefficient for Luv and Lab models.'''
-    if y > L_LUM_CUTOFF:
-        return L_LUM_A * math.pow (y, 1.0/3.0) - L_LUM_B
-    else:
-        # linear range
-        return L_LUM_C * y
-
-def L_luminance_inverse (L):
-    '''Inverse of L_luminance().'''
-    if L <= (L_LUM_C * L_LUM_CUTOFF):
-        # linear range
-        y = L / L_LUM_C
-    else:
-        t = (L + L_LUM_B) / L_LUM_A
-        y = math.pow (t, 3)
-    return y
-
-# Utility function for Luv
-
-def uv_primes (xyz):
-    '''Luv utility.'''
-    x = xyz [0]
-    y = xyz [1]
-    z = xyz [2]
-    w_denom = x + 15.0 * y + 3.0 * z
-    if w_denom != 0.0:
-        u_prime = 4.0 * x / w_denom
-        v_prime = 9.0 * y / w_denom
-    else:
-        # this should only happen when x=y=z=0 [i.e. black] since xyz values are positive
-        u_prime = 0.0
-        v_prime = 0.0
-    return (u_prime, v_prime)
-
-def uv_primes_inverse (u_prime, v_prime, y):
-    '''Inverse of uv_primes(). We will always have y known when this is called.'''
-    if v_prime != 0.0:
-        # normal
-        w_denom = (9.0 * y) / v_prime
-        x = 0.25 * u_prime * w_denom
-        y = y
-        z = (w_denom - x - 15.0 * y) / 3.0
-    else:
-        # should only happen when color is totally black
-        x = 0.0
-        y = 0.0
-        z = 0.0
-    xyz = xyz_color (x, y, z)
-    return xyz
-
-# Utility function for Lab
-#     See [Kasson p.399] for details.
-#     The linear range coefficient has more digits than in the paper,
-#     this makes the function more continuous over the boundary.
-
-LAB_F_A = 7.7870370302851422
-LAB_F_B = (16.0/116.0)
-# same cutoff as L_luminance()
-
-def Lab_f (t):
-    '''Lab utility function.'''
-    if t > L_LUM_CUTOFF:
-        return math.pow (t, 1.0/3.0)
-    else:
-        # linear range
-        return LAB_F_A * t + LAB_F_B
-
-def Lab_f_inverse (F):
-    '''Inverse of Lab_f().'''
-    if F <= (LAB_F_A * L_LUM_CUTOFF + LAB_F_B):
-        # linear range
-        t = (F - LAB_F_B) / LAB_F_A
-    else:
-        t = math.pow (F, 3)
-    return t
 
 # Conversions between standard device independent color space (CIE XYZ)
 # and the almost perceptually uniform space Luv.
@@ -575,6 +337,16 @@ def linear_from_display_component(x):
     y = color_converter.gamma_converter.linear_from_display(x)
     return y
 
+def gamma_invert(x):
+    ''' Gamma invert a single value. '''
+    y = color_converter.gamma_converter.display_from_linear(x)
+    return y
+
+def gamma_correct(x):
+    ''' Gamma correct a single value. '''
+    y = color_converter.gamma_converter.linear_from_display(x)
+    return y
+
 #
 # Color clipping - Physical color values may exceed the what the display can show,
 #   either because the color is too pure (indicated by negative rgb values), or
@@ -624,7 +396,7 @@ def irgb_from_irgb_string (irgb_string):
     ir = int (irs, 16)
     ig = int (igs, 16)
     ib = int (ibs, 16)
-    irgb = irgb_color (ir, ig, ib)
+    irgb = colortypes.irgb_color (ir, ig, ib)
     return irgb
 
 def irgb_from_rgb (rgb):
@@ -650,7 +422,7 @@ def irgb_string_from_xyz (xyz):
     return irgb_string_from_rgb (rgb_from_xyz (xyz))
 
 #
-# Object to hold color conversion values.
+# Class to hold color conversion values.
 #
 
 # FIXME: Should be able to specify maximum value rather than bit depth.
@@ -667,8 +439,9 @@ class ColorConverter(object):
         gamma_value        = None,
         gamma_correct_func = None,
         gamma_invert_func  = None,
+        bit_depth          = 8,
         clip_method        = CLIP_ADD_WHITE,
-        bit_depth          = 8):
+        verbose            = False):
         ''' Initialize the color conversions. '''
         # xyz <-> rgb conversions need phosphor chromaticities and white point.
         self.init_rgb_xyz(
@@ -678,10 +451,13 @@ class ColorConverter(object):
         # Gamma correction method.
         self.init_gamma_correction(
             gamma_method, gamma_value, gamma_correct_func, gamma_invert_func)
-        # Clipping method.
-        self.init_clipping(clip_method)
         # Bit depth for integer rgb values.
         self.init_bit_depth(bit_depth)
+        # Clipping method.
+        self.init_clipping(clip_method)
+        # Optional debug info.
+        if verbose:
+            self.dump()
 
     def init_rgb_xyz(self,
         phosphor_red,
@@ -721,7 +497,7 @@ class ColorConverter(object):
         ''' Specify the white point to use for Luv/Lab conversions. '''
         self.reference_white = white_point.copy()
         xyz_normalize_Y1 (self.reference_white)
-        self.reference_u_prime, self.reference_v_prime = uv_primes (self.reference_white)
+        self.reference_u_prime, self.reference_v_prime = percept.uv_primes (self.reference_white)
 
     def init_gamma_correction(self,
         gamma_method,          # gamma conversion method.
@@ -802,33 +578,19 @@ class ColorConverter(object):
 
     def luv_from_xyz(self, xyz):
         '''Convert CIE XYZ to Luv.'''
-        y = xyz [1]
-        y_p = y / self.reference_white [1]       # reference_white [1] is probably always 1.0.
-        u_prime, v_prime = uv_primes (xyz)
-        L = L_luminance (y_p)
-        u = 13.0 * L * (u_prime - self.reference_u_prime)
-        v = 13.0 * L * (v_prime - self.reference_v_prime)
-        luv = luv_color (L, u, v)
+        luv = percept.luv_from_xyz(
+            xyz,
+            self.reference_white,
+            self.reference_u_prime,
+            self.reference_v_prime)
         return luv
 
     def xyz_from_luv(self, luv):
         '''Convert Luv to CIE XYZ.  Inverse of luv_from_xyz().'''
-        L = luv [0]
-        u = luv [1]
-        v = luv [2]
-        # Invert L_luminance() to get y.
-        y = L_luminance_inverse (L)
-        if L != 0.0:
-            # Color is not totally black.
-            # Get u_prime, v_prime.
-            L13 = 13.0 * L
-            u_prime = self.reference_u_prime + (u / L13)
-            v_prime = self.reference_v_prime + (v / L13)
-            # Get xyz color.
-            xyz = uv_primes_inverse (u_prime, v_prime, y)
-        else:
-            # Color is black.
-            xyz = xyz_color (0.0, 0.0, 0.0)
+        xyz = percept.xyz_from_luv(
+            luv,
+            self.reference_u_prime,
+            self.reference_v_prime)
         return xyz
 
     # Conversions between standard device independent color space (CIE XYZ)
@@ -836,44 +598,12 @@ class ColorConverter(object):
 
     def lab_from_xyz(self, xyz):
         '''Convert color from CIE XYZ to Lab.'''
-        x = xyz [0]
-        y = xyz [1]
-        z = xyz [2]
-
-        x_p = x / self.reference_white [0]
-        y_p = y / self.reference_white [1]
-        z_p = z / self.reference_white [2]
-
-        f_x = Lab_f (x_p)
-        f_y = Lab_f (y_p)
-        f_z = Lab_f (z_p)
-
-        L = L_luminance (y_p)
-        a = 500.0 * (f_x - f_y)
-        b = 200.0 * (f_y - f_z)
-        Lab = lab_color (L, a, b)
-        return Lab
+        lab = percept.lab_from_xyz(xyz, self.reference_white)
+        return lab
 
     def xyz_from_lab(self, Lab):
         '''Convert color from Lab to CIE XYZ.  Inverse of lab_from_xyz().'''
-        L = Lab [0]
-        a = Lab [1]
-        b = Lab [2]
-        # invert L_luminance() to get y_p
-        y_p = L_luminance_inverse (L)
-        # calculate f_y
-        f_y = Lab_f (y_p)
-        # solve for f_x and f_z
-        f_x = f_y + (a / 500.0)
-        f_z = f_y - (b / 200.0)
-        # invert Lab_f() to get x_p and z_p
-        x_p = Lab_f_inverse (f_x)
-        z_p = Lab_f_inverse (f_z)
-        # multiply by reference white to get xyz
-        x = x_p * self.reference_white [0]
-        y = y_p * self.reference_white [1]
-        z = z_p * self.reference_white [2]
-        xyz = xyz_color (x, y, z)
+        xyz = percept.xyz_from_lab(Lab, self.reference_white)
         return xyz
 
     # Conversion of linear rgb color (range 0.0 - 1.0) to displayable values (range 0 - 255).
@@ -973,7 +703,7 @@ class ColorConverter(object):
         ir = min (self.max_value, max (0, ir))
         ig = min (self.max_value, max (0, ig))
         ib = min (self.max_value, max (0, ib))
-        irgb = irgb_color (ir, ig, ib)
+        irgb = colortypes.irgb_color (ir, ig, ib)
         return irgb
 
     def scale_float_from_int(self, irgb):
@@ -983,7 +713,7 @@ class ColorConverter(object):
         r = float (irgb [0]) / self.max_value
         g = float (irgb [1]) / self.max_value
         b = float (irgb [2]) / self.max_value
-        rgb = rgb_color (r, g, b)
+        rgb = colortypes.rgb_color (r, g, b)
         return rgb
 
     def clip_rgb_color(self, rgb_color):
@@ -1033,13 +763,47 @@ class ColorConverter(object):
         return rgb
 
 #
-# Initialization - Initialize to sRGB at module startup.
-#   If a different rgb model is needed, then the startup can be re-done to set the new conditions.
+# Factory functions for some standard color models.
+# The color clipping method is not defined by the standards,
+# so that is selected independently.
 #
 
-color_converter = None
+# Choice of standard color models.
+# Choose the one that you prefer.
+COLORMODEL_SRGB      = 0    # SRGB standard.
+COLORMODEL_HDTV      = 1    # HDTV standard Rec-709.
+COLORMODEL_UHDTV10   = 2    # UHDTV standard Rec-2020, 10 bits per color.
+COLORMODEL_UHDTV12   = 3    # UHDTV standard Rec-2020, 12 bits per color.
+COLORMODEL_ARBITRARY = 4    # Specify all parameters explicitly.
+
+
+def ColorConverterSrgb(
+    clip_method = CLIP_ADD_WHITE,
+    verbose     = False):
+    ''' sRGB standard color space.
+
+    sRGB (ITU-R BT.709) standard phosphor chromaticities, D65 white point.
+    This matches typical computer displays.
+
+        https://en.wikipedia.org/wiki/SRGB
+        http://www.color.org/sRGB.xalter
+    '''
+    converter = ColorConverter(
+        phosphor_red   = SRGB_Red,
+        phosphor_green = SRGB_Green,
+        phosphor_blue  = SRGB_Blue,
+        white_point    = SRGB_White,
+        gamma_method   = GAMMA_CORRECT_SRGB,
+        bit_depth      = 8,
+        clip_method    = clip_method,
+        verbose        = verbose)
+    return converter
+
+# https://en.wikipedia.org/wiki/Rec._2020
+
 
 def init (
+    colormodel_mode    = COLORMODEL_SRGB,
     phosphor_red       = SRGB_Red,
     phosphor_green     = SRGB_Green,
     phosphor_blue      = SRGB_Blue,
@@ -1048,25 +812,37 @@ def init (
     gamma_value        = None,
     gamma_correct_func = None,
     gamma_invert_func  = None,
-    clip_method        = CLIP_ADD_WHITE,
     bit_depth          = 8,
-    verbose            = False):
+    clip_method        = CLIP_ADD_WHITE,
+    verbose            = True):
     ''' Initialize. '''
     global color_converter
-    color_converter = ColorConverter(
-        phosphor_red       = phosphor_red,
-        phosphor_green     = phosphor_green,
-        phosphor_blue      = phosphor_blue,
-        white_point        = white_point,
-        gamma_method       = gamma_method,
-        gamma_value        = gamma_value,
-        gamma_correct_func = gamma_correct_func,
-        gamma_invert_func  = gamma_invert_func,
-        clip_method        = clip_method,
-        bit_depth          = bit_depth)
-    if verbose:
-        color_converter.dump()
+    if colormodel_mode == COLORMODEL_SRGB:
+        # sRGB
+        color_converter = ColorConverterSrgb(
+            clip_method = CLIP_ADD_WHITE,
+            verbose     = False)
+    elif colormodel_mode == COLORMODEL_ARBITRARY:
+        # Arbitrary
+        color_converter = ColorConverter(
+            phosphor_red       = phosphor_red,
+            phosphor_green     = phosphor_green,
+            phosphor_blue      = phosphor_blue,
+            white_point        = white_point,
+            gamma_method       = gamma_method,
+            gamma_value        = gamma_value,
+            gamma_correct_func = gamma_correct_func,
+            gamma_invert_func  = gamma_invert_func,
+            bit_depth          = bit_depth,
+            clip_method        = clip_method,
+            verbose            = verbose)
+    else:
+        raise ValueError('Invalid colormodel mode %s' % (str(colormodel_mode)))
 
+#
+# Initialization - Set a standard color model at module startup.
+# By default this is sRGB.
+#
 
+color_converter = None
 init()
-# Default conversions setup on module load
