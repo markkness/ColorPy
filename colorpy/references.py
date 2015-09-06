@@ -35,10 +35,6 @@ from colortypes import xyz_color
 # Various reference data that is (mostly) not used elsewhere.
 #
 
-#
-# Definitions of some standard values for colors and conversions
-#
-
 # Chromaticities of various standard phosphors and white points.
 
 # sRGB (ITU-R BT.709) standard phosphor chromaticities
@@ -108,10 +104,8 @@ MacBethWhite = xyz_color (0.30995, 0.31596, 0.37409)
 
 # Also see Judd/Wyszecki p.164 for colors of Planck Blackbodies
 
-#
 # Some standard xyz/rgb conversion matricies, which assume particular phosphors.
-# These are useful for testing.
-#
+# TODO: Use these in a test.
 
 # sRGB, from http://www.color.org/sRGB.xalter
 srgb_rgb_from_xyz_matrix = numpy.array ([
@@ -131,6 +125,19 @@ smpte_rgb_from_xyz_matrix = numpy.array ([
     [-1.0690,  1.9777,  0.0352],
     [ 0.0563, -0.1970,  1.0501]
 ])
+
+# Gamma correction:
+
+# Effective gamma for sRGB standard.  This exponent is not applied explicitly.
+STANDARD_GAMMA = 2.2
+
+# Although NTSC specifies a gamma of 2.2 as standard, this is designed
+# to account for the dim viewing environments typical of TV, but not
+# computers.  Well-adjusted CRT displays have a true gamma in the range
+# 2.35 through 2.55.  We use the physical gamma value here, not 2.2,
+# thus not correcting for a dim viewing environment.
+# [Poynton, Gamma FAQ p.5, p.9, Hall, p. 121]
+POYNTON_GAMMA = 2.45
 
 '''
 Setup the conversions between CIE XYZ and linear RGB spaces.

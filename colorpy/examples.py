@@ -1,5 +1,5 @@
 '''
-misc.py - Miscellaneous color plots.
+examples.py - Miscellaneous color plots.
 
 Description:
 
@@ -45,8 +45,6 @@ import colormodels
 import colortypes
 import plots
 import rayleigh
-
-# FIXME: Rename to examples?
 
 #
 # Some specialized figures.
