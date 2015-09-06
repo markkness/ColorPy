@@ -46,3 +46,5 @@ deactivate
     Return to normal Python 2.7 environment.
 
 Repeat test suite on Ubuntu (Python 2.7 only).
+
+Perform the GitHub merge on Ubuntu, and clean up the local branches.

@@ -764,7 +764,18 @@ class ColorConverter(object):
 
 #
 # Factory functions for some standard color models.
+# The color clipping method is not defined by the standards,
+# so that is selected independently.
 #
+
+# Choice of standard color models.
+# Choose the one that you prefer.
+COLORMODEL_SRGB      = 0    # SRGB standard.
+COLORMODEL_HDTV      = 1    # HDTV standard Rec-709.
+COLORMODEL_UHDTV10   = 2    # UHDTV standard Rec-2020, 10 bits per color.
+COLORMODEL_UHDTV12   = 3    # UHDTV standard Rec-2020, 12 bits per color.
+COLORMODEL_ARBITRARY = 4    # Specify all parameters explicitly.
+
 
 def ColorConverterSrgb(
     clip_method = CLIP_ADD_WHITE,
@@ -772,31 +783,23 @@ def ColorConverterSrgb(
     ''' sRGB standard color space.
 
     sRGB (ITU-R BT.709) standard phosphor chromaticities, D65 white point.
-    This matches typical computer displays and HDTV.
+    This matches typical computer displays.
 
         https://en.wikipedia.org/wiki/SRGB
         http://www.color.org/sRGB.xalter
     '''
     converter = ColorConverter(
-        phosphor_red       = SRGB_Red,
-        phosphor_green     = SRGB_Green,
-        phosphor_blue      = SRGB_Blue,
-        white_point        = SRGB_White,
-        gamma_method       = GAMMA_CORRECT_SRGB,
-        gamma_value        = None,
-        gamma_correct_func = None,
-        gamma_invert_func  = None,
-        bit_depth          = 8,
-        clip_method        = clip_method,
-        verbose            = verbose)
+        phosphor_red   = SRGB_Red,
+        phosphor_green = SRGB_Green,
+        phosphor_blue  = SRGB_Blue,
+        white_point    = SRGB_White,
+        gamma_method   = GAMMA_CORRECT_SRGB,
+        bit_depth      = 8,
+        clip_method    = clip_method,
+        verbose        = verbose)
     return converter
 
 # https://en.wikipedia.org/wiki/Rec._2020
-
-# Choice of standard color models.
-# Choose the one that you prefer.
-COLORMODEL_SRGB      = 0    # SRGB/HDTV standard.
-COLORMODEL_ARBITRARY = 1    # Specify the chromaticities, gamma, and range.
 
 
 def init (
