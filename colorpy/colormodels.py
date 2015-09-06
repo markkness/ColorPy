@@ -250,9 +250,7 @@ def xyz_normalize (xyz):
     sum_xyz = xyz[0] + xyz[1] + xyz[2]
     if sum_xyz != 0.0:
         scale = 1.0 / sum_xyz
-        xyz [0] *= scale
-        xyz [1] *= scale
-        xyz [2] *= scale
+        xyz *= scale
     return xyz
 
 def xyz_normalize_Y1 (xyz):
@@ -260,9 +258,7 @@ def xyz_normalize_Y1 (xyz):
     This both modifies the passed argument and returns the normalized result.'''
     if xyz [1] != 0.0:
         scale = 1.0 / xyz [1]
-        xyz [0] *= scale
-        xyz [1] *= scale
-        xyz [2] *= scale
+        xyz *= scale
     return xyz
 
 #
@@ -443,8 +439,9 @@ class ColorConverter(object):
         gamma_value        = None,
         gamma_correct_func = None,
         gamma_invert_func  = None,
+        bit_depth          = 8,
         clip_method        = CLIP_ADD_WHITE,
-        bit_depth          = 8):
+        verbose            = False):
         ''' Initialize the color conversions. '''
         # xyz <-> rgb conversions need phosphor chromaticities and white point.
         self.init_rgb_xyz(
@@ -454,10 +451,13 @@ class ColorConverter(object):
         # Gamma correction method.
         self.init_gamma_correction(
             gamma_method, gamma_value, gamma_correct_func, gamma_invert_func)
-        # Clipping method.
-        self.init_clipping(clip_method)
         # Bit depth for integer rgb values.
         self.init_bit_depth(bit_depth)
+        # Clipping method.
+        self.init_clipping(clip_method)
+        # Optional debug info.
+        if verbose:
+            self.dump()
 
     def init_rgb_xyz(self,
         phosphor_red,
@@ -763,13 +763,44 @@ class ColorConverter(object):
         return rgb
 
 #
-# Initialization - Initialize to sRGB at module startup.
-#   If a different rgb model is needed, then the startup can be re-done to set the new conditions.
+# Factory functions for some standard color models.
 #
 
-color_converter = None
+def ColorConverterSrgb(
+    clip_method = CLIP_ADD_WHITE,
+    verbose     = False):
+    ''' sRGB standard color space.
+
+    sRGB (ITU-R BT.709) standard phosphor chromaticities, D65 white point.
+    This matches typical computer displays and HDTV.
+
+        https://en.wikipedia.org/wiki/SRGB
+        http://www.color.org/sRGB.xalter
+    '''
+    converter = ColorConverter(
+        phosphor_red       = SRGB_Red,
+        phosphor_green     = SRGB_Green,
+        phosphor_blue      = SRGB_Blue,
+        white_point        = SRGB_White,
+        gamma_method       = GAMMA_CORRECT_SRGB,
+        gamma_value        = None,
+        gamma_correct_func = None,
+        gamma_invert_func  = None,
+        bit_depth          = 8,
+        clip_method        = clip_method,
+        verbose            = verbose)
+    return converter
+
+# https://en.wikipedia.org/wiki/Rec._2020
+
+# Choice of standard color models.
+# Choose the one that you prefer.
+COLORMODEL_SRGB      = 0    # SRGB/HDTV standard.
+COLORMODEL_ARBITRARY = 1    # Specify the chromaticities, gamma, and range.
+
 
 def init (
+    colormodel_mode    = COLORMODEL_SRGB,
     phosphor_red       = SRGB_Red,
     phosphor_green     = SRGB_Green,
     phosphor_blue      = SRGB_Blue,
@@ -778,25 +809,37 @@ def init (
     gamma_value        = None,
     gamma_correct_func = None,
     gamma_invert_func  = None,
-    clip_method        = CLIP_ADD_WHITE,
     bit_depth          = 8,
-    verbose            = False):
+    clip_method        = CLIP_ADD_WHITE,
+    verbose            = True):
     ''' Initialize. '''
     global color_converter
-    color_converter = ColorConverter(
-        phosphor_red       = phosphor_red,
-        phosphor_green     = phosphor_green,
-        phosphor_blue      = phosphor_blue,
-        white_point        = white_point,
-        gamma_method       = gamma_method,
-        gamma_value        = gamma_value,
-        gamma_correct_func = gamma_correct_func,
-        gamma_invert_func  = gamma_invert_func,
-        clip_method        = clip_method,
-        bit_depth          = bit_depth)
-    if verbose:
-        color_converter.dump()
+    if colormodel_mode == COLORMODEL_SRGB:
+        # sRGB
+        color_converter = ColorConverterSrgb(
+            clip_method = CLIP_ADD_WHITE,
+            verbose     = False)
+    elif colormodel_mode == COLORMODEL_ARBITRARY:
+        # Arbitrary
+        color_converter = ColorConverter(
+            phosphor_red       = phosphor_red,
+            phosphor_green     = phosphor_green,
+            phosphor_blue      = phosphor_blue,
+            white_point        = white_point,
+            gamma_method       = gamma_method,
+            gamma_value        = gamma_value,
+            gamma_correct_func = gamma_correct_func,
+            gamma_invert_func  = gamma_invert_func,
+            bit_depth          = bit_depth,
+            clip_method        = clip_method,
+            verbose            = verbose)
+    else:
+        raise ValueError('Invalid colormodel mode %s' % (str(colormodel_mode)))
 
+#
+# Initialization - Set a standard color model at module startup.
+# By default this is sRGB.
+#
 
+color_converter = None
 init()
-# Default conversions setup on module load

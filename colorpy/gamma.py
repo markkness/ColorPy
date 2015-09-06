@@ -71,6 +71,9 @@ But due to the vagaries of the electron gun physics, the intensity of the
 resulting beam was not proportional to this voltage, rather it was nearly
 an exponential function of it. Therefore the correction was needed.
 
+Also, the nonlinear conversion makes reasonably efficient use of
+integer values to display human-discernible light levels.
+
 With LCD and other modern displays, the physics is not the same. However,
 the modern devices are designed to have the same kind of color response as
 the legacy CRT displays, and so this gamma correction still applies.
