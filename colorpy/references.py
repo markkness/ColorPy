@@ -50,6 +50,10 @@ HDTV_Green = xyz_color (0.300, 0.600)
 HDTV_Blue  = xyz_color (0.150, 0.060)
 # use D65 as white point for HDTV
 
+# https://en.wikipedia.org/wiki/Rec._2020
+# https://en.wikipedia.org/wiki/Rec._709
+# https://en.wikipedia.org/wiki/Rec._601
+
 # SMPTE phosphors
 #   However, Hall [p. 188] notes that TV expects values calibrated for NTSC
 #   even though actual phosphors are as below.

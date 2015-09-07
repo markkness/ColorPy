@@ -1,7 +1,8 @@
-Testing Procedure for ColorPy
+**** Testing Procedure for ColorPy ****
 
 Some of these need to run from a normal Windows shell, not GitBash.
 They are written as if run from ColorPy\colorpy.
+Start with a Python 2.7 environment.
 
 clean:
 delete all files that git considers untracked.
@@ -15,13 +16,11 @@ python -m unittest discover
     Runs all unit tests.
 
 python test.py
-    Old-style test framework.
-
-python examples.py
+    Runs old-style test framework.
 
 python figures.py
-
-Manually examine figures *.png and html documents *.html.
+    Creates all sample figures and html documents.
+    Manually examine figures *.png and html documents *.html.
 
 Run data massage.
     cd data
@@ -48,3 +47,7 @@ deactivate
 Repeat test suite on Ubuntu (Python 2.7 only).
 
 Perform the GitHub merge on Ubuntu, and clean up the local branches.
+
+**** Release Procedure for ColorPy ****
+
+TBD.
