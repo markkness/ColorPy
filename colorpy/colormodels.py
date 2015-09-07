@@ -49,10 +49,6 @@ PhosphorWhite -
     Chromaticity values for display used in initialization.
     These are the sRGB values by default, but other values can be chosen.
 
-CLIP_CLAMP_TO_ZERO = 0
-CLIP_ADD_WHITE     = 1
-    Available color clipping methods.  Add white is the default.
-
 Functions:
 
 'Constructor-like' functions:
@@ -355,10 +351,6 @@ def gamma_correct(x):
 #   These must be clipped to something displayable.
 #
 
-# possible color clipping methods
-CLIP_CLAMP_TO_ZERO = 0
-CLIP_ADD_WHITE     = 1
-
 def clip_rgb_color (rgb_color):
     '''Convert a linear rgb color (nominal range 0.0 - 1.0), into a displayable
     irgb color with values in the range (0 - 255), clipping as necessary.
@@ -427,7 +419,7 @@ class ColorConverter(object):
         gamma_correct_func = None,
         gamma_invert_func  = None,
         bit_depth          = 8,
-        clip_method        = CLIP_ADD_WHITE,
+        clip_method        = clipping.CLIP_ADD_WHITE,
         verbose            = False):
         ''' Initialize the color conversions. '''
         # xyz <-> rgb conversions need phosphor chromaticities and white point.
@@ -532,8 +524,7 @@ class ColorConverter(object):
 
     def init_clipping(self, clip_method):
         '''Specify the color clipping method.'''
-        if not clip_method in [CLIP_CLAMP_TO_ZERO, CLIP_ADD_WHITE]:
-            raise ValueError('Invalid color clipping method %s' % (str(clip_method)))
+        clipping.check_clip_method(clip_method)
         self.clip_method = clip_method
 
     def init_bit_depth(self, bit_depth):
@@ -670,26 +661,17 @@ class ColorConverter(object):
         The return value is a tuple, the first element is the clipped irgb color,
         and the second element is a tuple indicating which (if any) clipping processes were used.
         '''
-        clipped_chromaticity = False
-        clipped_intensity = False
-
         rgb = rgb_color.copy()
 
-        # clip chromaticity if needed (negative rgb values)
-        if self.clip_method == CLIP_CLAMP_TO_ZERO:
-            clipped_chromaticity = clipping.clip_color_clamp(rgb)
-        elif self.clip_method == CLIP_ADD_WHITE:
-            clipped_chromaticity = clipping.clip_color_whiten(rgb)
-        else:
-            raise ValueError('Invalid color clipping method %s' % (str(self.clip_method)))
+        # Clip chromaticity (negative rgb values).
+        clipped_chromaticity = clipping.clip_color(rgb, self.clip_method)
+        # Clip intensity (rgb values > 1.0).
+        clipped_intensity = clipping.clip_intensity(rgb, self.max_value)
 
-        # clip intensity if needed (rgb values > 1.0) by scaling
-        clipped_intensity = clipping.clip_color_intensity(rgb, self.max_value)
-
-        # gamma correction
+        # Gamma adjustment.
         self.display_from_linear(rgb)
 
-        # Scale to 0 - 2^B - 1.
+        # Scaling to integer 0 to 2^B - 1.
         irgb = clipping.scale_int_from_float(rgb, self.max_value)
         return (irgb, (clipped_chromaticity, clipped_intensity))
 
@@ -725,7 +707,7 @@ COLORMODEL_ARBITRARY = 4    # Specify all parameters explicitly.
 
 
 def ColorConverterSrgb(
-    clip_method = CLIP_ADD_WHITE,
+    clip_method = clipping.CLIP_ADD_WHITE,
     verbose     = False):
     ''' sRGB standard color space.
 
@@ -760,14 +742,14 @@ def init (
     gamma_correct_func = None,
     gamma_invert_func  = None,
     bit_depth          = 8,
-    clip_method        = CLIP_ADD_WHITE,
+    clip_method        = clipping.CLIP_ADD_WHITE,
     verbose            = True):
     ''' Initialize. '''
     global color_converter
     if colormodel_mode == COLORMODEL_SRGB:
         # sRGB
         color_converter = ColorConverterSrgb(
-            clip_method = CLIP_ADD_WHITE,
+            clip_method = clipping.CLIP_ADD_WHITE,
             verbose     = False)
     elif colormodel_mode == COLORMODEL_ARBITRARY:
         # Arbitrary

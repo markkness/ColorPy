@@ -45,31 +45,29 @@ from __future__ import unicode_literals
 
 import colortypes
 
-###
-### Color clipping - Physical color values may exceed the what the display can show,
-###   either because the color is too pure (indicated by negative rgb values), or
-###   because the color is too bright (indicated by rgb values > 1.0).
-###   These must be clipped to something displayable.
-###
-##
-### possible color clipping methods
-##CLIP_CLAMP_TO_ZERO = 0
-##CLIP_ADD_WHITE     = 1
-##
-##def clip_rgb_color (rgb_color):
-##    '''Convert a linear rgb color (nominal range 0.0 - 1.0), into a displayable
-##    irgb color with values in the range (0 - 255), clipping as necessary.
-##
-##    The return value is a tuple, the first element is the clipped irgb color,
-##    and the second element is a tuple indicating which (if any) clipping processes were used.
-##    '''
-##    return color_converter.clip_rgb_color (rgb_color)
+#
+# Color clipping - Physical color values may exceed the what the display can show,
+#   either because the color is too pure (indicated by negative rgb values), or
+#   because the color is too bright (indicated by rgb values > 1.0).
+#   These must be clipped to something displayable.
+#
+
+# possible color clipping methods
+CLIP_CLAMP_TO_ZERO = 0
+CLIP_ADD_WHITE     = 1
+
+
+def check_clip_method(clip_method):
+    ''' Check that the clip method is legal, or raise an exception. '''
+    if not clip_method in [CLIP_CLAMP_TO_ZERO, CLIP_ADD_WHITE]:
+        raise ValueError('Invalid color clipping method %s' % (str(clip_method)))
 
 #
 # Clipping of undisplayable colors.
 #
-# These act on linear floating point color values,
-# seeking to limit the component range to 0.0 - 1.0.
+
+# Color clipping: clipping of negative rgb values.
+# These should remove all negative values.
 
 def clip_color_clamp(rgb):
     ''' Clip an rgb color to remove negative components.
@@ -108,7 +106,21 @@ def clip_color_whiten(rgb):
         clipped = True
     return clipped
 
-def clip_color_intensity(rgb, max_value):
+def clip_color(rgb, clip_method):
+    ''' Select the method and color clip. '''
+    # clip chromaticity if needed (negative rgb values)
+    if clip_method == CLIP_CLAMP_TO_ZERO:
+        clipped_chromaticity = clip_color_clamp(rgb)
+    elif clip_method == CLIP_ADD_WHITE:
+        clipped_chromaticity = clip_color_whiten(rgb)
+    else:
+        raise ValueError('Invalid color clipping method %s' % (str(clip_method)))
+    return clipped_chromaticity
+
+# Intensity clipping: clipping of too large rgb values.
+# These should remove all values significantly larger than 1.0.
+
+def clip_intensity(rgb, max_value):
     ''' Scale an rgb color if needed to the component range 0.0 - 1.0. '''
     # The input color is modified as necessary.
     clipped = False

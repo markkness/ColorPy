@@ -32,6 +32,7 @@ import numpy
 import random
 import unittest
 
+import clipping
 import colormodels
 import colortypes
 import purecolors
@@ -169,12 +170,12 @@ class TestColormodels(unittest.TestCase):
         num_wl = xyz_colors.shape[0]
         for i in range (num_wl):
             # Get rgb values for standard add white clipping.
-            colormodels.color_converter.init_clipping (colormodels.CLIP_ADD_WHITE)
+            colormodels.color_converter.init_clipping (clipping.CLIP_ADD_WHITE)
             rgb_white_color = colormodels.irgb_string_from_rgb (
                 colormodels.rgb_from_xyz (xyz_colors [i]))
 
             # Get rgb values for clamp-to-zero clipping.
-            colormodels.color_converter.init_clipping (colormodels.CLIP_CLAMP_TO_ZERO)
+            colormodels.color_converter.init_clipping (clipping.CLIP_CLAMP_TO_ZERO)
             rgb_clamp_color = colormodels.irgb_string_from_rgb (
                 colormodels.rgb_from_xyz (xyz_colors [i]))
 
