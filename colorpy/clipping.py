@@ -138,33 +138,38 @@ def clip_intensity(rgb, max_value):
 # Conversions between integer displayable colors and hexstrings, like '#AB05B4'.
 #
 
-def hexstring_from_irgb (irgb):
-    ''' Convert a displayable irgb color (0-255) into a hex string. '''
-    # Ensure that values are in the range 0-255.
-    ir = min (255, max (0, irgb [0]))
-    ig = min (255, max (0, irgb [1]))
-    ib = min (255, max (0, irgb [2]))
+def hexstring_from_irgb (irgb, num_digits=2):
+    ''' Convert a displayable irgb color into a hex string.
+    Use the specified number of hex digits per color component. '''
+    # Determine max value for the number of digits, and clamp values.
+    num_values = 1
+    for i in range(num_digits):
+        num_values *= 0x10
+    min_value = 0
+    max_value = num_values - 1
+    ir = min(max_value, max(min_value, irgb [0]))
+    ig = min(max_value, max(min_value, irgb [1]))
+    ib = min(max_value, max(min_value, irgb [2]))
     # Convert to hexstring.
-    num_digits = 2
     format1 = '%0' + '%d' % (num_digits) + 'X'
     format2 = '#' + format1 + format1 + format1
     hexstring = format2 % (ir, ig, ib)
-    #hexstring = '#%02X%02X%02X' % (ir, ig, ib)
     return hexstring
 
 def irgb_from_hexstring (hexstring):
     ''' Convert a hexstring (like '#AB13D2') into a displayable irgb color. '''
     # Check leading '#'.
     if hexstring [0] != '#':
-        raise ValueError('hexstring_from_irgb(): Expecting hex digit string like #AB13D2')
+        raise ValueError('hexstring_from_irgb(): Expect hex digit string like #AB13D2')
     # Check number of digits.
-    num_digits = len (hexstring) - 1
-    if num_digits != 6:
-        raise ValueError('hexstring_from_irgb(): Expecting 6 hex digits like #AB13D2')
+    num_all_digits = len(hexstring) - 1
+    num_digits, remainder = divmod(num_all_digits, 3)
+    if remainder != 0:
+        raise ValueError('hexstring_from_irgb(): Expect number of hex digits is multiple of 3')
     # Extract digits.
-    irs = hexstring [1:3]
-    igs = hexstring [3:5]
-    ibs = hexstring [5:7]
+    irs = hexstring [1               :1 +   num_digits]
+    igs = hexstring [1 +   num_digits:1 + 2*num_digits]
+    ibs = hexstring [1 + 2*num_digits:1 + 3*num_digits]
     # Parse as hexadecimal integers.
     ir = int (irs, 0x10)
     ig = int (igs, 0x10)

@@ -48,28 +48,29 @@ class TestClipping(unittest.TestCase):
             values.append(irgb)
         return values
 
-    def check_hexstring(self, irgb, verbose):
+    def check_hexstring_conversions(self, irgb, num_digits, verbose):
         ''' Convert back and forth from irgb and hexstring. '''
-        hexstring  = clipping.hexstring_from_irgb (irgb)
+        hexstring  = clipping.hexstring_from_irgb (irgb, num_digits)
         irgb2      = clipping.irgb_from_hexstring (hexstring)
-        hexstring2 = clipping.hexstring_from_irgb (irgb2)
+        hexstring2 = clipping.hexstring_from_irgb (irgb2, num_digits)
         # Values should match.
         self.assertEqual(irgb[0], irgb2[0])
         self.assertEqual(irgb[1], irgb2[1])
         self.assertEqual(irgb[2], irgb2[2])
         # String should match.
         self.assertEqual(hexstring, hexstring2)
-        msg = 'irgb: %-16s    irgb2: %-16s        hexstring: %s    hexstring2: %s' % (
+        msg = 'irgb: %-16s    irgb2: %-16s        hexstring: %-10s    hexstring2: %-10s' % (
             str(irgb), str(irgb2), hexstring, hexstring2)
         if verbose:
             print (msg)
 
-    def test_hexstring(self, verbose=True):
+    def test_hexstring_conversions(self, verbose=True):
         ''' Test conversions between irgb and hexstring. '''
-        if verbose: print('test_hexstring():')
-        values = self.get_irgb_values(num_range=256, count=20)
+        if verbose: print('test_hexstring_conversions():')
+        values = self.get_irgb_values(num_range=256, count=10)
         for irgb in values:
-            self.check_hexstring(irgb, verbose)
+            self.check_hexstring_conversions(irgb, 2, verbose)
+            self.check_hexstring_conversions(irgb, 3, verbose)
 
 
 if __name__ == '__main__':
