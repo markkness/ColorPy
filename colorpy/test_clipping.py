@@ -37,30 +37,39 @@ import colortypes
 class TestClipping(unittest.TestCase):
     ''' Test cases for color clipping and integer conversions. '''
 
-    def check_irgb_string(self, irgb, verbose):
-        ''' Convert back and forth from irgb and irgb_string. '''
-        irgb_string = clipping.irgb_string_from_irgb (irgb)
-        irgb2 = clipping.irgb_from_irgb_string (irgb_string)
-        irgb_string2 = clipping.irgb_string_from_irgb (irgb2)
+    def get_irgb_values(self, num_range=256, count=20):
+        ''' Get some random irgb values. '''
+        values = []
+        for i in range(count):
+            ir = random.randrange (0, num_range)
+            ig = random.randrange (0, num_range)
+            ib = random.randrange (0, num_range)
+            irgb = colortypes.irgb_color (ir, ig, ib)
+            values.append(irgb)
+        return values
+
+    def check_hexstring(self, irgb, verbose):
+        ''' Convert back and forth from irgb and hexstring. '''
+        hexstring  = clipping.hexstring_from_irgb (irgb)
+        irgb2      = clipping.irgb_from_hexstring (hexstring)
+        hexstring2 = clipping.hexstring_from_irgb (irgb2)
         # Values should match.
         self.assertEqual(irgb[0], irgb2[0])
         self.assertEqual(irgb[1], irgb2[1])
         self.assertEqual(irgb[2], irgb2[2])
         # String should match.
-        self.assertEqual(irgb_string, irgb_string2)
-        msg = 'irgb: %s    irgb2: %s        irgb_string: %s    irgb_string2: %s' % (
-            str(irgb), str(irgb2), irgb_string, irgb_string2)
+        self.assertEqual(hexstring, hexstring2)
+        msg = 'irgb: %-16s    irgb2: %-16s        hexstring: %s    hexstring2: %s' % (
+            str(irgb), str(irgb2), hexstring, hexstring2)
         if verbose:
             print (msg)
 
-    def test_irgb_string(self, verbose=False):
-        ''' Convert back and forth from irgb and irgb_string. '''
-        for i in range (20):
-            ir = random.randrange (0, 256)
-            ig = random.randrange (0, 256)
-            ib = random.randrange (0, 256)
-            irgb = colortypes.irgb_color (ir, ig, ib)
-            self.check_irgb_string(irgb, verbose)
+    def test_hexstring(self, verbose=True):
+        ''' Test conversions between irgb and hexstring. '''
+        if verbose: print('test_hexstring():')
+        values = self.get_irgb_values(num_range=256, count=20)
+        for irgb in values:
+            self.check_hexstring(irgb, verbose)
 
 
 if __name__ == '__main__':

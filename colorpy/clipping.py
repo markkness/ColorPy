@@ -64,6 +64,7 @@ def check_clip_method(clip_method):
 
 #
 # Clipping of undisplayable colors.
+# These modify the passed in colors, and return information about the clipping done.
 #
 
 # Color clipping: clipping of negative rgb values.
@@ -72,7 +73,7 @@ def check_clip_method(clip_method):
 def clip_color_clamp(rgb):
     ''' Clip an rgb color to remove negative components.
     Any negative components are zeroed. '''
-    # The input color is modified as necessary.
+    # The input rgb color is modified.
     clipped = False
     # Set negative rgb values to zero.
     if rgb [0] < 0.0:
@@ -89,7 +90,7 @@ def clip_color_clamp(rgb):
 def clip_color_whiten(rgb):
     ''' Clip an rgb color to remove negative components.
     White is added as necessary to remove any negative components. '''
-    # The input color is modified as necessary.
+    # The input rgb color is modified.
     clipped = False
     # Add enough white to make all rgb values nonnegative.
     rgb_min = min (0.0, min (rgb))
@@ -107,8 +108,8 @@ def clip_color_whiten(rgb):
     return clipped
 
 def clip_color(rgb, clip_method):
-    ''' Select the method and color clip. '''
-    # clip chromaticity if needed (negative rgb values)
+    ''' Clip chromaticity (negative rgb values). '''
+    # The input rgb color is modified.
     if clip_method == CLIP_CLAMP_TO_ZERO:
         clipped_chromaticity = clip_color_clamp(rgb)
     elif clip_method == CLIP_ADD_WHITE:
@@ -121,8 +122,8 @@ def clip_color(rgb, clip_method):
 # These should remove all values significantly larger than 1.0.
 
 def clip_intensity(rgb, max_value):
-    ''' Scale an rgb color if needed to the component range 0.0 - 1.0. '''
-    # The input color is modified as necessary.
+    ''' Clip intensity (rgb values significantly > 1.0). '''
+    # The input rgb color is modified.
     clipped = False
     rgb_max = max (rgb)
     # Does not actually overflow until 2^B * intensity > (2^B + 0.5).
@@ -134,35 +135,40 @@ def clip_intensity(rgb, max_value):
     return clipped
 
 #
-# Conversions between linear rgb colors (range 0.0 - 1.0, values proportional to light intensity)
-# and displayable irgb colors (range 0 - 255, values corresponding to hardware palette values).
-#
-# Displayable irgb colors can be represented as hex strings, like '#AB05B4'.
+# Conversions between integer displayable colors and hexstrings, like '#AB05B4'.
 #
 
-def irgb_string_from_irgb (irgb):
-    '''Convert a displayable irgb color (0-255) into a hex string.'''
-    # ensure that values are in the range 0-255
-    # FIXME: This is overwriting the input value.
-    for index in range (0, 3):
-        irgb [index] = min (255, max (0, irgb [index]))
-    # convert to hex string
-    irgb_string = '#%02X%02X%02X' % (irgb [0], irgb [1], irgb [2])
-    return irgb_string
+def hexstring_from_irgb (irgb):
+    ''' Convert a displayable irgb color (0-255) into a hex string. '''
+    # Ensure that values are in the range 0-255.
+    ir = min (255, max (0, irgb [0]))
+    ig = min (255, max (0, irgb [1]))
+    ib = min (255, max (0, irgb [2]))
+    # Convert to hexstring.
+    num_digits = 2
+    format1 = '%0' + '%d' % (num_digits) + 'X'
+    format2 = '#' + format1 + format1 + format1
+    hexstring = format2 % (ir, ig, ib)
+    #hexstring = '#%02X%02X%02X' % (ir, ig, ib)
+    return hexstring
 
-def irgb_from_irgb_string (irgb_string):
-    '''Convert a color hex string (like '#AB13D2') into a displayable irgb color.'''
-    strlen = len (irgb_string)
-    if strlen != 7:
-        raise ValueError('irgb_string_from_irgb(): Expecting 7 character string like #AB13D2')
-    if irgb_string [0] != '#':
-        raise ValueError('irgb_string_from_irgb(): Expecting 7 character string like #AB13D2')
-    irs = irgb_string [1:3]
-    igs = irgb_string [3:5]
-    ibs = irgb_string [5:7]
-    ir = int (irs, 16)
-    ig = int (igs, 16)
-    ib = int (ibs, 16)
+def irgb_from_hexstring (hexstring):
+    ''' Convert a hexstring (like '#AB13D2') into a displayable irgb color. '''
+    # Check leading '#'.
+    if hexstring [0] != '#':
+        raise ValueError('hexstring_from_irgb(): Expecting hex digit string like #AB13D2')
+    # Check number of digits.
+    num_digits = len (hexstring) - 1
+    if num_digits != 6:
+        raise ValueError('hexstring_from_irgb(): Expecting 6 hex digits like #AB13D2')
+    # Extract digits.
+    irs = hexstring [1:3]
+    igs = hexstring [3:5]
+    ibs = hexstring [5:7]
+    # Parse as hexadecimal integers.
+    ir = int (irs, 0x10)
+    ig = int (igs, 0x10)
+    ib = int (ibs, 0x10)
     irgb = colortypes.irgb_color (ir, ig, ib)
     return irgb
 

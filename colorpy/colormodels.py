@@ -370,12 +370,12 @@ def clip_rgb_color (rgb_color):
 def irgb_string_from_irgb (irgb):
     '''Convert a displayable irgb color (0-255) into a hex string.'''
     # ensure that values are in the range 0-255
-    hexstring = clipping.irgb_string_from_irgb(irgb)
+    hexstring = clipping.hexstring_from_irgb(irgb)
     return hexstring
 
 def irgb_from_irgb_string (irgb_string):
     '''Convert a color hex string (like '#AB13D2') into a displayable irgb color.'''
-    irgb = clipping.irgb_from_irgb_string(irgb_string)
+    irgb = clipping.irgb_from_hexstring(irgb_string)
     return irgb
 
 def irgb_from_rgb (rgb):
@@ -388,7 +388,7 @@ def rgb_from_irgb (irgb):
 
 def irgb_string_from_rgb (rgb):
     '''Clip the rgb color, convert to a displayable color, and convert to a hex string.'''
-    return clipping.irgb_string_from_irgb (irgb_from_rgb (rgb))
+    return clipping.hexstring_from_irgb (irgb_from_rgb (rgb))
 
 # Multi-level conversions, for convenience
 
