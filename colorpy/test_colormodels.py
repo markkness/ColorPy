@@ -160,31 +160,6 @@ class TestColormodels(unittest.TestCase):
             irgb0 = colortypes.irgb_color (ir, ig, ib)
             self.check_rgb_irgb(irgb0, verbose)
 
-    def check_irgb_string(self, irgb, verbose):
-        ''' Convert back and forth from irgb and irgb_string. '''
-        irgb_string = colormodels.irgb_string_from_irgb (irgb)
-        irgb2 = colormodels.irgb_from_irgb_string (irgb_string)
-        irgb_string2 = colormodels.irgb_string_from_irgb (irgb2)
-        # Values should match.
-        self.assertEqual(irgb[0], irgb2[0])
-        self.assertEqual(irgb[1], irgb2[1])
-        self.assertEqual(irgb[2], irgb2[2])
-        # String should match.
-        self.assertEqual(irgb_string, irgb_string2)
-        msg = 'irgb: %s    irgb2: %s        irgb_string: %s    irgb_string2: %s' % (
-            str(irgb), str(irgb2), irgb_string, irgb_string2)
-        if verbose:
-            print (msg)
-
-    def test_irgb_string(self, verbose=False):
-        ''' Convert back and forth from irgb and irgb_string. '''
-        for i in range (20):
-            ir = random.randrange (0, 256)
-            ig = random.randrange (0, 256)
-            ib = random.randrange (0, 256)
-            irgb = colortypes.irgb_color (ir, ig, ib)
-            self.check_irgb_string(irgb, verbose)
-
     # Clipping.
 
     def test_clipping(self, verbose=False):

@@ -226,6 +226,7 @@ from __future__ import unicode_literals
 
 import numpy
 
+import clipping
 import colortypes
 import gamma
 import percept
@@ -368,65 +369,6 @@ def clip_rgb_color (rgb_color):
     return color_converter.clip_rgb_color (rgb_color)
 
 #
-# Freed clipping code.
-#
-
-# These act on linear floating point color values,
-# seeking to limit the component range to 0.0 - 1.0.
-
-# Clipping of undisplayable colors.
-
-def clip_color_clamp(rgb):
-    ''' Clip an rgb color to remove negative components.
-    Any negative components are zeroed. '''
-    # The input color is modified as necessary.
-    clipped = False
-    # Set negative rgb values to zero.
-    if rgb [0] < 0.0:
-        rgb [0] = 0.0
-        clipped = True
-    if rgb [1] < 0.0:
-        rgb [1] = 0.0
-        clipped = True
-    if rgb [2] < 0.0:
-        rgb [2] = 0.0
-        clipped = True
-    return clipped
-
-def clip_color_whiten(rgb):
-    ''' Clip an rgb color to remove negative components.
-    White is added as necessary to remove any negative components. '''
-    # The input color is modified as necessary.
-    clipped = False
-    # Add enough white to make all rgb values nonnegative.
-    rgb_min = min (0.0, min (rgb))
-    # Get scaling factor to maintain max rgb after adding white.
-    rgb_max = max (rgb)
-    scaling = 1.0
-    if rgb_max > 0.0:
-        scaling = rgb_max / (rgb_max - rgb_min)
-    # Add white and scale.
-    if rgb_min < 0.0:
-        rgb [0] = scaling * (rgb [0] - rgb_min);
-        rgb [1] = scaling * (rgb [1] - rgb_min);
-        rgb [2] = scaling * (rgb [2] - rgb_min);
-        clipped = True
-    return clipped
-
-def clip_color_intensity(rgb, max_value):
-    ''' Scale an rgb color if needed to the component range 0.0 - 1.0. '''
-    # The input color is modified as necessary.
-    clipped = False
-    rgb_max = max (rgb)
-    # Does not actually overflow until 2^B * intensity > (2^B + 0.5).
-    intensity_cutoff = 1.0 + (0.5 / max_value)
-    if rgb_max > intensity_cutoff:
-        scaling = intensity_cutoff / rgb_max
-        rgb *= scaling
-        clipped = True
-    return clipped
-
-#
 # Conversions between linear rgb colors (range 0.0 - 1.0, values proportional to light intensity)
 # and displayable irgb colors (range 0 - 255, values corresponding to hardware palette values).
 #
@@ -436,60 +378,13 @@ def clip_color_intensity(rgb, max_value):
 def irgb_string_from_irgb (irgb):
     '''Convert a displayable irgb color (0-255) into a hex string.'''
     # ensure that values are in the range 0-255
-    # FIXME: This is overwriting the input value.
-    for index in range (0, 3):
-        irgb [index] = min (255, max (0, irgb [index]))
-    # convert to hex string
-    irgb_string = '#%02X%02X%02X' % (irgb [0], irgb [1], irgb [2])
-    return irgb_string
+    hexstring = clipping.irgb_string_from_irgb(irgb)
+    return hexstring
 
 def irgb_from_irgb_string (irgb_string):
     '''Convert a color hex string (like '#AB13D2') into a displayable irgb color.'''
-    strlen = len (irgb_string)
-    if strlen != 7:
-        raise ValueError('irgb_string_from_irgb(): Expecting 7 character string like #AB13D2')
-    if irgb_string [0] != '#':
-        raise ValueError('irgb_string_from_irgb(): Expecting 7 character string like #AB13D2')
-    irs = irgb_string [1:3]
-    igs = irgb_string [3:5]
-    ibs = irgb_string [5:7]
-    ir = int (irs, 16)
-    ig = int (igs, 16)
-    ib = int (ibs, 16)
-    irgb = colortypes.irgb_color (ir, ig, ib)
+    irgb = clipping.irgb_from_irgb_string(irgb_string)
     return irgb
-
-#
-# Scaling from 0.0 - 1.0 range to integer values 0 - 2^(bitdepth) - 1.
-#
-
-def scale_int_from_float(rgb, max_value):
-    ''' Scale a color with component range 0.0 - 1.0 to integer values
-    in range 0 - 2^(bitdepth) - 1. '''
-    ir = round (max_value * rgb [0])
-    ig = round (max_value * rgb [1])
-    ib = round (max_value * rgb [2])
-    # Ensure that values are in the valid range.
-    # This is redundant if the value was properly clipped, but make sure.
-    ir = min (max_value, max (0, ir))
-    ig = min (max_value, max (0, ig))
-    ib = min (max_value, max (0, ib))
-    irgb = colortypes.irgb_color (ir, ig, ib)
-    return irgb
-
-def scale_float_from_int(irgb, max_value):
-    ''' Scale a color with integer components 0 - 2^(bitdepth) - 1
-    to floating point values in range 0.0 - 1.0. '''
-    # Scale to 0.0 - 1.0.
-    r = float (irgb [0]) / max_value
-    g = float (irgb [1]) / max_value
-    b = float (irgb [2]) / max_value
-    rgb = colortypes.rgb_color (r, g, b)
-    return rgb
-
-#
-#
-#
 
 def irgb_from_rgb (rgb):
     '''Convert a (linear) rgb value (range 0.0 - 1.0) into a 0-255 displayable integer irgb value (range 0 - 255).'''
@@ -501,7 +396,7 @@ def rgb_from_irgb (irgb):
 
 def irgb_string_from_rgb (rgb):
     '''Clip the rgb color, convert to a displayable color, and convert to a hex string.'''
-    return irgb_string_from_irgb (irgb_from_rgb (rgb))
+    return clipping.irgb_string_from_irgb (irgb_from_rgb (rgb))
 
 # Multi-level conversions, for convenience
 
@@ -706,20 +601,20 @@ class ColorConverter(object):
         ''' Clip an rgb color to remove negative components.
         Any negative components are zeroed. '''
         # FIXME: Probably unused now.
-        clipped = clip_color_clamp(rgb)
+        clipped = clipping.clip_color_clamp(rgb)
         return clipped
 
     def clip_color_whiten(self, rgb):
         ''' Clip an rgb color to remove negative components.
         White is added as necessary to remove any negative components. '''
         # FIXME: Probably unused now.
-        clipped = clip_color_whiten(rgb)
+        clipped = clipping.clip_color_whiten(rgb)
         return clipped
 
     def clip_color_intensity(self, rgb):
         ''' Scale an rgb color if needed to the component range 0.0 - 1.0. '''
         # FIXME: Probably unused now.
-        clipped = clip_color_intensity(rgb, self.max_value)
+        clipped = clipping.clip_color_intensity(rgb, self.max_value)
         return clipped
 
     # Gamma correction, to convert between linear and displayable values.
@@ -758,14 +653,14 @@ class ColorConverter(object):
         ''' Scale a color with component range 0.0 - 1.0 to integer values
         in range 0 - 2^(bitdepth) - 1. '''
         # FIXME: Probably unused now.
-        irgb = scale_int_from_float(rgb, self.max_value)
+        irgb = clipping.scale_int_from_float(rgb, self.max_value)
         return irgb
 
     def scale_float_from_int(self, irgb):
         ''' Scale a color with integer components 0 - 2^(bitdepth) - 1
         to floating point values in range 0.0 - 1.0. '''
         # FIXME: Probably unused now.
-        rgb = scale_float_from_int(irgb, self.max_value)
+        rgb = clipping.scale_float_from_int(irgb, self.max_value)
         return rgb
 
     def clip_rgb_color(self, rgb_color):
@@ -782,20 +677,20 @@ class ColorConverter(object):
 
         # clip chromaticity if needed (negative rgb values)
         if self.clip_method == CLIP_CLAMP_TO_ZERO:
-            clipped_chromaticity = clip_color_clamp(rgb)
+            clipped_chromaticity = clipping.clip_color_clamp(rgb)
         elif self.clip_method == CLIP_ADD_WHITE:
-            clipped_chromaticity = clip_color_whiten(rgb)
+            clipped_chromaticity = clipping.clip_color_whiten(rgb)
         else:
             raise ValueError('Invalid color clipping method %s' % (str(self.clip_method)))
 
         # clip intensity if needed (rgb values > 1.0) by scaling
-        clipped_intensity = clip_color_intensity(rgb, self.max_value)
+        clipped_intensity = clipping.clip_color_intensity(rgb, self.max_value)
 
         # gamma correction
         self.display_from_linear(rgb)
 
         # Scale to 0 - 2^B - 1.
-        irgb = scale_int_from_float(rgb, self.max_value)
+        irgb = clipping.scale_int_from_float(rgb, self.max_value)
         return (irgb, (clipped_chromaticity, clipped_intensity))
 
     # Conversions between linear rgb colors (0.0 - 1.0 range) and
@@ -810,7 +705,7 @@ class ColorConverter(object):
     def rgb_from_irgb(self, irgb):
         '''Convert a displayable (gamma corrected) irgb value (range 0 - 2^B - 1) into a linear rgb value (range 0.0 - 1.0).'''
         # Scale to 0.0 - 1.0, and gamma correct.
-        rgb = scale_float_from_int(irgb, self.max_value)
+        rgb = clipping.scale_float_from_int(irgb, self.max_value)
         self.linear_from_display(rgb)
         return rgb
 
