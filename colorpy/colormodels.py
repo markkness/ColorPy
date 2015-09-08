@@ -422,11 +422,11 @@ class ColorConverter(object):
         clip_method        = clipping.CLIP_ADD_WHITE,
         verbose            = False):
         ''' Initialize the color conversions. '''
-        # xyz <-> rgb conversions need phosphor chromaticities and white point.
-        self.init_rgb_xyz(
+        # xyz <---> rgb chromaticities and white point.
+        self.init_chromaticities(
             phosphor_red, phosphor_green, phosphor_blue, white_point)
-        # xyz <-> Luv and Lab conversions need white point.
-        self.init_Luv_Lab_white_point(white_point)
+        # xyz <-> perceptually uniform systems Lab and Luv and Lab needs white point.
+        self.init_percept_white_point(white_point)
         # Gamma correction method.
         self.init_gamma_correction(
             gamma_method, gamma_value, gamma_correct_func, gamma_invert_func)
@@ -438,7 +438,7 @@ class ColorConverter(object):
         if verbose:
             self.dump()
 
-    def init_rgb_xyz(self,
+    def init_chromaticities(self,
         phosphor_red,
         phosphor_green,
         phosphor_blue,
@@ -453,10 +453,10 @@ class ColorConverter(object):
         See [Foley/Van Dam, p.587, eqn 13.27, 13.29] and [Hall, p. 239].
         '''
         # xyz colors of the monitor phosphors (and full white).
-        self.PhosphorRed   = phosphor_red
-        self.PhosphorGreen = phosphor_green
-        self.PhosphorBlue  = phosphor_blue
-        self.PhosphorWhite = white_point
+        self.phosphor_red   = phosphor_red
+        self.phosphor_green = phosphor_green
+        self.phosphor_blue  = phosphor_blue
+        self.phosphor_white = white_point
         phosphor_matrix = numpy.column_stack ((phosphor_red, phosphor_green, phosphor_blue))
         # Normalize white point to Y=1.0.
         normalized_white = white_point.copy()
@@ -472,8 +472,8 @@ class ColorConverter(object):
         # Invert to get rgb_from_xyz matrix.
         self.rgb_from_xyz_matrix = numpy.linalg.inv (self.xyz_from_rgb_matrix)
 
-    def init_Luv_Lab_white_point(self, white_point):
-        ''' Specify the white point to use for Luv/Lab conversions. '''
+    def init_percept_white_point(self, white_point):
+        ''' Specify the white point to use for Lab/Luv conversions. '''
         self.reference_white = white_point.copy()
         xyz_normalize_Y1 (self.reference_white)
         self.reference_u_prime, self.reference_v_prime = percept.uv_primes (self.reference_white)
@@ -522,10 +522,24 @@ class ColorConverter(object):
         else:
             raise ValueError('Invalid gamma correction method %s' % (str(gamma_method)))
 
+    def get_gamma_text(self):
+        ''' Print text about gamma correction. '''
+        gamma_txt = '???'    # TODO: Add some information.
+        return gamma_txt
+
+    # Clipping method.
+
     def init_clipping(self, clip_method):
         '''Specify the color clipping method.'''
         clipping.check_clip_method(clip_method)
         self.clip_method = clip_method
+
+    def get_clipping_text(self):
+        ''' Print text about clipping. '''
+        clip_txt = '%d' % (self.clip_method)
+        return clip_txt
+
+    # Range of values.
 
     def init_bit_depth(self, bit_depth):
         ''' Initialize the bit depth for displayable integer rgb colors. '''
@@ -533,13 +547,23 @@ class ColorConverter(object):
         self.bit_depth = bit_depth
         self.max_value = (1 << self.bit_depth) - 1
 
+    # Debug print.
+
     def dump(self):
         ''' Print some info about the color conversions. '''
-        print ('xyz_from_rgb', str (self.xyz_from_rgb_matrix))
-        print ('rgb_from_xyz', str (self.rgb_from_xyz_matrix))
+        print ('ColorConverter: %r' % (self))
+        # Chromaticities.
+        print ('phosphor_red   = %s' % (self.phosphor_red))
+        print ('phosphor_green = %s' % (self.phosphor_green))
+        print ('phosphor_blue  = %s' % (self.phosphor_blue))
+        print ('phosphor_white = %s' % (self.phosphor_white))
+        # Gamma correction.
+        print ('gamma     = %s' % (self.get_gamma_text()))
         # Bit depth.
         print ('bit_depth = %d' % (self.bit_depth))
         print ('max_value = %d' % (self.max_value))
+        # Clipping.
+        print ('clipping  = %s' % (self.get_clipping_text()))
 
     # Conversions between xyz and rgb.
     # (rgb here is linear, not gamma adjusted.)
@@ -656,11 +680,11 @@ class ColorConverter(object):
 
 # Choice of standard color models.
 # Choose the one that you prefer.
-COLORMODEL_SRGB      = 0    # SRGB standard.
-COLORMODEL_HDTV      = 1    # HDTV standard Rec-709.
-COLORMODEL_UHDTV10   = 2    # UHDTV standard Rec-2020, 10 bits per color.
-COLORMODEL_UHDTV12   = 3    # UHDTV standard Rec-2020, 12 bits per color.
-COLORMODEL_ARBITRARY = 4    # Specify all parameters explicitly.
+COLORMODEL_SRGB    = 0    # SRGB standard.
+COLORMODEL_HDTV    = 1    # HDTV standard Rec-709.
+COLORMODEL_UHDTV10 = 2    # UHDTV standard Rec-2020, 10 bits per color.
+COLORMODEL_UHDTV12 = 3    # UHDTV standard Rec-2020, 12 bits per color.
+COLORMODEL_ANY     = 4    # Any arbitrary values for all parameters.
 
 
 def ColorConverterSrgb(
@@ -690,6 +714,7 @@ def ColorConverterSrgb(
 
 def init (
     colormodel_mode    = COLORMODEL_SRGB,
+    #colormodel_mode    = COLORMODEL_ANY,
     phosphor_red       = SRGB_Red,
     phosphor_green     = SRGB_Green,
     phosphor_blue      = SRGB_Blue,
@@ -699,17 +724,18 @@ def init (
     gamma_correct_func = None,
     gamma_invert_func  = None,
     bit_depth          = 8,
+    #bit_depth          = 9,
     clip_method        = clipping.CLIP_ADD_WHITE,
-    verbose            = False):
+    verbose            = True):
     ''' Initialize. '''
     global color_converter
     if colormodel_mode == COLORMODEL_SRGB:
-        # sRGB
+        # sRGB.
         color_converter = ColorConverterSrgb(
             clip_method = clipping.CLIP_ADD_WHITE,
             verbose     = verbose)
-    elif colormodel_mode == COLORMODEL_ARBITRARY:
-        # Arbitrary
+    elif colormodel_mode == COLORMODEL_ANY:
+        # Any arbitrary parameters.
         color_converter = ColorConverter(
             phosphor_red       = phosphor_red,
             phosphor_green     = phosphor_green,

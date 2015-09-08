@@ -468,10 +468,10 @@ def shark_fin_plot ():
     for i in range (0, num_colors):
         colormodels.xyz_normalize (xy_list [i])
     # get phosphor colors and normalize
-    red   = colormodels.color_converter.PhosphorRed
-    green = colormodels.color_converter.PhosphorGreen
-    blue  = colormodels.color_converter.PhosphorBlue
-    white = colormodels.color_converter.PhosphorWhite
+    red   = colormodels.color_converter.phosphor_red
+    green = colormodels.color_converter.phosphor_green
+    blue  = colormodels.color_converter.phosphor_blue
+    white = colormodels.color_converter.phosphor_white
     colormodels.xyz_normalize (red)
     colormodels.xyz_normalize (green)
     colormodels.xyz_normalize (blue)
