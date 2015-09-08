@@ -352,8 +352,8 @@ def gamma_correct(x):
 #
 
 def clip_rgb_color (rgb_color):
-    '''Convert a linear rgb color (nominal range 0.0 - 1.0), into a displayable
-    irgb color with values in the range (0 - 255), clipping as necessary.
+    '''Convert a linear rgb color (nominal range 0.0 to 1.0), into a displayable
+    irgb color with values in the range 0 to max_value, clipping as necessary.
 
     The return value is a tuple, the first element is the clipped irgb color,
     and the second element is a tuple indicating which (if any) clipping processes were used.
@@ -361,8 +361,8 @@ def clip_rgb_color (rgb_color):
     return color_converter.clip_rgb_color (rgb_color)
 
 #
-# Conversions between linear rgb colors (range 0.0 - 1.0, values proportional to light intensity)
-# and displayable irgb colors (range 0 - 255, values corresponding to hardware palette values).
+# Conversions between linear rgb colors (range 0.0 to 1.0, values proportional to light intensity)
+# and displayable irgb colors (range 0 to max_value, values corresponding to hardware palette values).
 #
 # Displayable irgb colors can be represented as hex strings, like '#AB05B4'.
 #
@@ -529,6 +529,7 @@ class ColorConverter(object):
 
     def init_bit_depth(self, bit_depth):
         ''' Initialize the bit depth for displayable integer rgb colors. '''
+        # Integer values in range 0 to 2^(bitdepth) - 1.
         self.bit_depth = bit_depth
         self.max_value = (1 << self.bit_depth) - 1
 
@@ -584,109 +585,65 @@ class ColorConverter(object):
         xyz = percept.xyz_from_lab(Lab, self.reference_white)
         return xyz
 
-    # Conversion of linear rgb color (range 0.0 - 1.0) to displayable values (range 0 - 255).
-
-    # Clipping of undisplayable colors.
-
-    def clip_color_clamp(self, rgb):
-        ''' Clip an rgb color to remove negative components.
-        Any negative components are zeroed. '''
-        # FIXME: Probably unused now.
-        clipped = clipping.clip_color_clamp(rgb)
-        return clipped
-
-    def clip_color_whiten(self, rgb):
-        ''' Clip an rgb color to remove negative components.
-        White is added as necessary to remove any negative components. '''
-        # FIXME: Probably unused now.
-        clipped = clipping.clip_color_whiten(rgb)
-        return clipped
-
-    def clip_color_intensity(self, rgb):
-        ''' Scale an rgb color if needed to the component range 0.0 - 1.0. '''
-        # FIXME: Probably unused now.
-        clipped = clipping.clip_color_intensity(rgb, self.max_value)
-        return clipped
-
     # Gamma correction, to convert between linear and displayable values.
     # Linear  = Component value is proportional to physical light intensity.
     # Display = Component value is appropriate to display on monitor.
 
     def display_from_linear_component(self, x):
-        ''' Gamma invert a value (nominal range 0.0 - 1.0)
+        ''' Gamma invert a value (nominal range 0.0 to 1.0)
         to convert from linear to displayable values. '''
         y = self.gamma_converter.display_from_linear(x)
         return y
 
     def linear_from_display_component(self, x):
-        ''' Gamma correct a value (nominal range 0.0 - 1.0)
+        ''' Gamma correct a value (nominal range 0.0 to 1.0)
         to convert from displayable to linear values. '''
         y = self.gamma_converter.linear_from_display(x)
         return y
 
     def display_from_linear(self, rgb):
-        ''' Gamma invert an rgb color (nominal range 0.0 - 1.0)
+        ''' Gamma invert an rgb color (nominal range 0.0 to 1.0)
         to convert from linear to displayable values. '''
         rgb[0] = self.gamma_converter.display_from_linear(rgb[0])
         rgb[1] = self.gamma_converter.display_from_linear(rgb[1])
         rgb[2] = self.gamma_converter.display_from_linear(rgb[2])
 
     def linear_from_display(self, rgb):
-        ''' Gamma correct an rgb color (nominal range 0.0 - 1.0)
+        ''' Gamma correct an rgb color (nominal range 0.0 to 1.0)
         to convert from displayable to linear values. '''
         rgb[0] = self.gamma_converter.linear_from_display(rgb[0])
         rgb[1] = self.gamma_converter.linear_from_display(rgb[1])
         rgb[2] = self.gamma_converter.linear_from_display(rgb[2])
 
-    # Scaling from 0.0 - 1.0 range to integer values 0 - 2^(bitdepth) - 1.
-
-    def scale_int_from_float(self, rgb):
-        ''' Scale a color with component range 0.0 - 1.0 to integer values
-        in range 0 - 2^(bitdepth) - 1. '''
-        # FIXME: Probably unused now.
-        irgb = clipping.scale_int_from_float(rgb, self.max_value)
-        return irgb
-
-    def scale_float_from_int(self, irgb):
-        ''' Scale a color with integer components 0 - 2^(bitdepth) - 1
-        to floating point values in range 0.0 - 1.0. '''
-        # FIXME: Probably unused now.
-        rgb = clipping.scale_float_from_int(irgb, self.max_value)
-        return rgb
-
     def clip_rgb_color(self, rgb_color):
-        '''Convert a linear rgb color (nominal range 0.0 - 1.0), into a displayable
-        irgb color with values in the range (0 - 255), clipping as necessary.
+        '''Convert a linear rgb color (nominal range 0.0 to 1.0), into a displayable
+        irgb color with values in the range 0 to max_value, clipping as necessary.
 
         The return value is a tuple, the first element is the clipped irgb color,
         and the second element is a tuple indicating which (if any) clipping processes were used.
         '''
         rgb = rgb_color.copy()
-
-        # Clip chromaticity (negative rgb values).
+        # Clip chromaticity first.
         clipped_chromaticity = clipping.clip_color(rgb, self.clip_method)
-        # Clip intensity (rgb values > 1.0).
+        # Clip intensity second.
         clipped_intensity = clipping.clip_intensity(rgb, self.max_value)
-
         # Gamma adjustment.
         self.display_from_linear(rgb)
-
-        # Scaling to integer 0 to 2^B - 1.
-        irgb = clipping.scale_int_from_float(rgb, self.max_value)
+        # Scaling to integer range 0 to max_value.
+        irgb = clipping.scale_int_from_float (rgb, self.max_value)
         return (irgb, (clipped_chromaticity, clipped_intensity))
 
-    # Conversions between linear rgb colors (0.0 - 1.0 range) and
-    # displayable irgb values (0 - 2^B - 1 range).
+    # Conversions between linear rgb colors (0.0 to 1.0 range) and
+    # displayable irgb values (integer 0 to max_value range).
 
     def irgb_from_rgb(self, rgb):
-        '''Convert a (linear) rgb value (range 0.0 - 1.0) into a displayable integer irgb value (range 0 - 2^B - 1).'''
+        '''Convert a (linear) rgb value (range 0.0 to 1.0) into a displayable integer irgb value (integer range 0 to max_value).'''
         result = self.clip_rgb_color (rgb)
-        (irgb, (clipped_chrom,clipped_int)) = result
+        (irgb, (clipped_chrom, clipped_int)) = result
         return irgb
 
     def rgb_from_irgb(self, irgb):
-        '''Convert a displayable (gamma corrected) irgb value (range 0 - 2^B - 1) into a linear rgb value (range 0.0 - 1.0).'''
-        # Scale to 0.0 - 1.0, and gamma correct.
+        '''Convert a displayable (gamma corrected) irgb value (range 0 to max_value) into a linear rgb value (range 0.0 to 1.0).'''
         rgb = clipping.scale_float_from_int(irgb, self.max_value)
         self.linear_from_display(rgb)
         return rgb
@@ -743,14 +700,14 @@ def init (
     gamma_invert_func  = None,
     bit_depth          = 8,
     clip_method        = clipping.CLIP_ADD_WHITE,
-    verbose            = True):
+    verbose            = False):
     ''' Initialize. '''
     global color_converter
     if colormodel_mode == COLORMODEL_SRGB:
         # sRGB
         color_converter = ColorConverterSrgb(
             clip_method = clipping.CLIP_ADD_WHITE,
-            verbose     = False)
+            verbose     = verbose)
     elif colormodel_mode == COLORMODEL_ARBITRARY:
         # Arbitrary
         color_converter = ColorConverter(
