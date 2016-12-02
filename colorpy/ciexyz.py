@@ -704,7 +704,7 @@ def xyz_from_wavelength (wl_nm):
     if (int_wl_nm < start_wl_nm - 1) or (int_wl_nm > end_wl_nm + 1):
         return colormodels.xyz_color (0.0, 0.0, 0.0)
     # get index into main table
-    index = int_wl_nm - start_wl_nm + 1
+    index = int(round(int_wl_nm - start_wl_nm + 1))
     # apply linear interpolation to get the color
     return _xyz_colors [index] + frac_wl_nm * _xyz_deltas [index]
 
